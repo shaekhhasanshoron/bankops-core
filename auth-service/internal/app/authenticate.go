@@ -8,6 +8,7 @@ import (
 	"auth-service/internal/ports"
 	"errors"
 	"fmt"
+	"time"
 )
 
 // Authenticate is the use case for validating user credentials and generating a JWT.
@@ -46,7 +47,7 @@ func (a *Authenticate) Execute(username, password string) (string, string, error
 	}
 
 	// Generate JWT token
-	token, err := a.TokenSigner.SignJWT(employee.Username, employee.Role, config.Current().Auth.JWTSecret)
+	token, err := a.TokenSigner.SignJWT(employee.Username, employee.Role, config.Current().Auth.JWTSecret, 5*time.Minute)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Msg("failed to generate JWT token")
 		return "", "", fmt.Errorf("failed to generate token: %w", err)

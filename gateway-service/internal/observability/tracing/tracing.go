@@ -1,20 +1,17 @@
 package tracing
 
 import (
-	"auth-service/internal/config"
-	"auth-service/internal/logging"
 	"context"
 	"fmt"
+	"gateway-service/internal/config"
+	"gateway-service/internal/logging"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"go.opentelemetry.io/otel/trace"
-	"time"
 )
 
 // Init sets up an OpenTelemetry exporter if enabled and reachable; otherwise, it keeps OTEL's no-op.
@@ -81,40 +78,6 @@ func AddAttributesToSpan(span trace.Span, attributes map[string]string) {
 	}
 }
 
-// InitHttpConn connects with OTEL controller using http protocol
-func InitHttpConn(ctx context.Context, serviceName string) (func(context.Context) error, error) {
-	headers := map[string]string{
-		"content-type": "application/json",
-	}
-
-	exporter, err := otlptrace.New(
-		context.Background(),
-		otlptracehttp.NewClient(
-			otlptracehttp.WithEndpoint(config.Current().Observability.TracingConfig.Endpoint),
-			otlptracehttp.WithHeaders(headers),
-			otlptracehttp.WithInsecure(),
-		),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("creating new exporter: %w", err)
-	}
-
-	tracerprovider := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(
-			exporter,
-			sdktrace.WithMaxExportBatchSize(sdktrace.DefaultMaxExportBatchSize),
-			sdktrace.WithBatchTimeout(sdktrace.DefaultScheduleDelay*time.Millisecond),
-			sdktrace.WithMaxExportBatchSize(sdktrace.DefaultMaxExportBatchSize),
-		),
-		sdktrace.WithResource(
-			resource.NewWithAttributes(
-				semconv.SchemaURL,
-				semconv.ServiceNameKey.String(serviceName),
-			),
-		),
-	)
-
-	otel.SetTracerProvider(tracerprovider)
-
-	return tracerprovider.Shutdown, nil
+func ToString(t trace.TraceID) string {
+	return fmt.Sprintf("%x", t[:])
 }

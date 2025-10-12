@@ -1,0 +1,213 @@
+definitions:
+  handlers.CreateEmployeeRequest:
+    properties:
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - role
+    - username
+    type: object
+  handlers.CreateEmployeeResponse:
+    properties:
+      message:
+        type: string
+      username:
+        type: string
+    required:
+    - username
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  handlers.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handlers.LoginResponse:
+    properties:
+      access_token:
+        type: string
+    type: object
+  handlers.UpdateEmployeeRequest:
+    properties:
+      role:
+        type: string
+    required:
+    - role
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login to get access token using username and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Login API
+      tags:
+      - Authentication
+  /api/v1/customer/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a customer's details
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: Get a customer
+      tags:
+      - customers
+  /api/v1/employee:
+    post:
+      consumes:
+      - application/json
+      description: 'Create employee - Username: lowercase + underscores only (in middle)
+        | Role: viewer/admin/editor | Bearer token required'
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Employee details
+        in: body
+        name: employee
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateEmployeeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.CreateEmployeeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create Employee
+      tags:
+      - Employee
+  /api/v1/employee/{username}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an employee by username
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Username of the employee
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Delete Employee
+      tags:
+      - Employee
+    put:
+      consumes:
+      - application/json
+      description: Delete an employee by username
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Username of the employee
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: Employee details
+        in: body
+        name: employee
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateEmployeeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Delete Employee
+      tags:
+      - Employee
+swagger: "2.0"

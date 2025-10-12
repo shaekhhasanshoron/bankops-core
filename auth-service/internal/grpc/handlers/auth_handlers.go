@@ -1,6 +1,5 @@
 package handlers
 
-//
 import (
 	"auth-service/api/proto"
 	"auth-service/internal/app"
@@ -48,7 +47,7 @@ func (h *AuthHandler) CreateEmployee(ctx context.Context, req *proto.CreateEmplo
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", req.GetUsername()).Msg("create employee failed")
 		return &proto.CreateEmployeeResponse{
-			Message: "Failed to create employee",
+			Message: message,
 			Success: false,
 		}, nil
 	}
@@ -80,7 +79,7 @@ func (h *AuthHandler) DeleteEmployee(ctx context.Context, req *proto.DeleteEmplo
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", req.GetUsername()).Msg("delete employee failed")
 		return &proto.DeleteEmployeeResponse{
-			Message: "Failed to delete employee",
+			Message: message,
 			Success: false,
 		}, nil
 	}

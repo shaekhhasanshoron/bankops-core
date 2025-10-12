@@ -6,5 +6,7 @@ const (
 	EmployeeStatusInvalid = "invalid"
 
 	// Default role for new employees
-	DefaultRole = "viewer"
+	EmployeeRoleAdmin  = "admin"
+	EmployeeRoleViewer = "viewer"
+	EmployeeRoleEditor = "editor"
 )

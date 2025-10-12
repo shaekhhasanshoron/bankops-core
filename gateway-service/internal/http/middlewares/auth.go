@@ -1,0 +1,121 @@
+package middleware
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"gateway-service/internal/auth"
+	"gateway-service/internal/config"
+	"gateway-service/internal/grpc/clients"
+	"gateway-service/internal/logging"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
+	"time"
+)
+
+func AuthMiddleware(authClient *clients.AuthClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+			c.Abort()
+			return
+		}
+
+		// Extract token from "Bearer <token>"
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
+			c.Abort()
+			return
+		}
+
+		token := parts[1]
+
+		claim, httpCode, err := validateToken(c, token)
+		if err != nil {
+			c.JSON(httpCode, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+
+		// Set user info in context
+		c.Set("username", claim.Username)
+		c.Set("role", claim.Role)
+
+		// Proceed with the request
+		c.Next()
+	}
+}
+
+// validateToken validates incoming token and returns Claims obj, httpStatusCode, err
+func validateToken(c *gin.Context, token string) (*auth.Claims, int, error) {
+	claim, err := auth.NewTokenSigner(config.Current().Auth.JWTSecret).ParseJWT(token)
+	if err != nil {
+		logging.Logger.Err(err).Msg("Invalid token")
+		return nil, http.StatusUnauthorized, errors.New("Invalid or expired token")
+	}
+
+	jsonBody, _ := json.Marshal(claim)
+	fmt.Println("Claims: " + string(jsonBody))
+
+	// Check token expiry
+	if time.Now().After(claim.ExpiresAt.Time) {
+		logging.Logger.Err(errors.New("token expired")).Msg("Invalid token")
+		return nil, http.StatusUnauthorized, errors.New("Token has expired")
+	}
+
+	// Define route-to-role mapping with method-specific permissions
+	permissions := map[string]map[string][]string{
+		"/api/v1/employee": {
+			"GET":    {"admin"},
+			"POST":   {"admin"},
+			"DELETE": {"admin"},
+		},
+		"/api/v1/employee/:username": {
+			"GET":    {"admin", "viewer", "editor"},
+			"DELETE": {"admin"},
+			"PUT":    {"admin"},
+		},
+		"/api/v1/customer": {
+			"POST": {"admin", "editor"},
+			"GET":  {"admin", "viewer", "editor"},
+		},
+	}
+
+	// Get the requested URL path and HTTP method
+	fullPath := c.FullPath()
+	method := c.Request.Method
+	requiredRoles := []string{}
+
+	fmt.Println(fullPath, method)
+
+	// Check if there is a role requirement for the requested URL and method
+	for route, methods := range permissions {
+		fmt.Println(route, methods)
+		if strings.HasPrefix(fullPath, route) {
+			if roles, exists := methods[method]; exists {
+				requiredRoles = roles
+			}
+			break
+		}
+	}
+
+	// Role-based permission check
+	if len(requiredRoles) > 0 {
+		roleValid := false
+		for _, role := range requiredRoles {
+			if role == claim.Role {
+				roleValid = true
+				break
+			}
+		}
+		if !roleValid {
+			logging.Logger.Err(errors.New("Permission Denied")).Msg("User dont have permission")
+			return nil, http.StatusForbidden, errors.New("Permission Denied")
+		}
+	}
+
+	return claim, http.StatusOK, nil
+}

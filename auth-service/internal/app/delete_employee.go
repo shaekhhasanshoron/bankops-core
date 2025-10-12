@@ -24,14 +24,14 @@ func (d *DeleteEmployee) Execute(username string) (string, error) {
 	_, err := d.EmployeeRepo.GetEmployeeByUsername(username)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", username).Msg("employee not found")
-		return "", errors.New("employee not found")
+		return "Employee not found", errors.New("employee not found")
 	}
 
 	err = d.EmployeeRepo.DeleteEmployee(username)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", username).Msg("failed to mark employee as invalid")
-		return "", err
+		return "Failed to delete employee", err
 	}
 
-	return "Employee deleted", nil
+	return "Employee deleted successfully", nil
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"auth-service/internal/common"
 	"auth-service/internal/logging"
 	"auth-service/internal/ports"
 	"errors"
@@ -19,24 +20,28 @@ func NewUpdateEmployee(employeeRepo ports.EmployeeRepo) *UpdateEmployee {
 }
 
 // Execute updates an employee's role.
-func (u *UpdateEmployee) Execute(username, newRole string) (string, error) {
-	// Fetch the employee by username
+func (u *UpdateEmployee) Execute(username, role string) (string, error) {
 	_, err := u.EmployeeRepo.GetEmployeeByUsername(username)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", username).Msg("employee not found")
-		return "", errors.New("employee not found")
+		return "Employee not found", errors.New("employee not found")
+	}
+
+	if role == "" || (role != common.EmployeeRoleAdmin && role != common.EmployeeRoleViewer && role != common.EmployeeRoleEditor) {
+		logging.Logger.Warn().Err(errors.New("invalid role")).Msg("role: " + role)
+		return "Invalid role", errors.New("invalid role")
 	}
 
 	// Update the role
 	employee := ports.Employee{
 		Username: username,
-		Role:     newRole,
+		Role:     role,
 	}
 
 	_, err = u.EmployeeRepo.UpdateEmployee(&employee)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", username).Msg("failed to update employee role")
-		return "", err
+		return "Failed to update employee role", err
 	}
 
 	return "Employee role updated successfully", nil

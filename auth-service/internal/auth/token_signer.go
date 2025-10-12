@@ -26,8 +26,8 @@ func NewTokenSigner(secretKey string) *TokenSigner {
 }
 
 // Sign generates a SignJWT token for the user.
-func (t *TokenSigner) SignJWT(username, role, secretKey string) (string, error) {
-	expirationTime := time.Now().Add(1 * time.Hour)
+func (t *TokenSigner) SignJWT(username, role, secretKey string, expiryTime time.Duration) (string, error) {
+	expirationTime := time.Now().Add(expiryTime)
 	claims := &Claims{
 		Username: username,
 		Role:     role,

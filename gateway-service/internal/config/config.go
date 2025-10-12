@@ -2,11 +2,11 @@
 	Centralized configuration.
 
 	Load order & precedence (lowest → highest):
-		- defaults -> .env files (loaded when AUTH_ENV != "prod") -> *_FILE file injection -> real environment variables
+		- defaults -> .env files (loaded when GATEWAY_ENV != "prod") -> *_FILE file injection -> real environment variables
 
 	Env naming conventions:
-		- Use a service-specific prefix: AUTH_.
-		- Use double underscores "__" to denote nesting. e.g. AUTH_HTTP__ADDR=":8080"  -> http.addr
+		- Use a service-specific prefix: GATEWAY_.
+		- Use double underscores "__" to denote nesting. e.g. GATEWAY_HTTP__ADDR=":8080"  -> http.addr
 	Files Paths (*_FILE):
 		- This env denotes the filePath of any secret/private data; the files can be injected by any external source e.g. Vault.
 */
@@ -30,13 +30,13 @@ import (
 )
 
 const (
-	ServiceName = "auth-service"
+	ServiceName = "gateway-service"
 	EnvDev      = "dev"
 	EnvStaging  = "staging"
 	EnvProd     = "prod"
 
 	// EnvPrefix keeps unique environment prefix
-	EnvPrefix = "AUTH_"
+	EnvPrefix = "GATEWAY_"
 
 	// FileSuffix for "value from file" envs (Vault/K8s/Docker secrets pattern).
 	FileSuffix = "_FILE"
@@ -45,12 +45,10 @@ const (
 type Config struct {
 	Env           string           `koanf:"env" validate:"required,oneof=dev staging prod"`
 	Auth          AuthConfig       `koanf:"auth" validate:"required"`
-	User          UserConfig       `koanf:"user" validate:"required"`
 	GRPC          GrpcConfig       `koanf:"grpc" validate:"required"`
 	HTTP          HTTPConfig       `koanf:"http" validate:"required"`
 	Logging       LoggingCfg       `koanf:"logging" validate:"required"`
 	Observability ObservabilityCfg `koanf:"observability" validate:"required"`
-	DB            DBConfig         `koanf:"db" validate:"required"`
 }
 
 type AuthConfig struct {
@@ -58,13 +56,10 @@ type AuthConfig struct {
 	JWTSecret string `koanf:"jwt_secret"`
 }
 
-type UserConfig struct {
-	AdminUsername string `koanf:"admin_username"`
-	AdminPassword string `koanf:"admin_password"`
-}
-
 type GrpcConfig struct {
-	Addr string `koanf:"addr"                  validate:"required"`
+	AuthServiceAddr        string `koanf:"auth_svc_addr"                  validate:"required"`
+	AccountServiceAddr     string `koanf:"account_svc_addr"                  validate:"required"`
+	TransactionServiceAddr string `koanf:"transaction_svc_addr"                  validate:"required"`
 }
 
 type HTTPConfig struct {
@@ -94,11 +89,6 @@ type TracingCfg struct {
 	Endpoint string `koanf:"endpoint"`
 }
 
-type DBConfig struct {
-	DSN  string `koanf:"dsn"`
-	Type string `koanf:"type"`
-}
-
 var (
 	global     Config
 	globalOnce sync.Once
@@ -124,7 +114,7 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	}
 
 	// Setting default env
-	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("AUTH_ENV")))
+	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("GATEWAY_ENV")))
 	if appEnv == "" {
 		appEnv = EnvDev
 	}
@@ -139,7 +129,7 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 		}
 
 		// validating from .env file again and overwriting if exists
-		appEnvOverwrite := strings.ToLower(strings.TrimSpace(os.Getenv("AUTH_ENV")))
+		appEnvOverwrite := strings.ToLower(strings.TrimSpace(os.Getenv("GATEWAY_ENV")))
 		if appEnvOverwrite != "" {
 			appEnv = appEnvOverwrite
 		}
@@ -176,8 +166,8 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	return cfg, nil
 }
 
-// injectFiles reads AUTH_*_FILE envs and sets their contents to the corresponding key.
-// e.g. AUTH_DB__PASSWORD_FILE=/config/secret/data → (get data from file /config/secret/data) -> sets "db.password"  (if AUTH_DB__PASSWORD is not set in env directly).
+// injectFiles reads GATEWAY_*_FILE envs and sets their contents to the corresponding key.
+// e.g. GATEWAY_DB__PASSWORD_FILE=/config/secret/data → (get data from file /config/secret/data) -> sets "db.password"  (if GATEWAY_DB__PASSWORD is not set in env directly).
 func injectFiles(k *koanf.Koanf, prefix, suffix string) error {
 	var errs []string
 
@@ -187,13 +177,13 @@ func injectFiles(k *koanf.Koanf, prefix, suffix string) error {
 		if len(parts) != 2 {
 			continue
 		}
-		envKey, filePath := parts[0], parts[1] // e.g. envKey=AUTH_DB__PASSWORD_FILE; filePath=/config/secret/data
+		envKey, filePath := parts[0], parts[1] // e.g. envKey=GATEWAY_DB__PASSWORD_FILE; filePath=/config/secret/data
 
 		if !strings.HasPrefix(envKey, prefix) || !strings.HasSuffix(envKey, suffix) {
 			continue
 		}
 
-		base := strings.TrimSuffix(envKey, suffix) // e.g. AUTH_DB__PASSWORD_FILE -> AUTH_DB__PASSWORD
+		base := strings.TrimSuffix(envKey, suffix) // e.g. GATEWAY_DB__PASSWORD_FILE -> GATEWAY_DB__PASSWORD
 
 		// If key already exists in environment then skip
 		if _, ok := os.LookupEnv(base); ok {
@@ -209,7 +199,7 @@ func injectFiles(k *koanf.Koanf, prefix, suffix string) error {
 			continue
 		}
 
-		// maps env -> koanf key; e.g. AUTH_DB__PASSWORD -> db.password
+		// maps env -> koanf key; e.g. GATEWAY_DB__PASSWORD -> db.password
 		mapped := strings.ToLower(strings.TrimPrefix(base, prefix))
 		mapped = strings.ReplaceAll(mapped, "__", ".")
 
@@ -237,10 +227,12 @@ func defaults() map[string]any {
 	return map[string]any{
 		"env": EnvDev,
 		"grpc": map[string]any{
-			"addr": ":50051",
+			"auth_svc_addr":        ":50051",
+			"account_svc_addr":     ":50052",
+			"transaction_svc_addr": ":50053",
 		},
 		"http": map[string]any{
-			"addr":                  ":8081",
+			"addr":                  ":8080",
 			"read_timeout_seconds":  15,
 			"write_timeout_seconds": 15,
 			"idle_timeout_seconds":  120,
@@ -258,14 +250,6 @@ func defaults() map[string]any {
 				"protocol": "grpc",
 				"endpoint": "localhost:4317",
 			},
-		},
-		"db": map[string]any{
-			"dsn":  "./auth-service.db",
-			"type": "sqlite",
-		},
-		"user": map[string]any{
-			"admin_username": "admin",
-			"admin_password": "Admin123",
 		},
 		"auth": map[string]any{
 			"hash_key":   "fc5c6816998c7173ba5bc7a3c53bfabf",
