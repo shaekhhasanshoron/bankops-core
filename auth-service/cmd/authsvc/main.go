@@ -3,7 +3,6 @@ package main
 import (
 	"auth-service/internal/adapters/repo/sqlite"
 	"auth-service/internal/auth"
-	"auth-service/internal/bootstrap"
 	"auth-service/internal/config"
 	"auth-service/internal/db"
 	"auth-service/internal/grpc"
@@ -35,15 +34,9 @@ func main() {
 	}
 
 	// Initialize database
-	dbInstance, err := db.InitDatabase()
+	dbInstance, err := db.InitDB()
 	if err != nil {
 		logging.Logger.Fatal().Err(err).Msg("failed to connect to database")
-		os.Exit(1)
-	}
-
-	// Ensure initial admin user is created
-	if err := bootstrap.CreateAdmin(dbInstance); err != nil {
-		logging.Logger.Fatal().Err(err).Msg("failed to create admin user")
 		os.Exit(1)
 	}
 

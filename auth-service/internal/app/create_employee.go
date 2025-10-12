@@ -3,6 +3,7 @@ package app
 import (
 	"auth-service/internal/auth"
 	"auth-service/internal/common"
+	"auth-service/internal/domain/entity"
 	"auth-service/internal/logging"
 	"auth-service/internal/ports"
 	"errors"
@@ -24,10 +25,15 @@ func NewCreateEmployee(employeeRepo ports.EmployeeRepo, tokenSigner *auth.TokenS
 }
 
 // Execute creates a new employee if they don't already exist
-func (c *CreateEmployee) Execute(username, password, role string) (string, error) {
+func (c *CreateEmployee) Execute(username, password, role, requester string) (string, error) {
 	existingEmployee, _ := c.EmployeeRepo.GetEmployeeByUsername(username)
-	if existingEmployee != nil && existingEmployee.Status == common.EmployeeStatusValid {
+	if existingEmployee != nil && existingEmployee.Status == entity.EmployeeStatusValid {
 		return "Employee already exists", errors.New("employee already exists")
+	}
+
+	if username == common.SystemUserUsername {
+		logging.Logger.Warn().Err(errors.New("Invalid username")).Msg("username: " + username)
+		return "Invalid username: username cannot be 'system'", errors.New("Invalid username")
 	}
 
 	re := regexp.MustCompile(`^[a-z]+(_[a-z]+)*$`)
@@ -36,22 +42,22 @@ func (c *CreateEmployee) Execute(username, password, role string) (string, error
 		return "Invalid username: supports only lowercase and '_' (in middle only)", errors.New("Invalid username")
 	}
 
-	// Step 2: Hash the password before saving
+	if role == "" || (role != entity.EmployeeRoleAdmin && role != entity.EmployeeRoleViewer && role != entity.EmployeeRoleEditor) {
+		logging.Logger.Warn().Err(errors.New("invalid role")).Msg("role: " + role)
+		return "Invalid role", errors.New("invalid role")
+	}
+
 	hashedPassword, err := auth.HashData(password)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Msg("unable to hash password")
 		return "Failed to encrypt data", err
 	}
 
-	if role == "" || (role != common.EmployeeRoleAdmin && role != common.EmployeeRoleViewer && role != common.EmployeeRoleEditor) {
-		logging.Logger.Warn().Err(errors.New("invalid role")).Msg("role: " + role)
-		return "Invalid role", errors.New("invalid role")
-	}
-
 	employee := ports.Employee{
-		Username: username,
-		Password: hashedPassword,
-		Role:     role,
+		Username:  username,
+		Password:  hashedPassword,
+		Role:      role,
+		Requester: requester,
 	}
 
 	_, err = c.EmployeeRepo.CreateEmployee(&employee)

@@ -1,6 +1,8 @@
 syntax = "proto3";
 
-option go_package="api/proto";
+option go_package = "api/proto";
+
+import "google/protobuf/timestamp.proto";
 
 service AuthService {
   // Authenticate user and generate JWT token
@@ -11,6 +13,12 @@ service AuthService {
 
   // Update role for an employee
   rpc UpdateRole (UpdateRoleRequest) returns (UpdateRoleResponse);
+
+  // List employee
+  rpc GetEmployee (GetEmployeeRequest) returns (GetEmployeeResponse);
+
+  // List employee
+  rpc ListEmployee (ListEmployeeRequest) returns (ListEmployeeResponse);
 
   // Delete an employee
   rpc DeleteEmployee (DeleteEmployeeRequest) returns (DeleteEmployeeResponse);
@@ -31,6 +39,7 @@ message CreateEmployeeRequest {
   string username = 1;
   string password = 2;
   string role = 3;
+  string requester = 4;
 }
 
 message CreateEmployeeResponse {
@@ -41,6 +50,7 @@ message CreateEmployeeResponse {
 message UpdateRoleRequest {
   string username = 1;
   string role = 2;
+  string requester = 3;
 }
 
 message UpdateRoleResponse {
@@ -48,8 +58,45 @@ message UpdateRoleResponse {
   bool success = 2;
 }
 
+message GetEmployeeRequest {
+  string username = 1;
+  string role = 2;
+  string requester = 3;
+}
+
+message GetEmployeeResponse {
+  string id = 1;
+  string name = 2;
+  string role = 3;
+  string message = 4;
+  bool success = 5;
+}
+
+message ListEmployeeRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListEmployeeResponse {
+  repeated Employee employees = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  string message = 5;
+  bool success = 6;
+}
+
+message Employee {
+  string id = 1;
+  string name = 2;
+  string role = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
 message DeleteEmployeeRequest {
   string username = 1;
+  string requester = 2;
 }
 
 message DeleteEmployeeResponse {

@@ -119,10 +119,17 @@ func (h *AuthHandler) CreateEmployee(c *gin.Context) {
 		return
 	}
 
+	un, _ := c.Get("username") // middleware
+	requester, ok := un.(string)
+	if !ok {
+		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
+	}
+
 	grpcReq := &proto.CreateEmployeeRequest{
-		Username: req.Username,
-		Password: req.Password,
-		Role:     req.Role,
+		Username:  req.Username,
+		Password:  req.Password,
+		Role:      req.Role,
+		Requester: requester,
 	}
 
 	resp, err := h.AuthClient.CreateEmployee(c.Request.Context(), grpcReq)
@@ -169,9 +176,16 @@ func (h *AuthHandler) UpdateEmployee(c *gin.Context) {
 		return
 	}
 
+	un, _ := c.Get("username") // middleware
+	requester, ok := un.(string)
+	if !ok {
+		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + username)
+	}
+
 	grpcReq := &proto.UpdateRoleRequest{
-		Username: username,
-		Role:     req.Role,
+		Username:  username,
+		Role:      req.Role,
+		Requester: requester,
 	}
 
 	resp, err := h.AuthClient.UpdateEmployee(c.Request.Context(), grpcReq)
@@ -209,8 +223,15 @@ func (h *AuthHandler) UpdateEmployee(c *gin.Context) {
 func (h *AuthHandler) DeleteEmployee(c *gin.Context) {
 	username := c.Param("username")
 
+	un, _ := c.Get("username") // middleware
+	requester, ok := un.(string)
+	if !ok {
+		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
+	}
+
 	grpcReq := &proto.DeleteEmployeeRequest{
-		Username: username,
+		Username:  username,
+		Requester: requester,
 	}
 
 	resp, err := h.AuthClient.DeleteEmployee(c.Request.Context(), grpcReq)

@@ -2,8 +2,8 @@ package app
 
 import (
 	"auth-service/internal/auth"
-	"auth-service/internal/common"
 	"auth-service/internal/config"
+	"auth-service/internal/domain/entity"
 	"auth-service/internal/logging"
 	"auth-service/internal/ports"
 	"errors"
@@ -41,7 +41,7 @@ func (a *Authenticate) Execute(username, password string) (string, string, error
 	}
 
 	// Validate password
-	if employee.Status != common.EmployeeStatusValid || employee.Password != hashedPassword {
+	if employee.Status != entity.EmployeeStatusValid || employee.Password != hashedPassword {
 		logging.Logger.Warn().Str("username", username).Msg("invalid password or user status invalid")
 		return "", "", errors.New("invalid credentials")
 	}

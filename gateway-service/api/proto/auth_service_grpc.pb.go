@@ -22,6 +22,8 @@ const (
 	AuthService_Authenticate_FullMethodName   = "/AuthService/Authenticate"
 	AuthService_CreateEmployee_FullMethodName = "/AuthService/CreateEmployee"
 	AuthService_UpdateRole_FullMethodName     = "/AuthService/UpdateRole"
+	AuthService_GetEmployee_FullMethodName    = "/AuthService/GetEmployee"
+	AuthService_ListEmployee_FullMethodName   = "/AuthService/ListEmployee"
 	AuthService_DeleteEmployee_FullMethodName = "/AuthService/DeleteEmployee"
 )
 
@@ -35,6 +37,10 @@ type AuthServiceClient interface {
 	CreateEmployee(ctx context.Context, in *CreateEmployeeRequest, opts ...grpc.CallOption) (*CreateEmployeeResponse, error)
 	// Update role for an employee
 	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UpdateRoleResponse, error)
+	// List employee
+	GetEmployee(ctx context.Context, in *GetEmployeeRequest, opts ...grpc.CallOption) (*GetEmployeeResponse, error)
+	// List employee
+	ListEmployee(ctx context.Context, in *ListEmployeeRequest, opts ...grpc.CallOption) (*ListEmployeeResponse, error)
 	// Delete an employee
 	DeleteEmployee(ctx context.Context, in *DeleteEmployeeRequest, opts ...grpc.CallOption) (*DeleteEmployeeResponse, error)
 }
@@ -77,6 +83,26 @@ func (c *authServiceClient) UpdateRole(ctx context.Context, in *UpdateRoleReques
 	return out, nil
 }
 
+func (c *authServiceClient) GetEmployee(ctx context.Context, in *GetEmployeeRequest, opts ...grpc.CallOption) (*GetEmployeeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetEmployeeResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetEmployee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) ListEmployee(ctx context.Context, in *ListEmployeeRequest, opts ...grpc.CallOption) (*ListEmployeeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListEmployeeResponse)
+	err := c.cc.Invoke(ctx, AuthService_ListEmployee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) DeleteEmployee(ctx context.Context, in *DeleteEmployeeRequest, opts ...grpc.CallOption) (*DeleteEmployeeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteEmployeeResponse)
@@ -97,6 +123,10 @@ type AuthServiceServer interface {
 	CreateEmployee(context.Context, *CreateEmployeeRequest) (*CreateEmployeeResponse, error)
 	// Update role for an employee
 	UpdateRole(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error)
+	// List employee
+	GetEmployee(context.Context, *GetEmployeeRequest) (*GetEmployeeResponse, error)
+	// List employee
+	ListEmployee(context.Context, *ListEmployeeRequest) (*ListEmployeeResponse, error)
 	// Delete an employee
 	DeleteEmployee(context.Context, *DeleteEmployeeRequest) (*DeleteEmployeeResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
@@ -117,6 +147,12 @@ func (UnimplementedAuthServiceServer) CreateEmployee(context.Context, *CreateEmp
 }
 func (UnimplementedAuthServiceServer) UpdateRole(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateRole not implemented")
+}
+func (UnimplementedAuthServiceServer) GetEmployee(context.Context, *GetEmployeeRequest) (*GetEmployeeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEmployee not implemented")
+}
+func (UnimplementedAuthServiceServer) ListEmployee(context.Context, *ListEmployeeRequest) (*ListEmployeeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListEmployee not implemented")
 }
 func (UnimplementedAuthServiceServer) DeleteEmployee(context.Context, *DeleteEmployeeRequest) (*DeleteEmployeeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEmployee not implemented")
@@ -196,6 +232,42 @@ func _AuthService_UpdateRole_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_GetEmployee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEmployeeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetEmployee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetEmployee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetEmployee(ctx, req.(*GetEmployeeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_ListEmployee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListEmployeeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ListEmployee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ListEmployee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ListEmployee(ctx, req.(*ListEmployeeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_DeleteEmployee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteEmployeeRequest)
 	if err := dec(in); err != nil {
@@ -232,6 +304,14 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateRole",
 			Handler:    _AuthService_UpdateRole_Handler,
+		},
+		{
+			MethodName: "GetEmployee",
+			Handler:    _AuthService_GetEmployee_Handler,
+		},
+		{
+			MethodName: "ListEmployee",
+			Handler:    _AuthService_ListEmployee_Handler,
 		},
 		{
 			MethodName: "DeleteEmployee",

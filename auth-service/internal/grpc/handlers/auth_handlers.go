@@ -43,7 +43,7 @@ func (h *AuthHandler) Authenticate(ctx context.Context, req *proto.AuthenticateR
 
 // CreateEmployee handles the creation of a new employee by admin.
 func (h *AuthHandler) CreateEmployee(ctx context.Context, req *proto.CreateEmployeeRequest) (*proto.CreateEmployeeResponse, error) {
-	message, err := h.createEmployee.Execute(req.GetUsername(), req.GetPassword(), req.GetRole())
+	message, err := h.createEmployee.Execute(req.GetUsername(), req.GetPassword(), req.GetRole(), req.GetRequester())
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", req.GetUsername()).Msg("create employee failed")
 		return &proto.CreateEmployeeResponse{
@@ -59,7 +59,7 @@ func (h *AuthHandler) CreateEmployee(ctx context.Context, req *proto.CreateEmplo
 
 // UpdateRole handles updating the role for an existing employee by admin.
 func (h *AuthHandler) UpdateRole(ctx context.Context, req *proto.UpdateRoleRequest) (*proto.UpdateRoleResponse, error) {
-	message, err := h.updateEmployee.Execute(req.GetUsername(), req.GetRole())
+	message, err := h.updateEmployee.Execute(req.GetUsername(), req.GetRole(), req.GetRequester())
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", req.GetUsername()).Msg("update role failed")
 		return &proto.UpdateRoleResponse{
@@ -75,7 +75,7 @@ func (h *AuthHandler) UpdateRole(ctx context.Context, req *proto.UpdateRoleReque
 
 // DeleteEmployee handles the deletion (invalidation) of an employee by admin.
 func (h *AuthHandler) DeleteEmployee(ctx context.Context, req *proto.DeleteEmployeeRequest) (*proto.DeleteEmployeeResponse, error) {
-	message, err := h.deleteEmployee.Execute(req.GetUsername())
+	message, err := h.deleteEmployee.Execute(req.GetUsername(), req.GetRequester())
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", req.GetUsername()).Msg("delete employee failed")
 		return &proto.DeleteEmployeeResponse{
