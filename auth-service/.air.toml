@@ -1,0 +1,13 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/authsvc ./cmd/authsvc"
+bin = "./tmp/authsvc"
+full_bin = ""
+include_ext = ["go"]
+exclude_dir = ["tmp", "vendor"]
+delay = 1000
+
+[log]
+time = true
