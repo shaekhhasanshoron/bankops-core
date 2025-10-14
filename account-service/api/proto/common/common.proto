@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "protogen/accountservice/proto";
+
+message Metadata {
+  string request_id = 1;
+  string requester = 2;
+}
+
+message Response {
+  string message = 1;
+  bool success = 2;
+}
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message PaginationResponse {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total_count = 3;
+  int32 total_pages = 4;
+}

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "api/proto";
+option go_package = "protogen/authservice/proto";
 
 import "google/protobuf/timestamp.proto";
 
@@ -14,7 +14,7 @@ service AuthService {
   // Update role for an employee
   rpc UpdateRole (UpdateRoleRequest) returns (UpdateRoleResponse);
 
-  // List employee
+  // Get employee
   rpc GetEmployee (GetEmployeeRequest) returns (GetEmployeeResponse);
 
   // List employee

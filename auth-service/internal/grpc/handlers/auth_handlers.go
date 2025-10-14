@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"auth-service/api/proto"
+	"auth-service/api/protogen/authservice/proto"
 	"auth-service/internal/app"
 	"auth-service/internal/logging"
 	"context"

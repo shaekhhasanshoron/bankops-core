@@ -235,12 +235,12 @@ func injectFiles(k *koanf.Koanf, prefix, suffix string) error {
 
 func defaults() map[string]any {
 	return map[string]any{
-		"env": EnvDev,
+		"env": EnvProd,
 		"grpc": map[string]any{
 			"addr": ":50051",
 		},
 		"http": map[string]any{
-			"addr":                  ":8081",
+			"addr":                  ":8080",
 			"read_timeout_seconds":  15,
 			"write_timeout_seconds": 15,
 			"idle_timeout_seconds":  120,

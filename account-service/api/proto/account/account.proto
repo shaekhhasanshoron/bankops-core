@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package account;
+
+option go_package = "protogen/accountservice/proto";
+
+import "google/protobuf/timestamp.proto";
+import "common/common.proto";
+
+message Account {
+  string id = 1;
+  string customer_id = 2;
+  double balance = 3;
+  string active_status = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  string created_by = 7;
+  string updated_by = 8;
+  bool locked_for_tx = 9;
+  string active_transaction_id = 10;
+  int32 version = 11;
+}
+
+message CreateAccountRequest {
+  string customer_id = 1;
+  double initial_deposit = 2;
+  common.Metadata metadata = 4;
+}
+
+message CreateAccountResponse {
+  Account account = 1;
+  common.Response response = 2;
+}
+
+message GetAccountRequest {
+  string account_id = 1;
+  common.Metadata metadata = 2;
+}
+
+message GetAccountResponse {
+  Account account = 1;
+  common.Response response = 2;
+}
+
+message GetBalanceRequest {
+  string account_id = 1;
+  common.Metadata metadata = 2;
+}
+
+message GetBalanceResponse {
+  string account_id = 1;
+  double balance = 2;
+  common.Response response = 3;
+}
+
+message ListAccountsByCustomerRequest {
+  string customer_id = 1;
+  common.PaginationRequest pagination = 2;
+  common.Metadata metadata = 3;
+}
+
+message ListAccountsByCustomerResponse {
+  repeated Account accounts = 1;
+  common.PaginationResponse pagination = 2;
+  common.Response response = 3;
+}
+
+message UpdateAccountStatusRequest {
+  string account_id = 1;
+  string account_status = 2;
+  common.Metadata metadata = 3;
+}
+
+message UpdateAccountStatusResponse {
+  Account account = 1;
+  common.Response response = 2;
+}
+
+message DeleteAccountRequest {
+  string account_id = 1;
+  common.Metadata metadata = 3;
+}
+
+message DeleteAccountResponse {
+  common.Response response = 1;
+}

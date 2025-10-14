@@ -1,4 +1,20 @@
 definitions:
+  handlers.CreateCustomerRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  handlers.CreateCustomerResponse:
+    properties:
+      customer_id:
+        type: string
+      message:
+        type: string
+    required:
+    - customer_id
+    type: object
   handlers.CreateEmployeeRequest:
     properties:
       password:
@@ -41,6 +57,13 @@ definitions:
       access_token:
         type: string
     type: object
+  handlers.UpdateCustomerRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
   handlers.UpdateEmployeeRequest:
     properties:
       role:
@@ -81,23 +104,190 @@ paths:
       summary: Login API
       tags:
       - Authentication
-  /api/v1/customer/{id}:
+  /api/v1/customer:
     get:
       consumes:
       - application/json
-      description: Retrieve a customer's details
+      description: Get customer list
       parameters:
-      - description: Customer ID
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Number of customers per page
+        in: query
+        name: pagesize
+        type: integer
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Get Customer List
+      tags:
+      - Customer
+    post:
+      consumes:
+      - application/json
+      description: Create customer - Bearer token required
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Customer details
+        in: body
+        name: customer
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateCustomerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.CreateCustomerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create Customer
+      tags:
+      - Customer
+  /api/v1/customer/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a customer by customer id
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CustomerID of the customer
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
-      responses: {}
-      summary: Get a customer
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Delete Customer
       tags:
-      - customers
+      - Customer
+    get:
+      consumes:
+      - application/json
+      description: Get a customer by customer id
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CustomerID of the customer
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Get Customer
+      tags:
+      - Customer
+    put:
+      consumes:
+      - application/json
+      description: Update a customer by customer id
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: CustomerID of the customer
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Customer details
+        in: body
+        name: customer
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateCustomerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Update Customer
+      tags:
+      - Customer
   /api/v1/employee:
     post:
       consumes:
@@ -173,7 +363,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Delete an employee by username
+      description: Update an employee by username
       parameters:
       - description: Bearer token for authorization, include 'Bearer ' followed by
           access_token
@@ -207,7 +397,7 @@ paths:
           description: Unauthorized
           schema:
             type: string
-      summary: Delete Employee
+      summary: Update Employee
       tags:
       - Employee
 swagger: "2.0"

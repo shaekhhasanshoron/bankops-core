@@ -1,12 +1,11 @@
 package unit
 
-//
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"gateway-service/api/proto"
+	protoauth "gateway-service/api/protogen/authservice/proto"
 	"gateway-service/internal/http/handlers"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -30,36 +29,36 @@ func (m *MockAuthClient) EnsureConnection() error {
 	return args.Error(0)
 }
 
-func (m *MockAuthClient) Authenticate(ctx context.Context, req *proto.AuthenticateRequest) (*proto.AuthenticateResponse, error) {
+func (m *MockAuthClient) Authenticate(ctx context.Context, req *protoauth.AuthenticateRequest) (*protoauth.AuthenticateResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*proto.AuthenticateResponse), args.Error(1)
+	return args.Get(0).(*protoauth.AuthenticateResponse), args.Error(1)
 }
 
-func (m *MockAuthClient) CreateEmployee(ctx context.Context, req *proto.CreateEmployeeRequest) (*proto.CreateEmployeeResponse, error) {
+func (m *MockAuthClient) CreateEmployee(ctx context.Context, req *protoauth.CreateEmployeeRequest) (*protoauth.CreateEmployeeResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*proto.CreateEmployeeResponse), args.Error(1)
+	return args.Get(0).(*protoauth.CreateEmployeeResponse), args.Error(1)
 }
 
-func (m *MockAuthClient) DeleteEmployee(ctx context.Context, req *proto.DeleteEmployeeRequest) (*proto.DeleteEmployeeResponse, error) {
+func (m *MockAuthClient) DeleteEmployee(ctx context.Context, req *protoauth.DeleteEmployeeRequest) (*protoauth.DeleteEmployeeResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*proto.DeleteEmployeeResponse), args.Error(1)
+	return args.Get(0).(*protoauth.DeleteEmployeeResponse), args.Error(1)
 }
 
-func (m *MockAuthClient) UpdateEmployee(ctx context.Context, req *proto.UpdateRoleRequest) (*proto.UpdateRoleResponse, error) {
+func (m *MockAuthClient) UpdateEmployee(ctx context.Context, req *protoauth.UpdateRoleRequest) (*protoauth.UpdateRoleResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*proto.UpdateRoleResponse), args.Error(1)
+	return args.Get(0).(*protoauth.UpdateRoleResponse), args.Error(1)
 }
 
 func (m *MockAuthClient) Close() {
@@ -83,12 +82,12 @@ func TestLoginAPI_Success(t *testing.T) {
 		"password": "password123",
 	}
 
-	expectedResponse := &proto.AuthenticateResponse{
+	expectedResponse := &protoauth.AuthenticateResponse{
 		Token:        "access-token-123",
 		RefreshToken: "refresh-token-456",
 	}
 
-	mockClient.On("Authenticate", mock.Anything, mock.MatchedBy(func(req *proto.AuthenticateRequest) bool {
+	mockClient.On("Authenticate", mock.Anything, mock.MatchedBy(func(req *protoauth.AuthenticateRequest) bool {
 		return req.Username == "admin" && req.Password == "password123"
 	})).Return(expectedResponse, nil)
 

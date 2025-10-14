@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"fmt"
+	"errors"
 	"github.com/google/uuid"
 	"time"
 )
@@ -22,6 +22,10 @@ const (
 	EmployeeAuthMethodPasskey  = "passkey"
 )
 
+var (
+	ErrPasswordRequired = errors.New("password required")
+)
+
 // Employee entity
 type Employee struct {
 	ID           string `gorm:"primaryKey"`
@@ -31,17 +35,13 @@ type Employee struct {
 	Role         string `gorm:"not null"`
 	ActiveStatus string `gorm:"not null"`
 	Status       string `gorm:"default:valid;not null"`
-	CreatedBy    string `gorm:"null"` // username
+	CreatedBy    string `gorm:"null"`
 	UpdatedBy    string `gorm:"null"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
 
-func NewEmployee(id, username, password, role, authMethod, requester string) (*Employee, error) {
-	if id == "" {
-		id = uuid.New().String()
-	}
-
+func NewEmployee(username, password, role, authMethod, requester string) (*Employee, error) {
 	if requester == "" {
 		requester = "system"
 	}
@@ -52,14 +52,14 @@ func NewEmployee(id, username, password, role, authMethod, requester string) (*E
 
 	if authMethod == EmployeeAuthMethodPassword {
 		if password == "" {
-			return nil, fmt.Errorf("password is required for password auth method")
+			return nil, ErrPasswordRequired
 		}
 	} else {
 		password = ""
 	}
 
 	return &Employee{
-		ID:           id,
+		ID:           uuid.New().String(),
 		Username:     username,
 		AuthMethod:   authMethod,
 		Password:     password,
@@ -71,4 +71,8 @@ func NewEmployee(id, username, password, role, authMethod, requester string) (*E
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}, nil
+}
+
+func (e *Employee) IsValid() bool {
+	return e.ID != "" && e.Username != ""
 }

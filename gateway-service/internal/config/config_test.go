@@ -21,7 +21,7 @@ func TestLoad_Defaults_AreDevEnv(t *testing.T) {
 	}
 
 	// defaults env=prod
-	if cfg.Env != EnvDev {
+	if cfg.Env != EnvProd {
 		t.Fatalf("env=%q, want %q", cfg.Env, EnvProd)
 	}
 

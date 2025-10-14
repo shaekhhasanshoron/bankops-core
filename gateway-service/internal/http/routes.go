@@ -29,6 +29,7 @@ func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
 
 	// Initialize handlers with clients
 	authHandler := handlers.NewAuthHandler(*gRPCClients.AuthClient)
+	accountHandler := handlers.NewAccountHandler(*gRPCClients.AccountClient)
 
 	authGroup := router.Group("/api/v1/auth")
 	{
@@ -36,10 +37,17 @@ func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
 	}
 
 	protectedGroup := router.Group("/api/v1")
-	protectedGroup.Use(middleware.AuthMiddleware(gRPCClients.AuthClient))
+	protectedGroup.Use(middleware.AuthMiddleware(gRPCClients.AuthClient), middleware.RequestID)
 	{
+		// Employee API
 		protectedGroup.POST("/employee", authHandler.CreateEmployee)
 		protectedGroup.DELETE("/employee/:username", authHandler.DeleteEmployee)
 		protectedGroup.PUT("/employee/:username", authHandler.UpdateEmployee)
+		// Customer API
+		protectedGroup.POST("/customer", accountHandler.CreateCustomer)
+		protectedGroup.PUT("/customer/:id", accountHandler.UpdateCustomer)
+		protectedGroup.GET("/customer/:id", accountHandler.GetCustomer)
+		protectedGroup.GET("/customer", accountHandler.ListCustomer)
+		protectedGroup.DELETE("/customer:id", accountHandler.DeleteCustomer)
 	}
 }

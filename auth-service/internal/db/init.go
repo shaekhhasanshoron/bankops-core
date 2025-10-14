@@ -73,7 +73,6 @@ func prePopulateAdmin(db *gorm.DB) error {
 	}
 
 	newAdmin, err := entity.NewEmployee(
-		"",
 		config.Current().User.AdminUsername,
 		hashedPassword,
 		entity.EmployeeRoleAdmin,

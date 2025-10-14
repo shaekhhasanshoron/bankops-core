@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package customer;
+
+option go_package = "protogen/accountservice/proto";
+
+import "google/protobuf/timestamp.proto";
+import "account/account.proto";
+import "common/common.proto";
+
+message Customer {
+  string id = 1;
+  string name = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string created_by = 5;
+  bool locked_for_operation = 6;
+  int32 version = 7;
+  repeated account.Account accounts = 8;
+}
+
+message CustomerWithAccounts {
+  Customer customer = 1;
+  repeated account.Account accounts = 2;
+}
+
+message CreateCustomerRequest {
+  string name = 1;
+  common.Metadata metadata = 3;
+}
+
+message CreateCustomerResponse {
+  string customer_id = 1;
+  common.Response response = 2;
+}
+
+message GetCustomerRequest {
+  string customer_id = 1;
+  common.Metadata metadata = 2;
+}
+
+message GetCustomerResponse {
+  CustomerWithAccounts customer = 1;
+  common.Response response = 2;
+}
+
+message ListCustomersRequest {
+  common.PaginationRequest pagination = 1;
+  common.Metadata metadata = 2;
+}
+
+message ListCustomersResponse {
+  repeated Customer customers = 1;
+  common.PaginationResponse pagination = 2;
+  common.Response response = 3;
+}
+
+message UpdateCustomerRequest {
+  string customer_id = 1;
+  string name = 2;
+  common.Metadata metadata = 4;
+}
+
+message UpdateCustomerResponse {
+  Customer customer = 1;
+  common.Response response = 2;
+}
+
+message DeleteCustomerRequest {
+  string customer_id = 1;
+  common.Metadata metadata = 3;
+}
+
+message DeleteCustomerResponse {
+  common.Response response = 2;
+}

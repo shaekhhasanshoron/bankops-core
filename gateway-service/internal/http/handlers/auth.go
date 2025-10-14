@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"errors"
-	"gateway-service/api/proto"
+	protoauth "gateway-service/api/protogen/authservice/proto"
 	"gateway-service/internal/grpc/clients"
 	"gateway-service/internal/logging"
 	"github.com/gin-gonic/gin"
@@ -79,7 +79,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	grpcReq := &proto.AuthenticateRequest{
+	grpcReq := &protoauth.AuthenticateRequest{
 		Username: req.Username,
 		Password: req.Password,
 	}
@@ -125,7 +125,7 @@ func (h *AuthHandler) CreateEmployee(c *gin.Context) {
 		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
 	}
 
-	grpcReq := &proto.CreateEmployeeRequest{
+	grpcReq := &protoauth.CreateEmployeeRequest{
 		Username:  req.Username,
 		Password:  req.Password,
 		Role:      req.Role,
@@ -155,8 +155,8 @@ func (h *AuthHandler) CreateEmployee(c *gin.Context) {
 
 // UpdateEmployee for update an employee
 // @Tags Employee
-// @Summary Delete Employee
-// @Description Delete an employee by username
+// @Summary Update Employee
+// @Description Update an employee by username
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
@@ -182,7 +182,7 @@ func (h *AuthHandler) UpdateEmployee(c *gin.Context) {
 		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + username)
 	}
 
-	grpcReq := &proto.UpdateRoleRequest{
+	grpcReq := &protoauth.UpdateRoleRequest{
 		Username:  username,
 		Role:      req.Role,
 		Requester: requester,
@@ -201,7 +201,7 @@ func (h *AuthHandler) UpdateEmployee(c *gin.Context) {
 		return
 	}
 
-	res := DeleteEmployeeResponse{
+	res := UpdateCustomerResponse{
 		Message: resp.Message,
 	}
 
@@ -229,7 +229,7 @@ func (h *AuthHandler) DeleteEmployee(c *gin.Context) {
 		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
 	}
 
-	grpcReq := &proto.DeleteEmployeeRequest{
+	grpcReq := &protoauth.DeleteEmployeeRequest{
 		Username:  username,
 		Requester: requester,
 	}

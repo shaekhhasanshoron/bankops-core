@@ -37,7 +37,7 @@ type AuthServiceClient interface {
 	CreateEmployee(ctx context.Context, in *CreateEmployeeRequest, opts ...grpc.CallOption) (*CreateEmployeeResponse, error)
 	// Update role for an employee
 	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UpdateRoleResponse, error)
-	// List employee
+	// Get employee
 	GetEmployee(ctx context.Context, in *GetEmployeeRequest, opts ...grpc.CallOption) (*GetEmployeeResponse, error)
 	// List employee
 	ListEmployee(ctx context.Context, in *ListEmployeeRequest, opts ...grpc.CallOption) (*ListEmployeeResponse, error)
@@ -123,7 +123,7 @@ type AuthServiceServer interface {
 	CreateEmployee(context.Context, *CreateEmployeeRequest) (*CreateEmployeeResponse, error)
 	// Update role for an employee
 	UpdateRole(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error)
-	// List employee
+	// Get employee
 	GetEmployee(context.Context, *GetEmployeeRequest) (*GetEmployeeResponse, error)
 	// List employee
 	ListEmployee(context.Context, *ListEmployeeRequest) (*ListEmployeeResponse, error)

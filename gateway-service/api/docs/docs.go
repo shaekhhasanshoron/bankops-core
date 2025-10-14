@@ -61,9 +61,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/customer/{id}": {
+        "/api/v1/customer": {
             "get": {
-                "description": "Retrieve a customer's details",
+                "description": "Get customer list",
                 "consumes": [
                     "application/json"
                 ],
@@ -71,19 +71,261 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "customers"
+                    "Customer"
                 ],
-                "summary": "Get a customer",
+                "summary": "Get Customer List",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Customer ID",
+                        "default": 1,
+                        "description": "Page number for pagination",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Number of customers per page",
+                        "name": "pagesize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create customer - Bearer token required",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Customer"
+                ],
+                "summary": "Create Customer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Customer details",
+                        "name": "customer",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.CreateCustomerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.CreateCustomerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customer/{id}": {
+            "get": {
+                "description": "Get a customer by customer id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Customer"
+                ],
+                "summary": "Get Customer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CustomerID of the customer",
                         "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a customer by customer id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Customer"
+                ],
+                "summary": "Update Customer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CustomerID of the customer",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Customer details",
+                        "name": "customer",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UpdateCustomerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a customer by customer id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Customer"
+                ],
+                "summary": "Delete Customer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CustomerID of the customer",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/api/v1/employee": {
@@ -141,7 +383,7 @@ const docTemplate = `{
         },
         "/api/v1/employee/{username}": {
             "put": {
-                "description": "Delete an employee by username",
+                "description": "Update an employee by username",
                 "consumes": [
                     "application/json"
                 ],
@@ -151,7 +393,7 @@ const docTemplate = `{
                 "tags": [
                     "Employee"
                 ],
-                "summary": "Delete Employee",
+                "summary": "Update Employee",
                 "parameters": [
                     {
                         "type": "string",
@@ -250,6 +492,31 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handlers.CreateCustomerRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.CreateCustomerResponse": {
+            "type": "object",
+            "required": [
+                "customer_id"
+            ],
+            "properties": {
+                "customer_id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.CreateEmployeeRequest": {
             "type": "object",
             "required": [
@@ -310,6 +577,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "access_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.UpdateCustomerRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
                     "type": "string"
                 }
             }

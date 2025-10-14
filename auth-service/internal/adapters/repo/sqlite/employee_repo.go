@@ -34,7 +34,6 @@ func (r *EmployeeRepo) CreateEmployee(input *ports.Employee) (*entity.Employee, 
 	}
 
 	newEmployee, err := entity.NewEmployee(
-		"",
 		input.Username,
 		input.Password,
 		input.Role,

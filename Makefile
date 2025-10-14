@@ -21,7 +21,7 @@ GOLANGCI_LINT        := $(TOOLS_DIR)/golangci-lint
 MIGRATE              := $(TOOLS_DIR)/migrate
 
 # All service
-SERVICES             := gateway-service auth-service account-service transaction-service event-tracking-service
+SERVICES             := gateway-service auth-service account-service
 MODULE_DIRS          := $(foreach s,$(SERVICES),$(if $(wildcard $(s)/go.mod),$(s),))
 
 # Help output
@@ -39,11 +39,17 @@ help:
 	@echo "Auth service helpers:"
 	@echo "  make run-auth          - run auth-service"
 	@echo "  make air-auth          - run auth-service with Air"
-	@echo "  make proto-auth        - generate proto buf"
-	@echo "  make proto-auth-all    - generate proto buf to all services"
+	@echo "  make proto-auth        - generate proto buf to all services"
+	@echo "  make proto-auth-only   - generate proto buf for auth service"
 	@echo
 	@echo "Gateway service helpers:"
 	@echo "  make run-gateway       - run gateway-service"
+	@echo
+	@echo "Account service helpers:"
+	@echo "  make run-account        - run account-service"
+	@echo "  make air-account        - run account-service with Air"
+	@echo "  make proto-gateway      - generate proto buf to all services"
+	@echo "  make proto-account-only - generate proto buf for account service"
 
 
 
@@ -106,7 +112,7 @@ test:
 	done
 
 # run/air for auth-service
-.PHONY: air-auth run-auth proto-gen-auth proto
+.PHONY: air-auth run-auth proto-auth proto-auth-all
 air-auth: $(AIR)
 	@cd auth-service && $(AIR) -c .air.toml
 
@@ -114,27 +120,33 @@ run-auth:
 	@echo "→ running auth-service"
 	@cd auth-service && $(GO) run ./cmd/authsvc
 
-proto-auth:
+proto-auth-only:
 	 @protoc \
 	 --proto_path=auth-service/api/proto auth-service/api/proto/*.proto \
-	 --go_out=./auth-service/api/proto \
-	 --go_opt=paths=source_relative \
-	 --go-grpc_out=./auth-service/api/proto \
-	 --go-grpc_opt=paths=source_relative
+	 --go_out=./auth-service/api \
+	 --go_opt=paths=import \
+	 --go-grpc_out=./auth-service/api \
+	 --go-grpc_opt=paths=import
 
 # Generate proto files for all services
-proto-auth-all:
-	@PROTO_SERVICES="auth-service gateway-service"; \
-	for service in $$PROTO_SERVICES; do \
-		protoc --proto_path=auth-service/api/proto auth-service/api/proto/*.proto \
-			--go_out=./$$service/api/proto \
-			--go_opt=paths=source_relative \
-			--go-grpc_out=./$$service/api/proto \
-			--go-grpc_opt=paths=source_relative; \
-	done
+proto-auth:
+	 @protoc \
+	 --proto_path=auth-service/api/proto \
+	 auth-service/api/proto/*.proto \
+	 --go_out=./auth-service/api \
+	 --go_opt=paths=import \
+	 --go-grpc_out=./auth-service/api \
+	 --go-grpc_opt=paths=import
+	@protoc \
+		--proto_path=auth-service/api/proto \
+		auth-service/api/proto/*.proto \
+		--go_out=./gateway-service/api \
+		--go_opt=paths=import \
+		--go-grpc_out=./gateway-service/api \
+		--go-grpc_opt=paths=import
 
-# run/air for auth-gateway
-.PHONY: air-gateway run-gateway proto-gen-gateway
+# run/air for gateway-service
+.PHONY: air-gateway run-gateway
 run-gateway:
 	@echo "→ running gateway-service"
 	@cd gateway-service && $(GO) run ./cmd/gatewaysvc
@@ -145,3 +157,51 @@ air-gateway: $(AIR)
 test-gateway:
 	@echo "→ testing gateway-service"
 	@cd gateway-service && $(GO) test ./...
+
+# run/air for account-service
+.PHONY: air-account run-account proto-account proto-account-all
+run-account:
+	@echo "→ running account-service"
+	@cd account-service && $(GO) run ./cmd/accountsvc
+
+air-account: $(AIR)
+	@cd account-service && $(AIR) -c .air.toml
+
+test-account:
+	@echo "→ testing account-service"
+	@cd account-service && $(GO) test ./...
+
+proto-account-only:
+	@protoc \
+     		--proto_path=account-service/api/proto \
+     		--go_out=./account-service/api \
+     		--go_opt=paths=import \
+     		--go-grpc_out=./account-service/api \
+     		--go-grpc_opt=paths=import \
+     		account-service/api/proto/common/*.proto \
+     		account-service/api/proto/account/*.proto \
+     		account-service/api/proto/customer/*.proto \
+     		account-service/api/proto/*.proto
+
+# Generate proto files for all services
+proto-account:
+	@protoc \
+     		--proto_path=account-service/api/proto \
+     		--go_out=./account-service/api \
+     		--go_opt=paths=import \
+     		--go-grpc_out=./account-service/api \
+     		--go-grpc_opt=paths=import \
+     		account-service/api/proto/common/*.proto \
+     		account-service/api/proto/account/*.proto \
+     		account-service/api/proto/customer/*.proto \
+     		account-service/api/proto/*.proto
+	@protoc \
+     		--proto_path=account-service/api/proto \
+     		--go_out=./gateway-service/api \
+     		--go_opt=paths=import \
+     		--go-grpc_out=./gateway-service/api \
+     		--go-grpc_opt=paths=import \
+     		account-service/api/proto/common/*.proto \
+     		account-service/api/proto/account/*.proto \
+     		account-service/api/proto/customer/*.proto \
+     		account-service/api/proto/*.proto

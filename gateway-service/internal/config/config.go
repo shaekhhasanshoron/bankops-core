@@ -57,9 +57,8 @@ type AuthConfig struct {
 }
 
 type GrpcConfig struct {
-	AuthServiceAddr        string `koanf:"auth_svc_addr"                  validate:"required"`
-	AccountServiceAddr     string `koanf:"account_svc_addr"                  validate:"required"`
-	TransactionServiceAddr string `koanf:"transaction_svc_addr"                  validate:"required"`
+	AuthServiceAddr    string `koanf:"auth_svc_addr"                  validate:"required"`
+	AccountServiceAddr string `koanf:"account_svc_addr"                  validate:"required"`
 }
 
 type HTTPConfig struct {
@@ -225,11 +224,10 @@ func injectFiles(k *koanf.Koanf, prefix, suffix string) error {
 
 func defaults() map[string]any {
 	return map[string]any{
-		"env": EnvDev,
+		"env": EnvProd,
 		"grpc": map[string]any{
-			"auth_svc_addr":        ":50051",
-			"account_svc_addr":     ":50052",
-			"transaction_svc_addr": ":50053",
+			"auth_svc_addr":    ":50051",
+			"account_svc_addr": ":50052",
 		},
 		"http": map[string]any{
 			"addr":                  ":8080",

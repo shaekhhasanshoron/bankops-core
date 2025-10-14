@@ -21,12 +21,12 @@ func TestLoad_Defaults_AreDevEnv(t *testing.T) {
 	}
 
 	// defaults env=prod
-	if cfg.Env != EnvDev {
+	if cfg.Env != EnvProd {
 		t.Fatalf("env=%q, want %q", cfg.Env, EnvProd)
 	}
 
-	// defaults addr=:8081
-	if cfg.HTTP.Addr != ":8081" {
+	// defaults addr=:8080
+	if cfg.HTTP.Addr != ":8080" {
 		t.Fatalf("addr=%q, want :8080", cfg.HTTP.Addr)
 	}
 	if cfg.Observability.MetricsConfig.Enabled {

@@ -9,7 +9,7 @@ import (
 )
 
 func isProbePath(reqPath string) bool {
-	return reqPath == "/healthz" || reqPath == "/readyz" || reqPath == "/metrics"
+	return reqPath == "/health" || reqPath == "/ready" || reqPath == "/metrics"
 }
 
 // AccessLog logs method, path, status, duration

@@ -3,7 +3,7 @@ package clients
 import (
 	"context"
 	"fmt"
-	"gateway-service/api/proto"
+	protoauth "gateway-service/api/protogen/authservice/proto"
 	"gateway-service/internal/config"
 	"gateway-service/internal/logging"
 	"google.golang.org/grpc"
@@ -15,7 +15,7 @@ import (
 
 type GRPCAuthClient struct {
 	conn    *grpc.ClientConn
-	client  proto.AuthServiceClient
+	client  protoauth.AuthServiceClient
 	mutex   sync.RWMutex
 	timeout time.Duration
 }
@@ -50,7 +50,7 @@ func (c *GRPCAuthClient) Connect() error {
 	}
 
 	c.conn = conn
-	c.client = proto.NewAuthServiceClient(conn)
+	c.client = protoauth.NewAuthServiceClient(conn)
 	logging.Logger.Info().Str("service", config.Current().GRPC.AuthServiceAddr).Msg("connected to auth service")
 	return nil
 }
@@ -66,7 +66,7 @@ func (c *GRPCAuthClient) EnsureConnection() error {
 	return c.Connect()
 }
 
-func (c *GRPCAuthClient) Authenticate(ctx context.Context, req *proto.AuthenticateRequest) (*proto.AuthenticateResponse, error) {
+func (c *GRPCAuthClient) Authenticate(ctx context.Context, req *protoauth.AuthenticateRequest) (*protoauth.AuthenticateResponse, error) {
 	if err := c.EnsureConnection(); err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (c *GRPCAuthClient) Authenticate(ctx context.Context, req *proto.Authentica
 	return client.Authenticate(ctx, req)
 }
 
-func (c *GRPCAuthClient) CreateEmployee(ctx context.Context, req *proto.CreateEmployeeRequest) (*proto.CreateEmployeeResponse, error) {
+func (c *GRPCAuthClient) CreateEmployee(ctx context.Context, req *protoauth.CreateEmployeeRequest) (*protoauth.CreateEmployeeResponse, error) {
 	if err := c.EnsureConnection(); err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (c *GRPCAuthClient) CreateEmployee(ctx context.Context, req *proto.CreateEm
 	return client.CreateEmployee(ctx, req)
 }
 
-func (c *GRPCAuthClient) DeleteEmployee(ctx context.Context, req *proto.DeleteEmployeeRequest) (*proto.DeleteEmployeeResponse, error) {
+func (c *GRPCAuthClient) DeleteEmployee(ctx context.Context, req *protoauth.DeleteEmployeeRequest) (*protoauth.DeleteEmployeeResponse, error) {
 	if err := c.EnsureConnection(); err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (c *GRPCAuthClient) DeleteEmployee(ctx context.Context, req *proto.DeleteEm
 	return client.DeleteEmployee(ctx, req)
 }
 
-func (c *GRPCAuthClient) UpdateEmployee(ctx context.Context, req *proto.UpdateRoleRequest) (*proto.UpdateRoleResponse, error) {
+func (c *GRPCAuthClient) UpdateEmployee(ctx context.Context, req *protoauth.UpdateRoleRequest) (*protoauth.UpdateRoleResponse, error) {
 	if err := c.EnsureConnection(); err != nil {
 		return nil, err
 	}

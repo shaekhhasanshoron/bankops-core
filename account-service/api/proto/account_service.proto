@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "protogen/accountservice/proto";
+
+import "customer/customer.proto";
+import "account/account.proto";
+
+service AccountService {
+  rpc CreateCustomer(customer.CreateCustomerRequest) returns (customer.CreateCustomerResponse);
+  rpc GetCustomer(customer.GetCustomerRequest) returns (customer.GetCustomerResponse);
+  rpc ListCustomers(customer.ListCustomersRequest) returns (customer.ListCustomersResponse);
+  rpc UpdateCustomer(customer.UpdateCustomerRequest) returns (customer.UpdateCustomerResponse);
+  rpc DeleteCustomer(customer.DeleteCustomerRequest) returns (customer.DeleteCustomerResponse);
+  rpc CreateAccount(account.CreateAccountRequest) returns (account.CreateAccountResponse);
+  rpc GetAccount(account.GetAccountRequest) returns (account.GetAccountResponse);
+  rpc GetBalance(account.GetBalanceRequest) returns (account.GetBalanceResponse);
+  rpc UpdateAccountStatus(account.UpdateAccountStatusRequest) returns (account.UpdateAccountStatusResponse);
+  rpc DeleteAccount(account.DeleteAccountRequest) returns (account.DeleteAccountResponse);
+
+  // Transaction operations
+//  rpc InitTransaction(transaction.InitTransactionRequest) returns (transaction.InitTransactionResponse);
+//  rpc GetTransactionHistory(transaction.GetTransactionHistoryRequest) returns (transaction.GetTransactionHistoryResponse);
+}

@@ -9,8 +9,8 @@ import (
 
 func routes() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", handlers.HealthCheck)
-	mux.HandleFunc("/readyz", handlers.ReadyzCheck)
+	mux.HandleFunc("/health", handlers.HealthCheck)
+	mux.HandleFunc("/ready", handlers.ReadyCheck)
 	//mux.HandleFunc("/trace", handlers.Tracer)
 
 	if config.Current().Observability.MetricsConfig.Enabled {
