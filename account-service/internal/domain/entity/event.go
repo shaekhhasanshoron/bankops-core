@@ -7,18 +7,19 @@ import (
 )
 
 const (
-	EventTypeCustomerCreated     = "customer_created"
-	EventTypeCustomerUpdated     = "customer_updated"
-	EventTypeCustomerDeleted     = "customer_deleted"
-	EventTypeAccountCreated      = "account_created"
-	EventTypeAccountUpdated      = "account_updated"
-	EventTypeAccountDeleted      = "account_deleted"
-	EventTypeTransactionInit     = "transaction_init"
-	EventTypeTransactionCommit   = "transaction_commit"
-	EventTypeTransactionRollback = "transaction_rollback"
-	EventTypeTransactionFailed   = "transaction_failed"
-	EventAggregateTypeCustomer   = "customer"
-	EventAggregateTypeAccount    = "account"
+	EventTypeCustomerCreated      = "customer_created"
+	EventTypeCustomerUpdated      = "customer_updated"
+	EventTypeCustomerDeleted      = "customer_deleted"
+	EventTypeAccountCreated       = "account_created"
+	EventTypeAccountUpdated       = "account_updated"
+	EventTypeAccountDeleted       = "account_deleted"
+	EventTypeTransactionInit      = "transaction_init"
+	EventTypeTransactionCommit    = "transaction_commit"
+	EventTypeTransactionRollback  = "transaction_rollback"
+	EventTypeTransactionFailed    = "transaction_failed"
+	EventAggregateTypeCustomer    = "customer"
+	EventAggregateTypeAccount     = "account"
+	EventAggregateTypeTransaction = "transaction"
 )
 
 type Event struct {

@@ -103,6 +103,12 @@ func validateToken(c *gin.Context, token string) (*auth.Claims, int, error) {
 		"/api/v1/account/:id/balance": {
 			"GET": {"admin": true, "editor": true, "viewer": true},
 		},
+		"/api/v1/transaction/init": {
+			"POST": {"admin": true, "editor": true, "viewer": false},
+		},
+		"/api/v1/transaction": {
+			"GET": {"admin": true, "editor": true, "viewer": true},
+		},
 	}
 
 	// Get the requested URL path and HTTP method

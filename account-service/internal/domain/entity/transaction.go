@@ -7,46 +7,51 @@ import (
 )
 
 const (
-	TransactionPending    = "pending"
-	TransactionCompleted  = "completed"
-	TransactionFailed     = "failed"
-	TransactionCancelled  = "cancelled"
-	TransactionRecovering = "recovering"
+	TransactionStatusPending    = "pending"
+	TransactionStatusCompleted  = "completed"
+	TransactionStatusFailed     = "failed"
+	TransactionStatusCancelled  = "cancelled"
+	TransactionStatusRecovering = "recovering"
+
+	TransactionTypeWithdrawFull   = "withdraw_full"
+	TransactionTypeWithdrawAmount = "withdraw_amount"
+	TransactionTypeAddAmount      = "add_amount"
+	TransactionTypeTransfer       = "transfer"
 )
 
 type Transaction struct {
-	ID                string     `gorm:"primaryKey"`
-	FromAccountID     string     `gorm:"not null;index"`
-	ToAccountID       string     `gorm:"not null;index"`
-	Amount            float64    `gorm:"not null;check:amount > 0"`
-	TransactionStatus string     `gorm:"not null;index"`
-	ReferenceID       string     `gorm:"uniqueIndex"`
-	ErrorReason       string     `json:"error_reason,omitempty"`
-	RetryCount        int        `gorm:"default:0"`
-	LastRetryAt       *time.Time `json:"last_retry_at,omitempty"`
-	TimeoutAt         time.Time  `gorm:"index"`
-	Version           int        `gorm:"default:1"` // Optimistic locking
-	Status            string     `gorm:"not null;default:valid"`
-	CreatedBy         string     `gorm:"null"`
-	UpdatedBy         string     `gorm:"null"`
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID                   string     `gorm:"primaryKey"`
+	SourceAccountID      string     `gorm:"not null;index"`
+	DestinationAccountID *string    `gorm:"index"`
+	Amount               float64    `gorm:"not null;check:amount >= 0" json:"amount"`
+	Type                 string     `gorm:"not null;index" json:"type"`
+	TransactionStatus    string     `gorm:"not null;index"`
+	ReferenceID          string     `gorm:"uniqueIndex"`
+	TimeoutAt            time.Time  `gorm:"index"`
+	Version              int        `gorm:"default:1"`
+	LastRetryAt          *time.Time `gorm:"null"`
+	RetryCount           int        `gorm:"default:0"`
+	ErrorReason          string     `gorm:"null"`
+	CreatedBy            string     `gorm:"not null"`
+	CreatedAt            time.Time  `json:"created_at"`
+	UpdatedAt            time.Time  `json:"updated_at"`
 }
 
-func NewTransaction(fromAccountID, toAccountID string, amount float64, referenceID, createdBy string) (*Transaction, error) {
+func NewTransaction(sourceAccountID string, destinationAccountID *string, amount float64, transactionType, referenceID, createdBy string) (*Transaction, error) {
 	now := time.Now()
 	return &Transaction{
-		ID:            uuid.New().String(),
-		FromAccountID: fromAccountID,
-		ToAccountID:   toAccountID,
-		Amount:        amount,
-		Status:        TransactionPending,
-		ReferenceID:   referenceID,
-		CreatedAt:     now,
-		UpdatedAt:     now,
-		CreatedBy:     createdBy,
-		TimeoutAt:     now.Add(5 * time.Minute), // Default timeout
-		Version:       1,
+		ID:                   uuid.New().String(),
+		SourceAccountID:      sourceAccountID,
+		DestinationAccountID: destinationAccountID,
+		Amount:               amount,
+		Type:                 transactionType,
+		TransactionStatus:    TransactionStatusPending,
+		ReferenceID:          referenceID,
+		CreatedAt:            now,
+		UpdatedAt:            now,
+		CreatedBy:            createdBy,
+		TimeoutAt:            now.Add(5 * time.Minute),
+		Version:              1,
 	}, nil
 }
 
@@ -62,7 +67,7 @@ func (t *Transaction) MarkForRetry() {
 	now := time.Now()
 	t.RetryCount++
 	t.LastRetryAt = &now
-	t.Status = TransactionRecovering
+	t.TransactionStatus = TransactionStatusRecovering
 	t.UpdatedAt = now
 }
 
@@ -72,14 +77,53 @@ func (t *Transaction) IncrementVersion() {
 }
 
 func (t *Transaction) Validate() error {
-	if t.Amount <= 0 {
+	if t.Amount < 0 {
 		return value.ErrInvalidAmount
 	}
-	if t.FromAccountID == t.ToAccountID {
-		return value.ErrSameAccountTransfer
-	}
+
 	if t.ReferenceID == "" {
 		return value.ErrMissingReferenceID
 	}
+
+	switch t.Type {
+	case TransactionTypeTransfer:
+		if t.DestinationAccountID == nil {
+			return value.ErrMissingDestinationAccount
+		}
+		if t.SourceAccountID == *t.DestinationAccountID {
+			return value.ErrSameAccountTransfer
+		}
+		if t.Amount <= 0 {
+			return value.ErrInvalidAmount
+		}
+
+	case TransactionTypeWithdrawFull:
+		t.DestinationAccountID = nil
+	case TransactionTypeWithdrawAmount:
+		if t.Amount <= 0 {
+			return value.ErrInvalidAmount
+		}
+		t.DestinationAccountID = nil
+	case TransactionTypeAddAmount:
+		if t.Amount <= 0 {
+			return value.ErrInvalidAmount
+		}
+		t.DestinationAccountID = nil
+	default:
+		return value.ErrInvalidTransactionType
+	}
+
 	return nil
+}
+
+func (t *Transaction) RequiresDestinationAccount() bool {
+	return t.Type == TransactionTypeTransfer
+}
+
+func (t *Transaction) GetAccountsToLock() []string {
+	accounts := []string{t.SourceAccountID}
+	if t.RequiresDestinationAccount() && t.DestinationAccountID != nil {
+		accounts = append(accounts, *t.DestinationAccountID)
+	}
+	return accounts
 }

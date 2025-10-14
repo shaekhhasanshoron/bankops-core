@@ -159,6 +159,7 @@ func (r *AccountRepo) GetAccountsByFiltersWithPagination(filters map[string]inte
 	}
 
 	offset := (page - 1) * pageSize
+
 	err := query.
 		Order("created_at DESC").
 		Limit(pageSize).

@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -54,8 +55,9 @@ type Config struct {
 }
 
 type AuthConfig struct {
-	HashKey   string `koanf:"hash_key"`
-	JWTSecret string `koanf:"jwt_secret"`
+	HashKey           string        `koanf:"hash_key"`
+	JWTSecret         string        `koanf:"jwt_secret"`
+	JWTTokentDuration time.Duration `koanf:"jwt_token_duration"`
 }
 
 type UserConfig struct {
@@ -268,8 +270,9 @@ func defaults() map[string]any {
 			"admin_password": "Admin123",
 		},
 		"auth": map[string]any{
-			"hash_key":   "fc5c6816998c7173ba5bc7a3c53bfabf",
-			"jwt_secret": "fc5c6816998c7173ba5bc7a3c53bfabf",
+			"hash_key":           "fc5c6816998c7173ba5bc7a3c53bfabf",
+			"jwt_secret":         "fc5c6816998c7173ba5bc7a3c53bfabf",
+			"jwt_token_duration": 10 * time.Minute,
 		},
 	}
 }

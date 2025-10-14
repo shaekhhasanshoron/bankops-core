@@ -68,6 +68,32 @@ definitions:
       message:
         type: string
     type: object
+  handlers.InitTransactionRequest:
+    properties:
+      amount:
+        type: number
+      destination_account_id:
+        type: string
+      reference:
+        type: string
+      source_account_id:
+        type: string
+      transaction_type:
+        type: string
+    required:
+    - reference
+    - source_account_id
+    - transaction_type
+    type: object
+  handlers.InitTransactionResponse:
+    properties:
+      message:
+        type: string
+      transaction_id:
+        type: string
+      transaction_status:
+        type: string
+    type: object
   handlers.ListAccountResponse:
     properties:
       accounts: {}
@@ -81,6 +107,20 @@ definitions:
         type: integer
       totalPages:
         type: integer
+    type: object
+  handlers.ListTransactionResponse:
+    properties:
+      message:
+        type: string
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+      transactions: {}
     type: object
   handlers.LoginRequest:
     properties:
@@ -568,4 +608,109 @@ paths:
       summary: Update Employee
       tags:
       - Employee
+  /api/v1/transaction:
+    get:
+      consumes:
+      - application/json
+      description: Get transaction history for all accounts with optional filtering
+      parameters:
+      - description: Transaction history by account id
+        in: query
+        name: account_id
+        type: string
+      - description: Transaction history by customer id
+        in: query
+        name: customer_id
+        type: string
+      - description: Comma separated transaction types (transfer/withdraw_full/withdraw_amount/add_amount)
+        in: query
+        name: types
+        type: string
+      - description: 'Start date for filtering (format: DD-MM-YYYY)'
+        in: query
+        name: start_date
+        type: string
+      - description: 'End date for filtering (format: DD-MM-YYYY)'
+        in: query
+        name: end_date
+        type: string
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Number of transactions per page
+        in: query
+        name: pagesize
+        type: integer
+      - default: desc
+        description: Sort order (asc/desc)
+        in: query
+        name: order
+        type: string
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ListTransactionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get Transaction History
+      tags:
+      - Transaction
+  /api/v1/transaction/init:
+    post:
+      consumes:
+      - application/json
+      description: 'Create Transaction - Bearer token required. Transaction type can
+        be: transfer/withdraw_full/withdraw_amount/add_amount. Amount must be greater
+        than zero for all transaction types except ''withdraw_full''. Destination
+        account ID is only required when ''transaction_type=transfer''. Reference
+        is required for all transactions.'
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Transaction details
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.InitTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.InitTransactionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create new transaction
+      tags:
+      - Transaction
 swagger: "2.0"

@@ -19,16 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AccountService_CreateCustomer_FullMethodName = "/AccountService/CreateCustomer"
-	AccountService_GetCustomer_FullMethodName    = "/AccountService/GetCustomer"
-	AccountService_ListCustomers_FullMethodName  = "/AccountService/ListCustomers"
-	AccountService_UpdateCustomer_FullMethodName = "/AccountService/UpdateCustomer"
-	AccountService_DeleteCustomer_FullMethodName = "/AccountService/DeleteCustomer"
-	AccountService_CreateAccount_FullMethodName  = "/AccountService/CreateAccount"
-	AccountService_GetAccount_FullMethodName     = "/AccountService/GetAccount"
-	AccountService_ListAccount_FullMethodName    = "/AccountService/ListAccount"
-	AccountService_GetBalance_FullMethodName     = "/AccountService/GetBalance"
-	AccountService_DeleteAccount_FullMethodName  = "/AccountService/DeleteAccount"
+	AccountService_CreateCustomer_FullMethodName        = "/AccountService/CreateCustomer"
+	AccountService_GetCustomer_FullMethodName           = "/AccountService/GetCustomer"
+	AccountService_ListCustomers_FullMethodName         = "/AccountService/ListCustomers"
+	AccountService_UpdateCustomer_FullMethodName        = "/AccountService/UpdateCustomer"
+	AccountService_DeleteCustomer_FullMethodName        = "/AccountService/DeleteCustomer"
+	AccountService_CreateAccount_FullMethodName         = "/AccountService/CreateAccount"
+	AccountService_GetAccount_FullMethodName            = "/AccountService/GetAccount"
+	AccountService_ListAccount_FullMethodName           = "/AccountService/ListAccount"
+	AccountService_GetBalance_FullMethodName            = "/AccountService/GetBalance"
+	AccountService_DeleteAccount_FullMethodName         = "/AccountService/DeleteAccount"
+	AccountService_InitTransaction_FullMethodName       = "/AccountService/InitTransaction"
+	AccountService_GetTransactionHistory_FullMethodName = "/AccountService/GetTransactionHistory"
 )
 
 // AccountServiceClient is the client API for AccountService service.
@@ -45,6 +47,8 @@ type AccountServiceClient interface {
 	ListAccount(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
 	GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
+	InitTransaction(ctx context.Context, in *InitTransactionRequest, opts ...grpc.CallOption) (*InitTransactionResponse, error)
+	GetTransactionHistory(ctx context.Context, in *GetTransactionHistoryRequest, opts ...grpc.CallOption) (*GetTransactionHistoryResponse, error)
 }
 
 type accountServiceClient struct {
@@ -155,6 +159,26 @@ func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteAcco
 	return out, nil
 }
 
+func (c *accountServiceClient) InitTransaction(ctx context.Context, in *InitTransactionRequest, opts ...grpc.CallOption) (*InitTransactionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InitTransactionResponse)
+	err := c.cc.Invoke(ctx, AccountService_InitTransaction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) GetTransactionHistory(ctx context.Context, in *GetTransactionHistoryRequest, opts ...grpc.CallOption) (*GetTransactionHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTransactionHistoryResponse)
+	err := c.cc.Invoke(ctx, AccountService_GetTransactionHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServiceServer is the server API for AccountService service.
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility.
@@ -169,6 +193,8 @@ type AccountServiceServer interface {
 	ListAccount(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
 	GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
+	InitTransaction(context.Context, *InitTransactionRequest) (*InitTransactionResponse, error)
+	GetTransactionHistory(context.Context, *GetTransactionHistoryRequest) (*GetTransactionHistoryResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
 
@@ -208,6 +234,12 @@ func (UnimplementedAccountServiceServer) GetBalance(context.Context, *GetBalance
 }
 func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
+}
+func (UnimplementedAccountServiceServer) InitTransaction(context.Context, *InitTransactionRequest) (*InitTransactionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitTransaction not implemented")
+}
+func (UnimplementedAccountServiceServer) GetTransactionHistory(context.Context, *GetTransactionHistoryRequest) (*GetTransactionHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTransactionHistory not implemented")
 }
 func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 func (UnimplementedAccountServiceServer) testEmbeddedByValue()                        {}
@@ -410,6 +442,42 @@ func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_InitTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InitTransactionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).InitTransaction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_InitTransaction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).InitTransaction(ctx, req.(*InitTransactionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountService_GetTransactionHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTransactionHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).GetTransactionHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_GetTransactionHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).GetTransactionHistory(ctx, req.(*GetTransactionHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -456,6 +524,14 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteAccount",
 			Handler:    _AccountService_DeleteAccount_Handler,
+		},
+		{
+			MethodName: "InitTransaction",
+			Handler:    _AccountService_InitTransaction_Handler,
+		},
+		{
+			MethodName: "GetTransactionHistory",
+			Handler:    _AccountService_GetTransactionHistory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

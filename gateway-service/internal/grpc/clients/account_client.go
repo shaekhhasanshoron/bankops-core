@@ -227,3 +227,33 @@ func (c *GRPCAccountClient) GetBalance(ctx context.Context, req *protoacc.GetBal
 
 	return client.GetBalance(ctx, req)
 }
+
+func (c *GRPCAccountClient) InitTransaction(ctx context.Context, req *protoacc.InitTransactionRequest) (*protoacc.InitTransactionResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.InitTransaction(ctx, req)
+}
+
+func (c *GRPCAccountClient) GetTransactionHistory(ctx context.Context, req *protoacc.GetTransactionHistoryRequest) (*protoacc.GetTransactionHistoryResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.GetTransactionHistory(ctx, req)
+}

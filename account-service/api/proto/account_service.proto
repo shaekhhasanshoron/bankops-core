@@ -4,6 +4,7 @@ option go_package = "protogen/accountservice/proto";
 
 import "customer/customer.proto";
 import "account/account.proto";
+import "transaction/transaction.proto";
 
 service AccountService {
   rpc CreateCustomer(customer.CreateCustomerRequest) returns (customer.CreateCustomerResponse);
@@ -16,8 +17,6 @@ service AccountService {
   rpc ListAccount(account.ListAccountsRequest) returns (account.ListAccountsResponse);
   rpc GetBalance(account.GetBalanceRequest) returns (account.GetBalanceResponse);
   rpc DeleteAccount(account.DeleteAccountRequest) returns (account.DeleteAccountResponse);
-
-  // Transaction operations
-//  rpc InitTransaction(transaction.InitTransactionRequest) returns (transaction.InitTransactionResponse);
-//  rpc GetTransactionHistory(transaction.GetTransactionHistoryRequest) returns (transaction.GetTransactionHistoryResponse);
+  rpc InitTransaction(transaction.InitTransactionRequest) returns (transaction.InitTransactionResponse);
+  rpc GetTransactionHistory(transaction.GetTransactionHistoryRequest) returns (transaction.GetTransactionHistoryResponse);
 }

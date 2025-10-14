@@ -10,6 +10,7 @@ import (
 	"account-service/internal/observability/metrics"
 	"account-service/internal/observability/tracing"
 	"account-service/internal/runtime"
+	"account-service/internal/service"
 	"context"
 	"fmt"
 	"log"
@@ -50,6 +51,21 @@ func main() {
 	defer func() {
 		_ = traceShutdown(context.Background())
 	}()
+
+	// Initialize and start recovery service
+	recoveryService := service.NewRecoveryService(
+		sqlite.NewCustomerRepo(dbInstance),
+		sqlite.NewAccountRepo(dbInstance),
+		sqlite.NewTransactionRepo(dbInstance),
+		sqlite.NewEventRepo(dbInstance),
+	)
+
+	// Create context for graceful shutdown
+	recoveryCtx, recoveryCancel := context.WithCancel(context.Background())
+	defer recoveryCancel()
+
+	// Start background recovery service
+	go recoveryService.Start(recoveryCtx)
 
 	go grpc.StartGRPCServer(grpc.ServiceRepos{
 		CustomerRepo:    sqlite.NewCustomerRepo(dbInstance),

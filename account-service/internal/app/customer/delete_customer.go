@@ -6,7 +6,9 @@ import (
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
+	"errors"
 	"fmt"
+	"gorm.io/gorm"
 )
 
 // DeleteCustomer is a use-case for delete a customers
@@ -44,13 +46,12 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 		return "Unknown requester", err
 	}
 
-	if err = c.CustomerRepo.CheckModificationAllowed(id); err != nil {
-		logging.Logger.Warn().Err(err).Msg("Customer deletion not allowed")
-		return "Customer deletion not allowed right now", err
-	}
-
 	customer, err := c.CustomerRepo.GetCustomerByID(id)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = value.ErrCustomerNotFound
+			return "Customer not found", err
+		}
 		logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Failed to get customer")
 		return "Failed to get customer", err
 	}
@@ -58,6 +59,11 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 	if customer == nil {
 		err = value.ErrCustomerNotFound
 		return "Customer not found", err
+	}
+
+	if err = c.CustomerRepo.CheckModificationAllowed(id); err != nil {
+		logging.Logger.Warn().Err(err).Msg("Customer deletion not allowed")
+		return "Customer deletion not allowed right now", err
 	}
 
 	for _, account := range customer.Accounts {

@@ -17,7 +17,15 @@ func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
 	docs.SwaggerInfo.Title = "API Gateway"
 	docs.SwaggerInfo.Description = "API documentation for the BankOps Core"
 	docs.SwaggerInfo.Version = "1.0"
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/swagger", func(c *gin.Context) {
+		c.Redirect(302, "/swagger/index.html")
+	})
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(
+		swaggerFiles.Handler,
+		ginSwagger.DefaultModelsExpandDepth(-1),
+		ginSwagger.DeepLinking(true),
+	))
 
 	// Health check routes
 	router.GET("/health", handlers.Health)
@@ -57,5 +65,8 @@ func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
 		protectedGroup.GET("/account/:id/balance", accountHandler.GetAccountBalance)
 		protectedGroup.GET("/account", accountHandler.ListAccounts)
 		protectedGroup.DELETE("/account", accountHandler.DeleteAccount)
+		//Transaction API
+		protectedGroup.POST("/transaction/init", accountHandler.InitTransaction)
+		protectedGroup.GET("/transaction", accountHandler.ListTransactions)
 	}
 }

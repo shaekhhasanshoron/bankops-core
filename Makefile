@@ -180,6 +180,7 @@ proto-account-only:
      		--go-grpc_opt=paths=import \
      		account-service/api/proto/common/*.proto \
      		account-service/api/proto/account/*.proto \
+     		account-service/api/proto/transaction/*.proto \
      		account-service/api/proto/customer/*.proto \
      		account-service/api/proto/*.proto
 
@@ -194,6 +195,7 @@ proto-account:
      		account-service/api/proto/common/*.proto \
      		account-service/api/proto/account/*.proto \
      		account-service/api/proto/customer/*.proto \
+     		account-service/api/proto/transaction/*.proto \
      		account-service/api/proto/*.proto
 	@protoc \
      		--proto_path=account-service/api/proto \
@@ -203,5 +205,6 @@ proto-account:
      		--go-grpc_opt=paths=import \
      		account-service/api/proto/common/*.proto \
      		account-service/api/proto/account/*.proto \
+     		account-service/api/proto/transaction/*.proto \
      		account-service/api/proto/customer/*.proto \
      		account-service/api/proto/*.proto

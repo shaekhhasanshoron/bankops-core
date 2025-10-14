@@ -4,6 +4,7 @@ import (
 	protoacc "account-service/api/protogen/accountservice/proto"
 	appaccount "account-service/internal/app/account"
 	appcustomer "account-service/internal/app/customer"
+	apptx "account-service/internal/app/transaction"
 	"account-service/internal/config"
 	handlers "account-service/internal/grpc/account_handler"
 	"account-service/internal/grpc/interceptors"
@@ -66,5 +67,8 @@ func generateAggregatedHandlers(repos ServiceRepos) *handlers.AccountHandlerServ
 	accountAggregatedHandler.DeleteAccountService = appaccount.NewDeleteAccount(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
 	accountAggregatedHandler.GetAccountBalanceService = appaccount.NewGetAccountBalance(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
 	accountAggregatedHandler.ListAccountService = appaccount.NewListAccount(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
+	accountAggregatedHandler.InitTransactionService = apptx.NewInitTransaction(repos.AccountRepo, repos.CustomerRepo, repos.TransactionRepo, repos.EventRepo)
+	accountAggregatedHandler.CommitTransactionService = apptx.NewCommitTransaction(repos.AccountRepo, repos.CustomerRepo, repos.TransactionRepo, repos.EventRepo)
+	accountAggregatedHandler.GetTransactionHistoryService = apptx.NewGetTransactionHistory(repos.AccountRepo, repos.CustomerRepo, repos.TransactionRepo, repos.EventRepo)
 	return accountAggregatedHandler
 }
