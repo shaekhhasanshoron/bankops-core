@@ -19,16 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AccountService_CreateCustomer_FullMethodName      = "/AccountService/CreateCustomer"
-	AccountService_GetCustomer_FullMethodName         = "/AccountService/GetCustomer"
-	AccountService_ListCustomers_FullMethodName       = "/AccountService/ListCustomers"
-	AccountService_UpdateCustomer_FullMethodName      = "/AccountService/UpdateCustomer"
-	AccountService_DeleteCustomer_FullMethodName      = "/AccountService/DeleteCustomer"
-	AccountService_CreateAccount_FullMethodName       = "/AccountService/CreateAccount"
-	AccountService_GetAccount_FullMethodName          = "/AccountService/GetAccount"
-	AccountService_GetBalance_FullMethodName          = "/AccountService/GetBalance"
-	AccountService_UpdateAccountStatus_FullMethodName = "/AccountService/UpdateAccountStatus"
-	AccountService_DeleteAccount_FullMethodName       = "/AccountService/DeleteAccount"
+	AccountService_CreateCustomer_FullMethodName = "/AccountService/CreateCustomer"
+	AccountService_GetCustomer_FullMethodName    = "/AccountService/GetCustomer"
+	AccountService_ListCustomers_FullMethodName  = "/AccountService/ListCustomers"
+	AccountService_UpdateCustomer_FullMethodName = "/AccountService/UpdateCustomer"
+	AccountService_DeleteCustomer_FullMethodName = "/AccountService/DeleteCustomer"
+	AccountService_CreateAccount_FullMethodName  = "/AccountService/CreateAccount"
+	AccountService_GetAccount_FullMethodName     = "/AccountService/GetAccount"
+	AccountService_ListAccount_FullMethodName    = "/AccountService/ListAccount"
+	AccountService_GetBalance_FullMethodName     = "/AccountService/GetBalance"
+	AccountService_DeleteAccount_FullMethodName  = "/AccountService/DeleteAccount"
 )
 
 // AccountServiceClient is the client API for AccountService service.
@@ -42,8 +42,8 @@ type AccountServiceClient interface {
 	DeleteCustomer(ctx context.Context, in *DeleteCustomerRequest, opts ...grpc.CallOption) (*DeleteCustomerResponse, error)
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
+	ListAccount(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
 	GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error)
-	UpdateAccountStatus(ctx context.Context, in *UpdateAccountStatusRequest, opts ...grpc.CallOption) (*UpdateAccountStatusResponse, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
 }
 
@@ -125,20 +125,20 @@ func (c *accountServiceClient) GetAccount(ctx context.Context, in *GetAccountReq
 	return out, nil
 }
 
-func (c *accountServiceClient) GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error) {
+func (c *accountServiceClient) ListAccount(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetBalanceResponse)
-	err := c.cc.Invoke(ctx, AccountService_GetBalance_FullMethodName, in, out, cOpts...)
+	out := new(ListAccountsResponse)
+	err := c.cc.Invoke(ctx, AccountService_ListAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountServiceClient) UpdateAccountStatus(ctx context.Context, in *UpdateAccountStatusRequest, opts ...grpc.CallOption) (*UpdateAccountStatusResponse, error) {
+func (c *accountServiceClient) GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateAccountStatusResponse)
-	err := c.cc.Invoke(ctx, AccountService_UpdateAccountStatus_FullMethodName, in, out, cOpts...)
+	out := new(GetBalanceResponse)
+	err := c.cc.Invoke(ctx, AccountService_GetBalance_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -166,8 +166,8 @@ type AccountServiceServer interface {
 	DeleteCustomer(context.Context, *DeleteCustomerRequest) (*DeleteCustomerResponse, error)
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
 	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
+	ListAccount(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
 	GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error)
-	UpdateAccountStatus(context.Context, *UpdateAccountStatusRequest) (*UpdateAccountStatusResponse, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
@@ -200,11 +200,11 @@ func (UnimplementedAccountServiceServer) CreateAccount(context.Context, *CreateA
 func (UnimplementedAccountServiceServer) GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccount not implemented")
 }
+func (UnimplementedAccountServiceServer) ListAccount(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAccount not implemented")
+}
 func (UnimplementedAccountServiceServer) GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBalance not implemented")
-}
-func (UnimplementedAccountServiceServer) UpdateAccountStatus(context.Context, *UpdateAccountStatusRequest) (*UpdateAccountStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccountStatus not implemented")
 }
 func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
@@ -356,6 +356,24 @@ func _AccountService_GetAccount_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_ListAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAccountsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).ListAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_ListAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).ListAccount(ctx, req.(*ListAccountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AccountService_GetBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetBalanceRequest)
 	if err := dec(in); err != nil {
@@ -370,24 +388,6 @@ func _AccountService_GetBalance_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).GetBalance(ctx, req.(*GetBalanceRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AccountService_UpdateAccountStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateAccountStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServiceServer).UpdateAccountStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AccountService_UpdateAccountStatus_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).UpdateAccountStatus(ctx, req.(*UpdateAccountStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -446,12 +446,12 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AccountService_GetAccount_Handler,
 		},
 		{
-			MethodName: "GetBalance",
-			Handler:    _AccountService_GetBalance_Handler,
+			MethodName: "ListAccount",
+			Handler:    _AccountService_ListAccount_Handler,
 		},
 		{
-			MethodName: "UpdateAccountStatus",
-			Handler:    _AccountService_UpdateAccountStatus_Handler,
+			MethodName: "GetBalance",
+			Handler:    _AccountService_GetBalance_Handler,
 		},
 		{
 			MethodName: "DeleteAccount",

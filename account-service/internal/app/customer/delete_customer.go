@@ -69,7 +69,7 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 	}
 
 	// Delete customer
-	if err = c.CustomerRepo.DeleteCustomerByID(id); err != nil {
+	if err = c.CustomerRepo.DeleteCustomerByID(id, requester); err != nil {
 		err = fmt.Errorf("%w: failed to delete customer", value.ErrDatabase)
 		logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Failed to  deletion customer")
 		return "Customer deletion failed", err

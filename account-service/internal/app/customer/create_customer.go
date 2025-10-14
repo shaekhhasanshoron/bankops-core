@@ -52,12 +52,10 @@ func (c *CreateCustomer) Execute(name, requester, requestId string) (*entity.Cus
 		return nil, "Customer already exists", err
 	}
 
-	customerDTO := ports.CustomerDTO{
-		CustomerName: name,
-		Requester:    requester,
-	}
+	customer, err := entity.NewCustomer(name, requester)
+	customer.CreatedBy = requester
 
-	customer, err := c.CustomerRepo.CreateCustomer(&customerDTO)
+	_, err = c.CustomerRepo.CreateCustomer(customer)
 	if err != nil {
 		err = fmt.Errorf("%w", value.ErrDatabase)
 		logging.Logger.Error().Err(err).Msg("Failed to create customer")
@@ -71,7 +69,7 @@ func (c *CreateCustomer) Execute(name, requester, requestId string) (*entity.Cus
 		"request_id":  requestId,
 	}
 
-	event, eventErr := entity.NewEvent(entity.EventTypeCustomerCreated, customer.ID, entity.EventAggregateType, requester, eventData)
+	event, eventErr := entity.NewEvent(entity.EventTypeCustomerCreated, customer.ID, entity.EventAggregateTypeCustomer, requester, eventData)
 	if eventErr == nil {
 		if createErr := c.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("customer_id", customer.ID).Msg("Failed to create customer create event")

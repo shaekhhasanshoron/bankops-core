@@ -13,8 +13,8 @@ service AccountService {
   rpc DeleteCustomer(customer.DeleteCustomerRequest) returns (customer.DeleteCustomerResponse);
   rpc CreateAccount(account.CreateAccountRequest) returns (account.CreateAccountResponse);
   rpc GetAccount(account.GetAccountRequest) returns (account.GetAccountResponse);
+  rpc ListAccount(account.ListAccountsRequest) returns (account.ListAccountsResponse);
   rpc GetBalance(account.GetBalanceRequest) returns (account.GetBalanceResponse);
-  rpc UpdateAccountStatus(account.UpdateAccountStatusRequest) returns (account.UpdateAccountStatusResponse);
   rpc DeleteAccount(account.DeleteAccountRequest) returns (account.DeleteAccountResponse);
 
   // Transaction operations

@@ -31,7 +31,7 @@ func (h *AccountHandlerService) CreateCustomer(ctx context.Context, req *protoac
 }
 
 func (h *AccountHandlerService) ListCustomers(ctx context.Context, req *protoacc.ListCustomersRequest) (*protoacc.ListCustomersResponse, error) {
-	customers, total, message, err := h.ListCustomerService.Execute(int(req.GetPagination().GetPage()), int(req.GetPagination().GetPageSize()), req.GetMetadata().GetRequestId())
+	customers, totalCount, totalPage, message, err := h.ListCustomerService.Execute(int(req.GetPagination().GetPage()), int(req.GetPagination().GetPageSize()), req.GetMetadata().GetRequestId())
 	if err != nil {
 		logging.Logger.Warn().Err(err).Msg("list customer failed")
 		return &protoacc.ListCustomersResponse{
@@ -40,6 +40,7 @@ func (h *AccountHandlerService) ListCustomers(ctx context.Context, req *protoacc
 				Page:       req.GetPagination().GetPage(),
 				PageSize:   req.GetPagination().GetPageSize(),
 				TotalCount: 0,
+				TotalPages: 0,
 			},
 			Response: &protoacc.Response{
 				Message: message,
@@ -75,7 +76,8 @@ func (h *AccountHandlerService) ListCustomers(ctx context.Context, req *protoacc
 		Pagination: &protoacc.PaginationResponse{
 			Page:       req.GetPagination().GetPage(),
 			PageSize:   req.GetPagination().GetPageSize(),
-			TotalCount: int32(total),
+			TotalCount: int32(totalCount),
+			TotalPages: int32(totalPage),
 		},
 		Response: &protoacc.Response{
 			Message: message,

@@ -43,10 +43,6 @@ func NewAccount(customerID string, accountType string, initialDeposit float64, r
 		requester = "system"
 	}
 
-	if initialDeposit < 0 {
-		return nil, value.ErrInvalidAmount
-	}
-
 	now := time.Now()
 	return &Account{
 		ID:           uuid.New().String(),

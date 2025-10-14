@@ -87,51 +87,31 @@ func validateToken(c *gin.Context, token string) (*auth.Claims, int, error) {
 			"DELETE": {"admin": true, "editor": true, "viewer": false},
 			"GET":    {"admin": true, "editor": true, "viewer": true},
 		},
+		"/api/v1/customer/:id/account": {
+			"GET": {"admin": true, "editor": true, "viewer": true},
+		},
+		"/api/v1/account": {
+			"POST":   {"admin": true, "editor": true, "viewer": false},
+			"GET":    {"admin": true, "editor": true, "viewer": true},
+			"DELETE": {"admin": true, "editor": true, "viewer": false},
+		},
+		"/api/v1/account/:id": {
+			"PUT":    {"admin": true, "editor": true, "viewer": false},
+			"DELETE": {"admin": true, "editor": true, "viewer": false},
+			"GET":    {"admin": true, "editor": true, "viewer": true},
+		},
+		"/api/v1/account/:id/balance": {
+			"GET": {"admin": true, "editor": true, "viewer": true},
+		},
 	}
 
 	// Get the requested URL path and HTTP method
 	fullPath := c.FullPath()
 	method := c.Request.Method
-	fmt.Println(fullPath, method, claim.Role)
+	//fmt.Println(fullPath, method, claim.Role)
 	if permissions[fullPath][method][claim.Role] == false {
 		logging.Logger.Err(errors.New("Permission Denied")).Msg("User dont have permission")
 		return nil, http.StatusForbidden, errors.New("Permission Denied")
 	}
-	fmt.Println("passed")
-	//
-	//
-	//
-	//requiredRoles := []string{}
-	//
-	//fmt.Println(fullPath, method)
-	//
-	//list := permissions[fullPath][method]
-	//
-	//// Check if there is a role requirement for the requested URL and method
-	//for route, methods := range permissions {
-	//	fmt.Println(route, methods)
-	//	if strings.HasPrefix(fullPath, route) {
-	//		if roles, exists := methods[method]; exists {
-	//			requiredRoles = roles
-	//		}
-	//		break
-	//	}
-	//}
-	//
-	//// Role-based permission check
-	//if len(requiredRoles) > 0 {
-	//	roleValid := false
-	//	for _, role := range requiredRoles {
-	//		if role == claim.Role {
-	//			roleValid = true
-	//			break
-	//		}
-	//	}
-	//	if !roleValid {
-	//		logging.Logger.Err(errors.New("Permission Denied")).Msg("User dont have permission")
-	//		return nil, http.StatusForbidden, errors.New("Permission Denied")
-	//	}
-	//}
-
 	return claim, http.StatusOK, nil
 }

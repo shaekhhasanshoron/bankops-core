@@ -24,7 +24,7 @@ func NewListCustomer(customerRepo ports.CustomerRepo, eventRepo ports.EventRepo)
 }
 
 // Execute list customers
-func (c *ListCustomer) Execute(page, pageSize int, requestId string) ([]*entity.Customer, int64, string, error) {
+func (c *ListCustomer) Execute(page, pageSize int, requestId string) ([]*entity.Customer, int64, int64, string, error) {
 	metrics.IncRequestActive()
 	defer metrics.DecRequestActive()
 
@@ -37,14 +37,19 @@ func (c *ListCustomer) Execute(page, pageSize int, requestId string) ([]*entity.
 		page = 1
 	}
 	if pageSize < 1 || pageSize > 100 {
-		pageSize = 50
+		pageSize = 100
 	}
 
-	customers, total, err := c.CustomerRepo.ListCustomer(page, pageSize)
+	customers, totalCount, err := c.CustomerRepo.ListCustomer(page, pageSize)
 	if err != nil {
 		logging.Logger.Error().Err(err).Int("page", page).Int("page_size", pageSize).Msg("Failed to list customers")
-		return nil, 0, "Failed to list customer", fmt.Errorf("%w: failed to list customers", value.ErrDatabase)
+		return nil, 0, 0, "Failed to list customer", fmt.Errorf("%w: failed to list customers", value.ErrDatabase)
 	}
 
-	return customers, total, "Customer List", nil
+	totalPages := int64(0)
+	if totalCount > 0 {
+		totalPages = (totalCount + int64(pageSize) - 1) / int64(pageSize)
+	}
+
+	return customers, totalCount, totalPages, "Customer List", nil
 }

@@ -28,8 +28,22 @@ message CreateAccountRequest {
 }
 
 message CreateAccountResponse {
-  Account account = 1;
+  string account_id = 1;
   common.Response response = 2;
+}
+
+message ListAccountsRequest {
+  string scopes = 1; // comma separated; (customer/in_transaction/has_balance)
+  string customer_id = 2;
+  double min_balance = 3;
+  common.Metadata metadata = 5;
+  common.PaginationRequest pagination = 6;
+}
+
+message ListAccountsResponse {
+  repeated Account accounts = 1;
+  common.PaginationResponse pagination = 2;
+  common.Response response = 3;
 }
 
 message GetAccountRequest {
@@ -48,9 +62,8 @@ message GetBalanceRequest {
 }
 
 message GetBalanceResponse {
-  string account_id = 1;
-  double balance = 2;
-  common.Response response = 3;
+  double balance = 1;
+  common.Response response = 2;
 }
 
 message ListAccountsByCustomerRequest {
@@ -77,7 +90,8 @@ message UpdateAccountStatusResponse {
 }
 
 message DeleteAccountRequest {
-  string account_id = 1;
+  string scope = 1;
+  string id = 2;
   common.Metadata metadata = 3;
 }
 

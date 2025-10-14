@@ -17,7 +17,8 @@ const (
 	EventTypeTransactionCommit   = "transaction_commit"
 	EventTypeTransactionRollback = "transaction_rollback"
 	EventTypeTransactionFailed   = "transaction_failed"
-	EventAggregateType           = "customer"
+	EventAggregateTypeCustomer   = "customer"
+	EventAggregateTypeAccount    = "account"
 )
 
 type Event struct {

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	protoacc "account-service/api/protogen/accountservice/proto"
+	appaccount "account-service/internal/app/account"
 	appcustomer "account-service/internal/app/customer"
 	"account-service/internal/config"
 	handlers "account-service/internal/grpc/account_handler"
@@ -61,5 +62,9 @@ func generateAggregatedHandlers(repos ServiceRepos) *handlers.AccountHandlerServ
 	accountAggregatedHandler.CreateCustomerService = appcustomer.NewCreateCustomer(repos.CustomerRepo, repos.EventRepo)
 	accountAggregatedHandler.ListCustomerService = appcustomer.NewListCustomer(repos.CustomerRepo, repos.EventRepo)
 	accountAggregatedHandler.DeleteCustomerService = appcustomer.NewDeleteCustomer(repos.CustomerRepo, repos.EventRepo)
+	accountAggregatedHandler.CreateAccountService = appaccount.NewCreateAccount(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
+	accountAggregatedHandler.DeleteAccountService = appaccount.NewDeleteAccount(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
+	accountAggregatedHandler.GetAccountBalanceService = appaccount.NewGetAccountBalance(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
+	accountAggregatedHandler.ListAccountService = appaccount.NewListAccount(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
 	return accountAggregatedHandler
 }

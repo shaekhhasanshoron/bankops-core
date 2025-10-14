@@ -53,6 +53,11 @@ type Config struct {
 	Recovery      RecoveryConfig   `koanf:"recovery" validate:"required"`
 	Cleanup       CleanupConfig    `koanf:"cleanup" validate:"required"`
 	DB            DBConfig         `koanf:"db" validate:"required"`
+	AccountConfig AccountConfig    `koanf:"account" validate:"required"`
+}
+
+type AccountConfig struct {
+	MinDepositAmount float64 `koanf:"min_deposit_amount"  validate:"gte=0"`
 }
 
 type AuthConfig struct {
@@ -287,6 +292,9 @@ func defaults() map[string]any {
 			"enabled":         false,
 			"interval":        1 * time.Hour,
 			"stale_threshold": 24 * time.Hour,
+		},
+		"account": map[string]any{
+			"min_deposit_amount": 0,
 		},
 	}
 }

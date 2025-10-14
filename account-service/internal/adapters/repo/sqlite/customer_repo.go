@@ -22,27 +22,20 @@ func NewCustomerRepo(db *gorm.DB) ports.CustomerRepo {
 }
 
 // CreateCustomer checks if the customer already exists with a valid status and creates a new one
-func (r *CustomerRepo) CreateCustomer(input *ports.CustomerDTO) (*entity.Customer, error) {
+func (r *CustomerRepo) CreateCustomer(customer *entity.Customer) (*entity.Customer, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	var employee entity.Customer
-
 	// Checks if customer exists with valid status
-	if err := r.DB.Where("name = ? AND status = ?", input.CustomerName, entity.CustomerStatusValid).First(&employee).Error; err == nil {
+	if err := r.DB.Where("name = ? AND status = ?", customer.Name, entity.CustomerStatusValid).First(&entity.Customer{}).Error; err == nil {
 		return nil, errors.New("customer with this username already exists")
 	}
 
-	newCustomer, err := entity.NewCustomer(input.CustomerName, input.Requester)
-	if err != nil {
+	if err := r.DB.Create(customer).Error; err != nil {
 		return nil, err
 	}
 
-	if err := r.DB.Create(newCustomer).Error; err != nil {
-		return nil, err
-	}
-
-	return newCustomer, nil
+	return customer, nil
 }
 
 func (r *CustomerRepo) GetCustomerByID(id string) (*entity.Customer, error) {
@@ -58,9 +51,6 @@ func (r *CustomerRepo) GetCustomerByID(id string) (*entity.Customer, error) {
 }
 
 func (r *CustomerRepo) GetCustomerByName(name string) (*entity.Customer, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
 	var customer entity.Customer
 	err := r.DB.Preload("Accounts").Where("name = ? AND status = ?", name, entity.CustomerStatusValid).First(&customer).Error
 	if err != nil {
@@ -70,9 +60,6 @@ func (r *CustomerRepo) GetCustomerByName(name string) (*entity.Customer, error) 
 }
 
 func (r *CustomerRepo) ListCustomer(page, pageSize int) ([]*entity.Customer, int64, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
 	var customers []*entity.Customer
 	var total int64
 
@@ -86,7 +73,7 @@ func (r *CustomerRepo) ListCustomer(page, pageSize int) ([]*entity.Customer, int
 
 	// Query only valid customers
 	err := r.DB.Where("status = ?", entity.CustomerStatusValid).
-		Preload("Accounts").
+		//Preload("Accounts", "status = ?", entity.AccountStatusValid).
 		Offset(offset).
 		Limit(pageSize).
 		Order("created_at DESC").
@@ -95,11 +82,20 @@ func (r *CustomerRepo) ListCustomer(page, pageSize int) ([]*entity.Customer, int
 	return customers, total, err
 }
 
-func (r *CustomerRepo) DeleteCustomerByID(id string) error {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+func (r *CustomerRepo) DeleteCustomerByID(id, requester string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var customer entity.Customer
+	if err := r.DB.Where("id = ? AND status = ?", id, entity.CustomerStatusValid).First(&customer).Error; err != nil {
+		return err
+	}
 
-	return r.DB.Where("id = ? AND status = ?", id, entity.CustomerStatusValid).Delete(&entity.Customer{}).Error
+	customer.Status = entity.CustomerStatusInvalid
+	customer.UpdatedBy = requester
+	if err := r.DB.Save(&customer).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *CustomerRepo) CheckModificationAllowed(id string) error {
@@ -120,4 +116,10 @@ func (r *CustomerRepo) CheckModificationAllowed(id string) error {
 	}
 
 	return nil
+}
+
+func (r *CustomerRepo) Exists(id string) (bool, error) {
+	var count int64
+	err := r.DB.Model(&entity.Customer{}).Where("id = ? AND status = ?", id, entity.CustomerStatusValid).Count(&count).Error
+	return count > 0, err
 }

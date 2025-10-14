@@ -1,4 +1,23 @@
 definitions:
+  handlers.CreateAccountRequest:
+    properties:
+      customer_id:
+        type: string
+      deposit_amount:
+        type: number
+    required:
+    - customer_id
+    - deposit_amount
+    type: object
+  handlers.CreateAccountResponse:
+    properties:
+      account_id:
+        type: string
+      message:
+        type: string
+    required:
+    - account_id
+    type: object
   handlers.CreateCustomerRequest:
     properties:
       name:
@@ -42,6 +61,27 @@ definitions:
       error:
         type: string
     type: object
+  handlers.GetBalanceResponse:
+    properties:
+      balance:
+        type: number
+      message:
+        type: string
+    type: object
+  handlers.ListAccountResponse:
+    properties:
+      accounts: {}
+      message:
+        type: string
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
   handlers.LoginRequest:
     properties:
       password:
@@ -57,13 +97,6 @@ definitions:
       access_token:
         type: string
     type: object
-  handlers.UpdateCustomerRequest:
-    properties:
-      name:
-        type: string
-    required:
-    - name
-    type: object
   handlers.UpdateEmployeeRequest:
     properties:
       role:
@@ -74,6 +107,170 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/account:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an account or all accounts for a customer by scope (scope=single;
+        id = account_id / scope=all; id = customer_id)
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Scope (single/all)
+        in: query
+        name: scope
+        required: true
+        type: string
+      - description: AccountID or CustomerID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Delete Account (single/all)
+      tags:
+      - Account
+    get:
+      consumes:
+      - application/json
+      description: Get account list based on scopes. scopes is optional, value of
+        scope (customer/in_transaction/has_balance).
+      parameters:
+      - default: all
+        description: Scope filter (comma separated) (customer,in_transaction,has_balance)
+        in: query
+        name: scopes
+        type: string
+      - description: Customer ID (required when adding 'customer' to scopes)
+        in: query
+        name: customer_id
+        type: string
+      - description: Minimum balance (required when adding 'has_balance' to scopes)
+        in: query
+        name: min_balance
+        type: number
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Number of accounts per page
+        in: query
+        name: pagesize
+        type: integer
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved account list
+          schema:
+            $ref: '#/definitions/handlers.ListAccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get Account List
+      tags:
+      - Account
+    post:
+      consumes:
+      - application/json
+      description: Create account - Bearer token required
+      parameters:
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Account details
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.CreateAccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create Account
+      tags:
+      - Account
+  /api/v1/account/{id}/balance:
+    get:
+      consumes:
+      - application/json
+      description: Get account balance
+      parameters:
+      - description: AccountID of a customer account
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.GetBalanceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get Account balance
+      tags:
+      - Account
   /api/v1/auth/login:
     post:
       consumes:
@@ -115,7 +312,7 @@ paths:
         in: query
         name: page
         type: integer
-      - default: 20
+      - default: 50
         description: Number of customers per page
         in: query
         name: pagesize
@@ -214,78 +411,49 @@ paths:
       summary: Delete Customer
       tags:
       - Customer
+  /api/v1/customer/{id}/account:
     get:
       consumes:
       - application/json
-      description: Get a customer by customer id
+      description: Get account list of customers
       parameters:
+      - description: CustomerID of the customer
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Number of accounts per page
+        in: query
+        name: pagesize
+        type: integer
       - description: Bearer token for authorization, include 'Bearer ' followed by
           access_token
         in: header
         name: Authorization
         required: true
         type: string
-      - description: CustomerID of the customer
-        in: path
-        name: id
-        required: true
-        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved account list
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ListAccountResponse'
         "400":
           description: Bad Request
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            type: string
-      summary: Get Customer
-      tags:
-      - Customer
-    put:
-      consumes:
-      - application/json
-      description: Update a customer by customer id
-      parameters:
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: CustomerID of the customer
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Customer details
-        in: body
-        name: customer
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.UpdateCustomerRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-        "401":
-          description: Unauthorized
-          schema:
-            type: string
-      summary: Update Customer
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get Account List of customer
       tags:
       - Customer
   /api/v1/employee:

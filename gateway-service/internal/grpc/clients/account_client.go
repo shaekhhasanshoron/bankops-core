@@ -167,3 +167,63 @@ func (c *GRPCAccountClient) ListCustomer(ctx context.Context, req *protoacc.List
 
 	return client.ListCustomers(ctx, req)
 }
+
+func (c *GRPCAccountClient) CreateAccount(ctx context.Context, req *protoacc.CreateAccountRequest) (*protoacc.CreateAccountResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.CreateAccount(ctx, req)
+}
+
+func (c *GRPCAccountClient) DeleteAccount(ctx context.Context, req *protoacc.DeleteAccountRequest) (*protoacc.DeleteAccountResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.DeleteAccount(ctx, req)
+}
+
+func (c *GRPCAccountClient) ListAccount(ctx context.Context, req *protoacc.ListAccountsRequest) (*protoacc.ListAccountsResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.ListAccount(ctx, req)
+}
+
+func (c *GRPCAccountClient) GetBalance(ctx context.Context, req *protoacc.GetBalanceRequest) (*protoacc.GetBalanceResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.GetBalance(ctx, req)
+}

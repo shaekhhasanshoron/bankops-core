@@ -41,10 +41,11 @@ type GetCustomerResponse struct {
 }
 
 type ListCustomerResponse struct {
-	Customers  interface{} `json:"customerList"`
+	Customers  interface{} `json:"customers"`
 	Page       int         `json:"page"`
 	PageSize   int         `json:"pageSize"`
 	TotalCount int         `json:"totalCount"`
+	TotalPages int         `json:"totalPages"`
 	Message    string      `json:"message" binding:"message"`
 }
 
@@ -103,63 +104,64 @@ func (h *AccountHandler) CreateCustomer(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
-// UpdateCustomer for update a customer
-// @Tags Customer
-// @Summary Update Customer
-// @Description Update a customer by customer id
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
-// @Param id path string true "CustomerID of the customer"
-// @Param customer body UpdateCustomerRequest true "Customer details"
-// @Success 200 {string} {object} UpdateCustomerResponse
-// @Failure 400 {string} {object} ErrorResponse
-// @Failure 401 {string} {object} ErrorResponse
-// @Router /api/v1/customer/{id} [put]
-func (h *AccountHandler) UpdateCustomer(c *gin.Context) {
-	customerID := c.Param("id")
-
-	var req UpdateCustomerRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		logging.Logger.Warn().Err(err).Msg("invalid request param")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-		return
-	}
-
-	un, _ := c.Get("username") // middleware
-	requester, ok := un.(string)
-	if !ok {
-		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
-	}
-
-	grpcReq := &protoacc.UpdateCustomerRequest{
-		CustomerId: customerID,
-		Name:       req.Name,
-		Metadata: &protoacc.Metadata{
-			RequestId: c.GetHeader("X-Request-ID"),
-			Requester: requester,
-		},
-	}
-
-	resp, err := h.AccountClient.UpdateCustomer(c.Request.Context(), grpcReq)
-	if err != nil {
-		logging.Logger.Error().Err(err).Msg("failed to update customer")
-		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
-		return
-	}
-
-	if !resp.Response.Success {
-		logging.Logger.Error().Err(errors.New(resp.Response.Message)).Msg("unable to update customer")
-		c.JSON(http.StatusBadRequest, ErrorResponse{Error: resp.Response.Message})
-		return
-	}
-
-	res := UpdateCustomerResponse{
-		Message: resp.Response.Message,
-	}
-
-	c.JSON(http.StatusOK, res)
-}
+// TODO: neeed to delete
+//// UpdateCustomer for update a customer
+//// @Tags Customer
+//// @Summary Update Customer
+//// @Description Update a customer by customer id
+//// @Accept json
+//// @Produce json
+//// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+//// @Param id path string true "CustomerID of the customer"
+//// @Param customer body UpdateCustomerRequest true "Customer details"
+//// @Success 200 {string} {object} UpdateCustomerResponse
+//// @Failure 400 {string} {object} ErrorResponse
+//// @Failure 401 {string} {object} ErrorResponse
+//// @Router /api/v1/customer/{id} [put]
+//func (h *AccountHandler) UpdateCustomer(c *gin.Context) {
+//	customerID := c.Param("id")
+//
+//	var req UpdateCustomerRequest
+//	if err := c.ShouldBindJSON(&req); err != nil {
+//		logging.Logger.Warn().Err(err).Msg("invalid request param")
+//		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+//		return
+//	}
+//
+//	un, _ := c.Get("username") // middleware
+//	requester, ok := un.(string)
+//	if !ok {
+//		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
+//	}
+//
+//	grpcReq := &protoacc.UpdateCustomerRequest{
+//		CustomerId: customerID,
+//		Name:       req.Name,
+//		Metadata: &protoacc.Metadata{
+//			RequestId: c.GetHeader("X-Request-ID"),
+//			Requester: requester,
+//		},
+//	}
+//
+//	resp, err := h.AccountClient.UpdateCustomer(c.Request.Context(), grpcReq)
+//	if err != nil {
+//		logging.Logger.Error().Err(err).Msg("failed to update customer")
+//		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
+//		return
+//	}
+//
+//	if !resp.Response.Success {
+//		logging.Logger.Error().Err(errors.New(resp.Response.Message)).Msg("unable to update customer")
+//		c.JSON(http.StatusBadRequest, ErrorResponse{Error: resp.Response.Message})
+//		return
+//	}
+//
+//	res := UpdateCustomerResponse{
+//		Message: resp.Response.Message,
+//	}
+//
+//	c.JSON(http.StatusOK, res)
+//}
 
 // DeleteCustomer for delete a customer by customer id
 // @Tags Customer
@@ -210,58 +212,59 @@ func (h *AccountHandler) DeleteCustomer(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// GetCustomer for fetching a customer by customer id
-// @Tags Customer
-// @Summary Get Customer
-// @Description Get a customer by customer id
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
-// @Param id path string true "CustomerID of the customer"
-// @Success 200 {string} {object} GetCustomerResponse
-// @Failure 400 {string} {object} ErrorResponse
-// @Failure 401 {string} {object} ErrorResponse
-// @Router /api/v1/customer/{id} [get]
-func (h *AccountHandler) GetCustomer(c *gin.Context) {
-	customerId := c.Param("id")
-
-	un, _ := c.Get("username") // middleware
-	requester, ok := un.(string)
-	if !ok {
-		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
-	}
-
-	grpcReq := &protoacc.GetCustomerRequest{
-		CustomerId: customerId,
-		Metadata: &protoacc.Metadata{
-			RequestId: c.GetHeader("X-Request-ID"),
-			Requester: requester,
-		},
-	}
-
-	resp, err := h.AccountClient.GetCustomer(c.Request.Context(), grpcReq)
-	if err != nil {
-		logging.Logger.Error().Err(err).Msg("failed to get customer")
-		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
-		return
-	}
-
-	if !resp.Response.Success {
-		logging.Logger.Error().Err(errors.New(resp.Response.Message)).Msg("unable to get customer")
-		c.JSON(http.StatusBadRequest, ErrorResponse{Error: resp.Response.Message})
-		return
-	}
-
-	res := GetCustomerResponse{
-		Customer: Customer{
-			ID:   resp.Customer.Customer.Id,
-			Name: resp.Customer.Customer.Name,
-		},
-		Message: resp.Response.Message,
-	}
-
-	c.JSON(http.StatusOK, res)
-}
+// TODO: need to delete
+//// GetCustomer for fetching a customer by customer id
+//// @Tags Customer
+//// @Summary Get Customer
+//// @Description Get a customer by customer id
+//// @Accept json
+//// @Produce json
+//// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+//// @Param id path string true "CustomerID of the customer"
+//// @Success 200 {string} {object} GetCustomerResponse
+//// @Failure 400 {string} {object} ErrorResponse
+//// @Failure 401 {string} {object} ErrorResponse
+//// @Router /api/v1/customer/{id} [get]
+//func (h *AccountHandler) GetCustomer(c *gin.Context) {
+//	customerId := c.Param("id")
+//
+//	un, _ := c.Get("username") // middleware
+//	requester, ok := un.(string)
+//	if !ok {
+//		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
+//	}
+//
+//	grpcReq := &protoacc.GetCustomerRequest{
+//		CustomerId: customerId,
+//		Metadata: &protoacc.Metadata{
+//			RequestId: c.GetHeader("X-Request-ID"),
+//			Requester: requester,
+//		},
+//	}
+//
+//	resp, err := h.AccountClient.GetCustomer(c.Request.Context(), grpcReq)
+//	if err != nil {
+//		logging.Logger.Error().Err(err).Msg("failed to get customer")
+//		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
+//		return
+//	}
+//
+//	if !resp.Response.Success {
+//		logging.Logger.Error().Err(errors.New(resp.Response.Message)).Msg("unable to get customer")
+//		c.JSON(http.StatusBadRequest, ErrorResponse{Error: resp.Response.Message})
+//		return
+//	}
+//
+//	res := GetCustomerResponse{
+//		Customer: Customer{
+//			ID:   resp.Customer.Customer.Id,
+//			Name: resp.Customer.Customer.Name,
+//		},
+//		Message: resp.Response.Message,
+//	}
+//
+//	c.JSON(http.StatusOK, res)
+//}
 
 // ListCustomer for fetching a customer list
 // @Tags Customer
@@ -270,7 +273,7 @@ func (h *AccountHandler) GetCustomer(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number for pagination" default(1)
-// @Param pagesize query int false "Number of customers per page" default(20)
+// @Param pagesize query int false "Number of customers per page" default(50)
 // @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
 // @Success 200 {string} {object} ListCustomerResponse
 // @Failure 400 {string} {object} ErrorResponse
@@ -334,6 +337,90 @@ func (h *AccountHandler) ListCustomer(c *gin.Context) {
 		Page:       int(resp.Pagination.Page),
 		PageSize:   int(resp.Pagination.PageSize),
 		TotalCount: int(resp.Pagination.TotalCount),
+		TotalPages: int(resp.Pagination.TotalPages),
+		Message:    resp.Response.Message,
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// ListCustomerAccounts for fetching account list of customer
+// @Tags Customer
+// @Summary Get Account List of customer
+// @Description Get account list of customers
+// @Accept json
+// @Produce json
+// @Param id path string true "CustomerID of the customer"
+// @Param page query int false "Page number for pagination" default(1)
+// @Param pagesize query int false "Number of accounts per page" default(50)
+// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+// @Success 200 {object} ListAccountResponse "Successfully retrieved account list"
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /api/v1/customer/{id}/account [get]
+func (h *AccountHandler) ListCustomerAccounts(c *gin.Context) {
+	customerId := c.Param("id")
+	pageStr := c.Query("page")
+	pageSizeStr := c.Query("pagesize")
+	scopes := "customer"
+
+	var pageNo int = -1
+	var err error
+	if pageStr != "" {
+		pageNo, err = strconv.Atoi(pageStr)
+		if err != nil {
+			logging.Logger.Warn().Err(err).Msg("Invalid page no: " + pageStr)
+			pageNo = -1
+		}
+	}
+
+	var pageSize int = -1
+	if pageSizeStr != "" {
+		pageSize, err = strconv.Atoi(pageSizeStr)
+		if err != nil {
+			logging.Logger.Warn().Err(err).Msg("Invalid page size: " + pageSizeStr)
+			pageSize = -1
+		}
+	}
+
+	un, _ := c.Get("username") // middleware
+	requester, ok := un.(string)
+	if !ok {
+		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
+	}
+
+	grpcReq := &protoacc.ListAccountsRequest{
+		Scopes:     scopes,
+		CustomerId: customerId,
+		Metadata: &protoacc.Metadata{
+			RequestId: c.GetHeader("X-Request-ID"),
+			Requester: requester,
+		},
+		Pagination: &protoacc.PaginationRequest{
+			Page:     int32(pageNo),
+			PageSize: int32(pageSize),
+		},
+	}
+
+	resp, err := h.AccountClient.ListAccount(c.Request.Context(), grpcReq)
+	if err != nil {
+		logging.Logger.Error().Err(err).Msg("failed to get accounts")
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	if !resp.Response.Success {
+		logging.Logger.Error().Err(errors.New(resp.Response.Message)).Msg("unable to get accounts")
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: resp.Response.Message})
+		return
+	}
+
+	res := ListAccountResponse{
+		Accounts:   resp.Accounts,
+		Page:       int(resp.Pagination.Page),
+		PageSize:   int(resp.Pagination.PageSize),
+		TotalCount: int(resp.Pagination.TotalCount),
+		TotalPages: int(resp.Pagination.TotalPages),
 		Message:    resp.Response.Message,
 	}
 
