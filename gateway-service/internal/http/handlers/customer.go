@@ -105,65 +105,6 @@ func (h *AccountHandler) CreateCustomer(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
-// TODO: neeed to delete
-//// UpdateCustomer for update a customer
-//// @Tags Customer
-//// @Summary Update Customer
-//// @Description Update a customer by customer id
-//// @Accept json
-//// @Produce json
-//// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
-//// @Param id path string true "CustomerID of the customer"
-//// @Param customer body UpdateCustomerRequest true "Customer details"
-//// @Success 200 {string} {object} UpdateCustomerResponse
-//// @Failure 400 {string} {object} ErrorResponse
-//// @Failure 401 {string} {object} ErrorResponse
-//// @Router /api/v1/customer/{id} [put]
-//func (h *AccountHandler) UpdateCustomer(c *gin.Context) {
-//	customerID := c.Param("id")
-//
-//	var req UpdateCustomerRequest
-//	if err := c.ShouldBindJSON(&req); err != nil {
-//		logging.Logger.Warn().Err(err).Msg("invalid request param")
-//		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-//		return
-//	}
-//
-//	un, _ := c.Get("username") // middleware
-//	requester, ok := un.(string)
-//	if !ok {
-//		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
-//	}
-//
-//	grpcReq := &protoacc.UpdateCustomerRequest{
-//		CustomerId: customerID,
-//		Name:       req.Name,
-//		Metadata: &protoacc.Metadata{
-//			RequestId: c.GetHeader("X-Request-ID"),
-//			Requester: requester,
-//		},
-//	}
-//
-//	resp, err := h.AccountClient.UpdateCustomer(c.Request.Context(), grpcReq)
-//	if err != nil {
-//		logging.Logger.Error().Err(err).Msg("failed to update customer")
-//		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
-//		return
-//	}
-//
-//	if !resp.Response.Success {
-//		logging.Logger.Error().Err(errors.New(resp.Response.Message)).Msg("unable to update customer")
-//		c.JSON(http.StatusBadRequest, ErrorResponse{Error: resp.Response.Message})
-//		return
-//	}
-//
-//	res := UpdateCustomerResponse{
-//		Message: resp.Response.Message,
-//	}
-//
-//	c.JSON(http.StatusOK, res)
-//}
-
 // DeleteCustomer for delete a customer by customer id
 // @Tags Customer
 // @Summary Delete Customer
@@ -212,60 +153,6 @@ func (h *AccountHandler) DeleteCustomer(c *gin.Context) {
 
 	c.JSON(http.StatusOK, res)
 }
-
-// TODO: need to delete
-//// GetCustomer for fetching a customer by customer id
-//// @Tags Customer
-//// @Summary Get Customer
-//// @Description Get a customer by customer id
-//// @Accept json
-//// @Produce json
-//// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
-//// @Param id path string true "CustomerID of the customer"
-//// @Success 200 {string} {object} GetCustomerResponse
-//// @Failure 400 {string} {object} ErrorResponse
-//// @Failure 401 {string} {object} ErrorResponse
-//// @Router /api/v1/customer/{id} [get]
-//func (h *AccountHandler) GetCustomer(c *gin.Context) {
-//	customerId := c.Param("id")
-//
-//	un, _ := c.Get("username") // middleware
-//	requester, ok := un.(string)
-//	if !ok {
-//		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
-//	}
-//
-//	grpcReq := &protoacc.GetCustomerRequest{
-//		CustomerId: customerId,
-//		Metadata: &protoacc.Metadata{
-//			RequestId: c.GetHeader("X-Request-ID"),
-//			Requester: requester,
-//		},
-//	}
-//
-//	resp, err := h.AccountClient.GetCustomer(c.Request.Context(), grpcReq)
-//	if err != nil {
-//		logging.Logger.Error().Err(err).Msg("failed to get customer")
-//		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
-//		return
-//	}
-//
-//	if !resp.Response.Success {
-//		logging.Logger.Error().Err(errors.New(resp.Response.Message)).Msg("unable to get customer")
-//		c.JSON(http.StatusBadRequest, ErrorResponse{Error: resp.Response.Message})
-//		return
-//	}
-//
-//	res := GetCustomerResponse{
-//		Customer: Customer{
-//			ID:   resp.Customer.Customer.Id,
-//			Name: resp.Customer.Customer.Name,
-//		},
-//		Message: resp.Response.Message,
-//	}
-//
-//	c.JSON(http.StatusOK, res)
-//}
 
 // ListCustomer for fetching a customer list
 // @Tags Customer

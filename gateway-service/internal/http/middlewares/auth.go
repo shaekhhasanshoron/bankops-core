@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"gateway-service/internal/auth"
 	"gateway-service/internal/config"
-	"gateway-service/internal/grpc/clients"
 	"gateway-service/internal/logging"
+	"gateway-service/internal/ports"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 	"time"
 )
 
-func AuthMiddleware(authClient *clients.AuthClient) gin.HandlerFunc {
+func AuthMiddleware(authClient *ports.AuthClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -66,8 +66,18 @@ func validateToken(c *gin.Context, token string) (*auth.Claims, int, error) {
 		return nil, http.StatusUnauthorized, errors.New("Token has expired")
 	}
 
-	// Define route-to-role mapping with method-specific permissions
-	permissions := map[string]map[string]map[string]bool{
+	permissions := getRBACPermissions()
+	fullPath := c.FullPath()
+	method := c.Request.Method
+	if permissions[fullPath][method][claim.Role] == false {
+		logging.Logger.Err(errors.New("Permission Denied")).Msg("User dont have permission")
+		return nil, http.StatusForbidden, errors.New("Permission Denied")
+	}
+	return claim, http.StatusOK, nil
+}
+
+func getRBACPermissions() map[string]map[string]map[string]bool {
+	return map[string]map[string]map[string]bool{
 		"/api/v1/employee": {
 			"GET":    {"admin": true, "editor": false, "viewer": false},
 			"POST":   {"admin": true, "editor": false, "viewer": false},
@@ -110,14 +120,4 @@ func validateToken(c *gin.Context, token string) (*auth.Claims, int, error) {
 			"GET": {"admin": true, "editor": true, "viewer": true},
 		},
 	}
-
-	// Get the requested URL path and HTTP method
-	fullPath := c.FullPath()
-	method := c.Request.Method
-	//fmt.Println(fullPath, method, claim.Role)
-	if permissions[fullPath][method][claim.Role] == false {
-		logging.Logger.Err(errors.New("Permission Denied")).Msg("User dont have permission")
-		return nil, http.StatusForbidden, errors.New("Permission Denied")
-	}
-	return claim, http.StatusOK, nil
 }

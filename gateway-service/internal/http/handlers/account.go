@@ -1,12 +1,14 @@
 package handlers
 
-import "gateway-service/internal/grpc/clients"
+import (
+	"gateway-service/internal/ports"
+)
 
 type AccountHandler struct {
-	AccountClient clients.AccountClient
+	AccountClient ports.AccountClient
 }
 
-func NewAccountHandler(authClient clients.AccountClient) *AccountHandler {
+func NewAccountHandler(authClient ports.AccountClient) *AccountHandler {
 	return &AccountHandler{
 		AccountClient: authClient,
 	}

@@ -3,17 +3,17 @@ package http
 import (
 	"fmt"
 	"gateway-service/internal/config"
-	"gateway-service/internal/grpc/clients"
 	middleware "gateway-service/internal/http/middlewares"
 	"gateway-service/internal/logging"
+	"gateway-service/internal/ports"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 type GrpcClients struct {
-	AuthClient    *clients.AuthClient
-	AccountClient *clients.AccountClient
+	AuthClient    *ports.AuthClient
+	AccountClient *ports.AccountClient
 }
 
 func StartServer(gRPCClients GrpcClients) {

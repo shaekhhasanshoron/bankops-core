@@ -1,4 +1,4 @@
-package clients
+package ports
 
 import (
 	"context"

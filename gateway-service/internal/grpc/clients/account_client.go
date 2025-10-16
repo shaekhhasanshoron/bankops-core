@@ -6,6 +6,7 @@ import (
 	protoacc "gateway-service/api/protogen/accountservice/proto"
 	"gateway-service/internal/config"
 	"gateway-service/internal/logging"
+	"gateway-service/internal/ports"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
@@ -21,7 +22,7 @@ type GRPCAccountClient struct {
 }
 
 // NewAccountClient creating new grpc client
-func NewAccountClient(timeout time.Duration) AccountClient {
+func NewAccountClient(timeout time.Duration) ports.AccountClient {
 	return &GRPCAccountClient{
 		timeout: timeout,
 	}

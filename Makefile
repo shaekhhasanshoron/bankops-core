@@ -186,9 +186,14 @@ run-gateway:
 air-gateway: $(AIR)
 	@cd gateway-service && $(AIR) -c .air.toml
 
+.PHONY: coverage-auth test-gateway
 test-gateway:
-	@echo "→ testing gateway-service"
+	@echo "→ testing of gateway-service"
 	@cd gateway-service && $(GO) test ./...
+
+coverage-gateway:
+	@echo "→ coverage of gateway-service"
+	@cd gateway-service && $(GO) test -cover ./...
 
 .PHONY: docker-build-gateway docker-push-gateway
 docker-build-gateway:

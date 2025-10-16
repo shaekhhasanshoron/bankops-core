@@ -108,8 +108,18 @@ func (h *AccountHandler) CreateAccount(c *gin.Context) {
 // @Failure 401 {string} {object} ErrorResponse
 // @Router /api/v1/account [delete]
 func (h *AccountHandler) DeleteAccount(c *gin.Context) {
-	scope := c.Query("scope")
-	id := c.Query("id")
+	scope := strings.TrimSpace(c.Query("scope"))
+	id := strings.TrimSpace(c.Query("id"))
+
+	if scope == "" || id == "" {
+		logging.Logger.Error().Err(errors.New("Missing required parameters (scope and id)")).
+			Str("scope", scope).
+			Str("id", id).
+			Msg("Invalid request")
+
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Missing required parameters (scope and id)"})
+		return
+	}
 
 	un, _ := c.Get("username") // middleware
 	requester, ok := un.(string)
@@ -159,7 +169,7 @@ func (h *AccountHandler) DeleteAccount(c *gin.Context) {
 // @Failure 401 {object} ErrorResponse
 // @Router /api/v1/account/{id}/balance [get]
 func (h *AccountHandler) GetAccountBalance(c *gin.Context) {
-	accountId := c.Param("id")
+	accountId := strings.TrimSpace(c.Param("id"))
 
 	un, _ := c.Get("username") // middleware
 	requester, ok := un.(string)

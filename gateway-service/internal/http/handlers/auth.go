@@ -3,8 +3,8 @@ package handlers
 import (
 	"errors"
 	protoauth "gateway-service/api/protogen/authservice/proto"
-	"gateway-service/internal/grpc/clients"
 	"gateway-service/internal/logging"
+	"gateway-service/internal/ports"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 type AuthHandler struct {
-	AuthClient clients.AuthClient
+	AuthClient ports.AuthClient
 }
 
 type LoginRequest struct {
@@ -65,7 +65,7 @@ type ListEmployeeResponse struct {
 	Message    string      `json:"message" binding:"message"`
 }
 
-func NewAuthHandler(authClient clients.AuthClient) *AuthHandler {
+func NewAuthHandler(authClient ports.AuthClient) *AuthHandler {
 	return &AuthHandler{
 		AuthClient: authClient,
 	}
