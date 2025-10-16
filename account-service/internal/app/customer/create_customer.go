@@ -2,7 +2,7 @@ package customer
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
@@ -34,20 +34,20 @@ func (c *CreateCustomer) Execute(name, requester, requestId string) (*entity.Cus
 	}()
 
 	if name == "" {
-		err = fmt.Errorf("%w: customer name is required", value.ErrValidationFailed)
+		err = fmt.Errorf("%w: customer name is required", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Required missing fields")
 		return nil, "Required missing fields", err
 	}
 
 	if requester == "" {
-		err = fmt.Errorf("%w: requester is required", value.ErrValidationFailed)
+		err = fmt.Errorf("%w: requester is required", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Unknown requester")
 		return nil, "Unknown requester", err
 	}
 
 	existingCustomer, err := c.CustomerRepo.GetCustomerByName(name)
 	if err == nil && existingCustomer != nil {
-		err = fmt.Errorf("%w", value.ErrCustomerExists)
+		err = fmt.Errorf("%w", custom_err.ErrCustomerExists)
 		logging.Logger.Error().Err(err).Msg("Customer already exists")
 		return nil, "Customer already exists", err
 	}
@@ -57,7 +57,7 @@ func (c *CreateCustomer) Execute(name, requester, requestId string) (*entity.Cus
 
 	_, err = c.CustomerRepo.CreateCustomer(customer)
 	if err != nil {
-		err = fmt.Errorf("%w", value.ErrDatabase)
+		err = fmt.Errorf("%w", custom_err.ErrDatabase)
 		logging.Logger.Error().Err(err).Msg("Failed to create customer")
 		return nil, "Failed to create customer", err
 	}

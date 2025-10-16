@@ -22,34 +22,21 @@ func NewEmployeeRepo(db *gorm.DB) ports.EmployeeRepo {
 }
 
 // CreateEmployee checks if the user already exists with a valid status and creates a new one
-func (r *EmployeeRepo) CreateEmployee(input *ports.Employee) (*entity.Employee, error) {
+func (r *EmployeeRepo) CreateEmployee(employee *entity.Employee) (*entity.Employee, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	var employee entity.Employee
+	var existingEmployee entity.Employee
 
-	// Checks if employee exists with valid status
-	if err := r.DB.Where("username = ? AND status = ?", input.Username, entity.EmployeeStatusValid).First(&employee).Error; err == nil {
+	if err := r.DB.Where("username = ? AND status = ?", employee.Username, entity.EmployeeStatusValid).First(&existingEmployee).Error; err == nil {
 		return nil, errors.New("employee with this username already exists")
 	}
 
-	newEmployee, err := entity.NewEmployee(
-		input.Username,
-		input.Password,
-		input.Role,
-		"",
-		input.Requester,
-	)
-
-	if err != nil {
+	if err := r.DB.Create(employee).Error; err != nil {
 		return nil, err
 	}
 
-	if err := r.DB.Create(newEmployee).Error; err != nil {
-		return nil, err
-	}
-
-	return newEmployee, nil
+	return employee, nil
 }
 
 // GetEmployeeByUsername returns the employee if valid
@@ -65,7 +52,7 @@ func (r *EmployeeRepo) GetEmployeeByUsername(username string) (*entity.Employee,
 }
 
 // UpdateEmployee updates the role for a valid employee
-func (r *EmployeeRepo) UpdateEmployee(input *ports.Employee) (*entity.Employee, error) {
+func (r *EmployeeRepo) UpdateEmployee(input *entity.Employee) (*entity.Employee, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -74,9 +61,6 @@ func (r *EmployeeRepo) UpdateEmployee(input *ports.Employee) (*entity.Employee, 
 		return nil, err
 	}
 
-	// Update role
-	employee.Role = input.Role
-	employee.UpdatedBy = input.Requester
 	if err := r.DB.Save(&employee).Error; err != nil {
 		return nil, err
 	}
@@ -103,4 +87,30 @@ func (r *EmployeeRepo) DeleteEmployee(username, requester string) error {
 	}
 
 	return nil
+}
+
+func (r *EmployeeRepo) ListEmployee(page, pageSize int, sortOrder string) ([]*entity.Employee, int64, error) {
+	var employees []*entity.Employee
+	var total int64
+
+	offset := (page - 1) * pageSize
+
+	if err := r.DB.Model(&entity.Employee{}).
+		Where("status = ?", entity.EmployeeStatusValid).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	order := "created_at DESC"
+	if sortOrder == "asc" {
+		order = "created_at ASC"
+	}
+
+	err := r.DB.Where("status = ?", entity.EmployeeStatusValid).
+		Offset(offset).
+		Limit(pageSize).
+		Order(order).
+		Find(&employees).Error
+
+	return employees, total, err
 }

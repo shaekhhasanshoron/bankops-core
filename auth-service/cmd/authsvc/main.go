@@ -1,8 +1,8 @@
 package main
 
 import (
+	"auth-service/internal/adapters/auth"
 	"auth-service/internal/adapters/repo/sqlite"
-	"auth-service/internal/auth"
 	"auth-service/internal/config"
 	"auth-service/internal/db"
 	"auth-service/internal/grpc"
@@ -56,8 +56,9 @@ func main() {
 
 	// JWT Token Signer
 	tokenSigner := auth.NewTokenSigner(config.Current().Auth.JWTSecret)
+	hashing := auth.NewHashing(config.Current().Auth.HashKey)
 
-	go grpc.StartGRPCServer(sqlite.NewEmployeeRepo(dbInstance), tokenSigner)
+	go grpc.StartGRPCServer(sqlite.NewEmployeeRepo(dbInstance), tokenSigner, hashing)
 
 	// Creating new http server for liveness and readiness checking
 	srv := httpserver.NewServerHTTP(httpserver.ServerConfig{

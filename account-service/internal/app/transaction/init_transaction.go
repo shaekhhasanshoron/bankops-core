@@ -3,7 +3,7 @@ package transaction
 import (
 	"account-service/internal/config"
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
@@ -73,7 +73,7 @@ func (t *IniTransaction) Execute(sourceAccountID string, destinationAccountID *s
 			Str("reference_id", referenceID).
 			Str("type", transaction.Type).
 			Msg("Failed to create transaction")
-		return nil, "Failed to create transaction", fmt.Errorf("%w: failed to create transaction", value.ErrDatabase)
+		return nil, "Failed to create transaction", fmt.Errorf("%w: failed to create transaction", custom_err.ErrDatabase)
 	}
 
 	// Lock accounts for the transaction
@@ -89,7 +89,7 @@ func (t *IniTransaction) Execute(sourceAccountID string, destinationAccountID *s
 			Strs("account_ids", accountsToLock).
 			Str("type", transaction.Type).
 			Msg("Failed to lock accounts for transaction")
-		return nil, "Failed to lock accounts for transaction", fmt.Errorf("%w: failed to lock accounts for transaction", value.ErrDatabase)
+		return nil, "Failed to lock accounts for transaction", fmt.Errorf("%w: failed to lock accounts for transaction", custom_err.ErrDatabase)
 	}
 
 	// Record event
@@ -126,19 +126,19 @@ func (t *IniTransaction) Execute(sourceAccountID string, destinationAccountID *s
 
 func (t *IniTransaction) validateInput(sourceAccountID string, referenceID, requester string) (string, error) {
 	if sourceAccountID == "" {
-		err := fmt.Errorf("%w: source account ID is required", value.ErrValidationFailed)
+		err := fmt.Errorf("%w: source account ID is required", custom_err.ErrValidationFailed)
 		logging.Logger.Warn().Err(err).Msg("Source Account ID missing")
 		return "Source Account ID missing", err
 	}
 
 	if referenceID == "" {
-		err := fmt.Errorf("%w", value.ErrMissingReferenceID)
+		err := fmt.Errorf("%w", custom_err.ErrMissingReferenceID)
 		logging.Logger.Warn().Err(err).Msg("Reference ID missing")
 		return "Reference ID missing", err
 	}
 
 	if requester == "" {
-		err := fmt.Errorf("%w: requester is required", value.ErrValidationFailed)
+		err := fmt.Errorf("%w: requester is required", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Unknown requester")
 		return "Unknown requester", err
 	}
@@ -146,11 +146,11 @@ func (t *IniTransaction) validateInput(sourceAccountID string, referenceID, requ
 	existingTx, err := t.TransactionRepo.GetTransactionByReferenceID(referenceID)
 	if err != nil {
 		logging.Logger.Error().Err(err).Str("reference_id", referenceID).Msg("Failed to check duplicate reference")
-		return "Failed to check duplicate reference", fmt.Errorf("%w: failed to check duplicate reference", value.ErrDatabase)
+		return "Failed to check duplicate reference", fmt.Errorf("%w: failed to check duplicate reference", custom_err.ErrDatabase)
 	}
 
 	if existingTx != nil {
-		err := fmt.Errorf("%w", value.ErrDuplicateReference)
+		err := fmt.Errorf("%w", custom_err.ErrDuplicateReference)
 		logging.Logger.Error().Err(err).Str("reference_id", referenceID).Msg("Duplicate transaction reference")
 		return "Duplicate transaction reference", err
 	}
@@ -161,7 +161,7 @@ func (t *IniTransaction) validateTransactionType(transaction *entity.Transaction
 	switch transaction.Type {
 	case entity.TransactionTypeTransfer:
 		if transaction.DestinationAccountID == nil {
-			err := fmt.Errorf("%w", value.ErrMissingDestinationAccount)
+			err := fmt.Errorf("%w", custom_err.ErrMissingDestinationAccount)
 			logging.Logger.Error().Err(err).Msg("Destination account required")
 			return "Destination account required", err
 		}
@@ -169,31 +169,31 @@ func (t *IniTransaction) validateTransactionType(transaction *entity.Transaction
 		destAccount, err := t.AccountRepo.GetAccountByID(*transaction.DestinationAccountID)
 		if err != nil {
 			logging.Logger.Error().Err(err).Msg("Failed to verify destination account")
-			return "Destination account required", fmt.Errorf("%w: failed to verify destination account", value.ErrDatabase)
+			return "Destination account required", fmt.Errorf("%w: failed to verify destination account", custom_err.ErrDatabase)
 		}
 
 		if destAccount == nil {
-			err := fmt.Errorf("%w", value.ErrAccountNotFound)
+			err := fmt.Errorf("%w", custom_err.ErrAccountNotFound)
 			logging.Logger.Error().Err(err).Msg("Destination account not found")
 			return "Destination account not found", err
 		}
 
 		if transaction.Amount <= 0 {
-			err := fmt.Errorf("%w", value.ErrInvalidAmount)
+			err := fmt.Errorf("%w", custom_err.ErrInvalidAmount)
 			logging.Logger.Error().Err(err).Msg("Invalid amount for transaction")
 			return "Invalid amount for transaction", err
 		}
 
 	case entity.TransactionTypeWithdrawAmount:
 		if transaction.Amount <= 0 {
-			err := fmt.Errorf("%w", value.ErrInvalidWithdrawAmount)
+			err := fmt.Errorf("%w", custom_err.ErrInvalidWithdrawAmount)
 			logging.Logger.Error().Err(err).Msg("Invalid amount for transaction")
 			return "Invalid amount for transaction", err
 		}
 
 	case entity.TransactionTypeAddAmount:
 		if transaction.Amount <= 0 {
-			err := fmt.Errorf("%w", value.ErrInvalidAddAmount)
+			err := fmt.Errorf("%w", custom_err.ErrInvalidAddAmount)
 			logging.Logger.Error().Err(err).Msg("Invalid amount for transaction")
 			return "Invalid amount for transaction", err
 		}
@@ -201,19 +201,19 @@ func (t *IniTransaction) validateTransactionType(transaction *entity.Transaction
 
 	sourceAccount, err := t.AccountRepo.GetAccountByID(transaction.SourceAccountID)
 	if err != nil {
-		err := fmt.Errorf("%w", value.ErrInvalidAddAmount)
+		err := fmt.Errorf("%w", custom_err.ErrInvalidAddAmount)
 		logging.Logger.Error().Err(err).Msg("Failed to verify source account")
-		return "Failed to verify source account", fmt.Errorf("%w: failed to verify source account", value.ErrDatabase)
+		return "Failed to verify source account", fmt.Errorf("%w: failed to verify source account", custom_err.ErrDatabase)
 	}
 
 	if sourceAccount == nil {
-		err := fmt.Errorf("%w", value.ErrAccountNotFound)
+		err := fmt.Errorf("%w", custom_err.ErrAccountNotFound)
 		logging.Logger.Error().Err(err).Msg("Source account not found")
 		return "Source account not found", err
 	}
 
 	if transaction.Type == entity.TransactionTypeWithdrawFull && sourceAccount.Balance <= 0 {
-		err := fmt.Errorf("%w", value.ErrAccountEmpty)
+		err := fmt.Errorf("%w", custom_err.ErrAccountEmpty)
 		logging.Logger.Error().Err(err).Msg("Account already empty")
 		return "Account already empty", err
 	}

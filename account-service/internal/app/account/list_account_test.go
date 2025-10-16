@@ -2,7 +2,7 @@ package account
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	mock_repo "account-service/internal/ports/mocks/repo"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -20,6 +20,7 @@ func TestListAccount_Execute_SuccessWithDefaultPagination(t *testing.T) {
 	pageSize := 0
 	requester := "user123"
 	requestId := "req-456"
+	setOrder := "desc"
 
 	expectedAccounts := []*entity.Account{
 		{ID: "acc-1", CustomerID: customerID, Balance: 1000.0},
@@ -36,7 +37,7 @@ func TestListAccount_Execute_SuccessWithDefaultPagination(t *testing.T) {
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
-		customerID, minBalance, inTransaction, page, pageSize, requester, requestId,
+		customerID, minBalance, inTransaction, page, pageSize, setOrder, requester, requestId,
 	)
 
 	assert.NoError(t, err)
@@ -59,6 +60,7 @@ func TestListAccount_Execute_SuccessWithCustomPagination(t *testing.T) {
 	pageSize := 10
 	requester := "user123"
 	requestId := "req-456"
+	setOrder := "desc"
 
 	expectedAccounts := []*entity.Account{
 		{ID: "acc-1", CustomerID: customerID, Balance: 1000.0},
@@ -74,7 +76,7 @@ func TestListAccount_Execute_SuccessWithCustomPagination(t *testing.T) {
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
-		customerID, minBalance, inTransaction, page, pageSize, requester, requestId,
+		customerID, minBalance, inTransaction, page, pageSize, setOrder, requester, requestId,
 	)
 
 	assert.NoError(t, err)
@@ -97,6 +99,7 @@ func TestListAccount_Execute_SuccessWithMinBalanceFilter(t *testing.T) {
 	pageSize := 20
 	requester := "user123"
 	requestId := "req-456"
+	setOrder := "desc"
 
 	expectedAccounts := []*entity.Account{
 		{ID: "acc-1", CustomerID: customerID, Balance: 1000.0},
@@ -113,7 +116,7 @@ func TestListAccount_Execute_SuccessWithMinBalanceFilter(t *testing.T) {
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
-		customerID, minBalance, inTransaction, page, pageSize, requester, requestId,
+		customerID, minBalance, inTransaction, page, pageSize, setOrder, requester, requestId,
 	)
 
 	assert.NoError(t, err)
@@ -137,6 +140,7 @@ func TestListAccount_Execute_SuccessWithInTransactionTrue(t *testing.T) {
 	pageSize := 100
 	requester := "user123"
 	requestId := "req-456"
+	setOrder := "desc"
 
 	expectedAccounts := []*entity.Account{
 		{ID: "acc-1", CustomerID: customerID, Balance: 1000.0, LockedForTx: true},
@@ -153,7 +157,7 @@ func TestListAccount_Execute_SuccessWithInTransactionTrue(t *testing.T) {
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
-		customerID, minBalance, inTransaction, page, pageSize, requester, requestId,
+		customerID, minBalance, inTransaction, page, pageSize, setOrder, requester, requestId,
 	)
 
 	assert.NoError(t, err)
@@ -176,6 +180,7 @@ func TestListAccount_Execute_SuccessWithInTransactionFalse(t *testing.T) {
 	pageSize := 100
 	requester := "user123"
 	requestId := "req-456"
+	setOrder := "desc"
 
 	expectedAccounts := []*entity.Account{
 		{ID: "acc-1", CustomerID: customerID, Balance: 1000.0, LockedForTx: false},
@@ -192,7 +197,7 @@ func TestListAccount_Execute_SuccessWithInTransactionFalse(t *testing.T) {
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
-		customerID, minBalance, inTransaction, page, pageSize, requester, requestId,
+		customerID, minBalance, inTransaction, page, pageSize, setOrder, requester, requestId,
 	)
 
 	assert.NoError(t, err)
@@ -215,6 +220,7 @@ func TestListAccount_Execute_SuccessWithAllFilters(t *testing.T) {
 	pageSize := 50
 	requester := "user123"
 	requestId := "req-456"
+	setOrder := "desc"
 
 	expectedAccounts := []*entity.Account{
 		{ID: "acc-1", CustomerID: customerID, Balance: 1500.0, LockedForTx: true},
@@ -232,7 +238,7 @@ func TestListAccount_Execute_SuccessWithAllFilters(t *testing.T) {
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
-		customerID, minBalance, inTransaction, page, pageSize, requester, requestId,
+		customerID, minBalance, inTransaction, page, pageSize, setOrder, requester, requestId,
 	)
 
 	assert.NoError(t, err)
@@ -255,6 +261,7 @@ func TestListAccount_Execute_SuccessWithDefaultFilter(t *testing.T) {
 	pageSize := 100
 	requester := "user123"
 	requestId := "req-456"
+	setOrder := "desc"
 
 	expectedAccounts := []*entity.Account{
 		{ID: "acc-1", CustomerID: "cust-1", Balance: 1000.0},
@@ -270,7 +277,7 @@ func TestListAccount_Execute_SuccessWithDefaultFilter(t *testing.T) {
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
-		customerID, minBalance, inTransaction, page, pageSize, requester, requestId,
+		customerID, minBalance, inTransaction, page, pageSize, setOrder, requester, requestId,
 	)
 
 	assert.NoError(t, err)
@@ -293,12 +300,13 @@ func TestListAccount_Execute_ErrorInvalidMinBalanceFormat(t *testing.T) {
 	pageSize := 100
 	requester := "user123"
 	requestId := "req-456"
+	setOrder := "desc"
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
-		customerID, minBalance, inTransaction, page, pageSize, requester, requestId,
+		customerID, minBalance, inTransaction, page, pageSize, setOrder, requester, requestId,
 	)
 
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Contains(t, message, "Invalid request - customer id missing")
 	assert.Nil(t, accounts)
 	assert.Equal(t, int64(0), totalCount)
@@ -318,9 +326,10 @@ func TestListAccount_Execute_ErrorNegativeMinBalance(t *testing.T) {
 	pageSize := 100
 	requester := "user123"
 	requestId := "req-456"
+	setOrder := "desc"
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
-		customerID, minBalance, inTransaction, page, pageSize, requester, requestId,
+		customerID, minBalance, inTransaction, page, pageSize, setOrder, requester, requestId,
 	)
 
 	assert.Error(t, err)

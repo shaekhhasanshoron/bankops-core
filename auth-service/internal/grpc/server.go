@@ -3,7 +3,6 @@ package grpc
 import (
 	"auth-service/api/protogen/authservice/proto"
 	"auth-service/internal/app"
-	"auth-service/internal/auth"
 	"auth-service/internal/config"
 	"auth-service/internal/grpc/handlers"
 	"auth-service/internal/grpc/interceptors"
@@ -16,7 +15,7 @@ import (
 	"net"
 )
 
-func StartGRPCServer(employeeRepo ports.EmployeeRepo, tokenSigner *auth.TokenSigner) {
+func StartGRPCServer(employeeRepo ports.EmployeeRepo, tokenSigner ports.TokenSigner, hashing ports.Hashing) {
 	var unaryInterceptors []grpc.UnaryServerInterceptor
 
 	if config.Current().Observability.MetricsConfig.Enabled {
@@ -38,10 +37,11 @@ func StartGRPCServer(employeeRepo ports.EmployeeRepo, tokenSigner *auth.TokenSig
 
 	// Register gRPC services
 	authHandler := handlers.NewAuthHandler(
-		app.NewAuthenticate(employeeRepo, tokenSigner),
-		app.NewCreateEmployee(employeeRepo, tokenSigner),
+		app.NewAuthenticate(employeeRepo, tokenSigner, hashing),
+		app.NewCreateEmployee(employeeRepo, tokenSigner, hashing),
 		app.NewUpdateEmployee(employeeRepo),
 		app.NewDeleteEmployee(employeeRepo),
+		app.NewListEmployee(employeeRepo),
 	)
 
 	proto.RegisterAuthServiceServer(grpcServer, authHandler)

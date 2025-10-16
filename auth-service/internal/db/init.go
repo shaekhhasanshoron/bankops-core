@@ -1,7 +1,7 @@
 package db
 
 import (
-	"auth-service/internal/auth"
+	"auth-service/internal/adapters/auth"
 	"auth-service/internal/common"
 	"auth-service/internal/config"
 	"auth-service/internal/domain/entity"
@@ -67,7 +67,9 @@ func prePopulateAdmin(db *gorm.DB) error {
 		return nil
 	}
 
-	hashedPassword, err := auth.HashData(config.Current().User.AdminPassword)
+	hashing := auth.NewHashing(config.Current().Auth.HashKey)
+
+	hashedPassword, err := hashing.HashData(config.Current().User.AdminPassword)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}

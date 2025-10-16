@@ -111,7 +111,7 @@ func (m *MockAccountRepo) DeleteAccount(id, requester string) error {
 	return args.Error(0)
 }
 
-func (m *MockAccountRepo) GetAccountsByFiltersWithPagination(filters map[string]interface{}, page, pageSize int) ([]*entity.Account, int64, error) {
+func (m *MockAccountRepo) GetAccountsByFiltersWithPagination(filters map[string]interface{}, page, pageSize int, setOrder string) ([]*entity.Account, int64, error) {
 	args := m.Called(filters, page, pageSize)
 	if args.Get(0) == nil {
 		return nil, args.Get(1).(int64), args.Error(2)

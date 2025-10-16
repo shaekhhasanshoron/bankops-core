@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"github.com/google/uuid"
 	"time"
 )
@@ -78,39 +78,39 @@ func (t *Transaction) IncrementVersion() {
 
 func (t *Transaction) Validate() error {
 	if t.Amount < 0 {
-		return value.ErrInvalidAmount
+		return custom_err.ErrInvalidAmount
 	}
 
 	if t.ReferenceID == "" {
-		return value.ErrMissingReferenceID
+		return custom_err.ErrMissingReferenceID
 	}
 
 	switch t.Type {
 	case TransactionTypeTransfer:
 		if t.DestinationAccountID == nil {
-			return value.ErrMissingDestinationAccount
+			return custom_err.ErrMissingDestinationAccount
 		}
 		if t.SourceAccountID == *t.DestinationAccountID {
-			return value.ErrSameAccountTransfer
+			return custom_err.ErrSameAccountTransfer
 		}
 		if t.Amount <= 0 {
-			return value.ErrInvalidAmount
+			return custom_err.ErrInvalidAmount
 		}
 
 	case TransactionTypeWithdrawFull:
 		t.DestinationAccountID = nil
 	case TransactionTypeWithdrawAmount:
 		if t.Amount <= 0 {
-			return value.ErrInvalidAmount
+			return custom_err.ErrInvalidAmount
 		}
 		t.DestinationAccountID = nil
 	case TransactionTypeAddAmount:
 		if t.Amount <= 0 {
-			return value.ErrInvalidAmount
+			return custom_err.ErrInvalidAmount
 		}
 		t.DestinationAccountID = nil
 	default:
-		return value.ErrInvalidTransactionType
+		return custom_err.ErrInvalidTransactionType
 	}
 
 	return nil

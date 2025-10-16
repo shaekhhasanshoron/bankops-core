@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"github.com/google/uuid"
 	"strings"
 	"time"
@@ -31,7 +31,7 @@ type Customer struct {
 
 func NewCustomer(name, requester string) (*Customer, error) {
 	if name == "" {
-		return nil, value.ErrInvalidCustomer
+		return nil, custom_err.ErrInvalidCustomer
 	}
 
 	if requester == "" {

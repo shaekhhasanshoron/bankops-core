@@ -2,7 +2,7 @@ package customer
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	mock_repo "account-service/internal/ports/mocks/repo"
 	"errors"
 	"github.com/stretchr/testify/assert"
@@ -88,7 +88,7 @@ func TestDeleteCustomer_Execute_EmptyCustomerID(t *testing.T) {
 	message, err := deleteCustomer.Execute("", "user123", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Missing required data", message)
 
 	mockCustomerRepo.AssertNotCalled(t, "GetCustomerByID")
@@ -106,7 +106,7 @@ func TestDeleteCustomer_Execute_EmptyRequester(t *testing.T) {
 	message, err := deleteCustomer.Execute("cust-123", "", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Unknown requester", message)
 
 	mockCustomerRepo.AssertNotCalled(t, "GetCustomerByID")
@@ -157,7 +157,7 @@ func TestDeleteCustomer_Execute_CustomerNotFound_NilCustomer(t *testing.T) {
 	message, err := deleteCustomer.Execute(id, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrCustomerNotFound)
+	assert.ErrorIs(t, err, custom_err.ErrCustomerNotFound)
 	assert.Equal(t, "Customer not found", message)
 
 	mockCustomerRepo.AssertNotCalled(t, "CheckModificationAllowed")
@@ -280,7 +280,7 @@ func TestDeleteCustomer_Execute_DatabaseError_DeleteCustomer(t *testing.T) {
 	message, err := deleteCustomer.Execute(id, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrDatabase)
+	assert.ErrorIs(t, err, custom_err.ErrDatabase)
 	assert.Equal(t, "Customer deletion failed", message)
 
 	mockCustomerRepo.AssertExpectations(t)

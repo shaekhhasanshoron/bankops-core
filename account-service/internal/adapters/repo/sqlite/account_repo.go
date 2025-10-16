@@ -2,7 +2,7 @@ package sqlite
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/ports"
 	"errors"
 	"gorm.io/gorm"
@@ -93,7 +93,7 @@ func (r *AccountRepo) UpdateAccount(account *entity.Account) error {
 	}
 
 	if result.RowsAffected == 0 {
-		return value.ErrConcurrentModification
+		return custom_err.ErrConcurrentModification
 	}
 
 	return nil
@@ -132,7 +132,7 @@ func (r *AccountRepo) DeleteAllAccountsByCustomerID(customerID, requester string
 		}).Error
 }
 
-func (r *AccountRepo) GetAccountsByFiltersWithPagination(filters map[string]interface{}, page, pageSize int) ([]*entity.Account, int64, error) {
+func (r *AccountRepo) GetAccountsByFiltersWithPagination(filters map[string]interface{}, page, pageSize int, setOrder string) ([]*entity.Account, int64, error) {
 	var accounts []*entity.Account
 	var totalCount int64
 
@@ -160,8 +160,13 @@ func (r *AccountRepo) GetAccountsByFiltersWithPagination(filters map[string]inte
 
 	offset := (page - 1) * pageSize
 
+	order := "created_at DESC"
+	if setOrder == "asc" {
+		order = "created_at ASC"
+	}
+
 	err := query.
-		Order("created_at DESC").
+		Order(order).
 		Limit(pageSize).
 		Offset(offset).
 		Find(&accounts).Error
@@ -192,7 +197,7 @@ func (r *AccountRepo) UpdateAccountBalance(id string, newBalance float64, curren
 	}
 
 	if result.RowsAffected == 0 {
-		return value.ErrConcurrentModification
+		return custom_err.ErrConcurrentModification
 	}
 
 	return nil
@@ -220,7 +225,7 @@ func (r *AccountRepo) LockAccountForTransaction(id string, transactionID string)
 
 	// Check if already locked
 	if account.LockedForTx {
-		return value.ErrAccountLocked
+		return custom_err.ErrAccountLocked
 	}
 
 	// Apply lock
@@ -237,7 +242,7 @@ func (r *AccountRepo) LockAccountForTransaction(id string, transactionID string)
 	}
 
 	if result.RowsAffected == 0 {
-		return value.ErrConcurrentModification
+		return custom_err.ErrConcurrentModification
 	}
 
 	return tx.Commit().Error
@@ -265,11 +270,11 @@ func (r *AccountRepo) CheckTransactionLock(id string) error {
 		return err
 	}
 	if account == nil {
-		return value.ErrAccountNotFound
+		return custom_err.ErrAccountNotFound
 	}
 
 	if account.LockedForTx || account.ActiveTransactionID != nil {
-		return value.ErrAccountLocked
+		return custom_err.ErrAccountLocked
 	}
 
 	return nil
@@ -327,7 +332,7 @@ func (r *AccountRepo) IncrementVersion(id string, currentVersion int) error {
 	}
 
 	if result.RowsAffected == 0 {
-		return value.ErrConcurrentModification
+		return custom_err.ErrConcurrentModification
 	}
 
 	return nil

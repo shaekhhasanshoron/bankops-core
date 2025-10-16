@@ -2,7 +2,7 @@ package account
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	mock_repo "account-service/internal/ports/mocks/repo"
 	"errors"
 	"github.com/stretchr/testify/assert"
@@ -95,7 +95,7 @@ func TestGetAccountBalance_Execute_EmptyAccountID(t *testing.T) {
 	balance, message, err := getAccountBalance.Execute("", "user123", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Invalid request - 'id' account id missing", message)
 	assert.Equal(t, 0.0, balance)
 
@@ -177,7 +177,7 @@ func TestGetAccountBalance_Execute_WhitespaceAccountID(t *testing.T) {
 	balance, message, err := getAccountBalance.Execute("   ", "user123", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Invalid request - 'id' account id missing", message)
 	assert.Equal(t, 0.0, balance)
 

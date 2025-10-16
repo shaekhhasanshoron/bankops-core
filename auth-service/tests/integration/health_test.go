@@ -56,33 +56,33 @@ func TestHttpHealthEndpoints(t *testing.T) {
 		}
 	}
 
-	if err := waitOK(addr + "/healthz"); err != nil {
+	if err := waitOK(addr + "/health"); err != nil {
 		t.Fatalf("server did not become healthy in time: %v", err)
 	}
 
 	// Check health apis
-	healthResp, err := http.Get(addr + "/healthz")
+	healthResp, err := http.Get(addr + "/health")
 	if err != nil {
-		t.Fatalf("GET /healthz: %v", err)
+		t.Fatalf("GET /health: %v", err)
 	}
 	defer healthResp.Body.Close()
 	if healthResp.StatusCode != http.StatusOK {
-		t.Fatalf("healthz status = %d", healthResp.StatusCode)
+		t.Fatalf("health status = %d", healthResp.StatusCode)
 	}
 
 	b, _ := io.ReadAll(healthResp.Body)
 	if string(b) != "ok" {
-		t.Fatalf("healthz body = %q", string(b))
+		t.Fatalf("health body = %q", string(b))
 	}
 
 	// Check readiness
-	readinessResp, err := http.Get(addr + "/readyz")
+	readinessResp, err := http.Get(addr + "/ready")
 	if err != nil {
-		t.Fatalf("GET /readyz: %v", err)
+		t.Fatalf("GET /ready: %v", err)
 	}
 	defer readinessResp.Body.Close()
 	if readinessResp.StatusCode != http.StatusOK {
-		t.Fatalf("readyz status = %d", readinessResp.StatusCode)
+		t.Fatalf("ready status = %d", readinessResp.StatusCode)
 	}
 
 	// Shutdown and assert the server exits cleanly

@@ -36,8 +36,9 @@ message ListAccountsRequest {
   string customer_id = 1;
   string min_balance = 2;
   string in_transaction = 3;
-  common.Metadata metadata = 4;
-  common.PaginationRequest pagination = 5;
+  string sort_order = 5;
+  common.Metadata metadata = 6;
+  common.PaginationRequest pagination = 7;
 }
 
 message ListAccountsResponse {

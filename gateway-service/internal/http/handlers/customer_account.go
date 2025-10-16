@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type CreateAccountRequest struct {
@@ -206,17 +207,19 @@ func (h *AccountHandler) GetAccountBalance(c *gin.Context) {
 // @Param min_balance query string false "Minimum balance"
 // @Param page query int false "Page number for pagination" default(1)
 // @Param pagesize query int false "Number of accounts per page" default(50)
+// @Param order query string false "Sort order (asc/desc)" default(desc)
 // @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
 // @Success 200 {object} ListAccountResponse "Successfully retrieved account list"
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /api/v1/account [get]
 func (h *AccountHandler) ListAccounts(c *gin.Context) {
-	pageStr := c.Query("page")
-	pageSizeStr := c.Query("pagesize")
-	customerID := c.Query("customer_id")
-	minBalanceStr := c.Query("min_balance")
-	inTransactionStr := c.Query("in_transaction")
+	pageStr := strings.TrimSpace(c.Query("page"))
+	pageSizeStr := strings.TrimSpace(c.Query("pagesize"))
+	order := strings.TrimSpace(c.Query("order"))
+	customerID := strings.TrimSpace(c.Query("customer_id"))
+	minBalanceStr := strings.TrimSpace(c.Query("min_balance"))
+	inTransactionStr := strings.TrimSpace(c.Query("in_transaction"))
 
 	var pageNo int = -1
 	var err error
@@ -247,6 +250,7 @@ func (h *AccountHandler) ListAccounts(c *gin.Context) {
 		CustomerId:    customerID,
 		MinBalance:    minBalanceStr,
 		InTransaction: inTransactionStr,
+		SortOrder:     order,
 		Metadata: &protoacc.Metadata{
 			RequestId: c.GetHeader("X-Request-ID"),
 			Requester: requester,

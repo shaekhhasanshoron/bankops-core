@@ -34,7 +34,7 @@ func (m *MockCustomerRepo) GetCustomerByID(id string) (*entity.Customer, error) 
 	return args.Get(0).(*entity.Customer), args.Error(1)
 }
 
-func (m *MockCustomerRepo) ListCustomer(page, pageSize int) ([]*entity.Customer, int64, error) {
+func (m *MockCustomerRepo) ListCustomer(page, pageSize int, setOrder string) ([]*entity.Customer, int64, error) {
 	args := m.Called(page, pageSize)
 	return args.Get(0).([]*entity.Customer), args.Get(1).(int64), args.Error(2)
 }

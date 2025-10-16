@@ -2,7 +2,7 @@ package transaction
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
@@ -30,7 +30,7 @@ func NewCommitTransaction(transactionRepo ports.TransactionRepo, accountRepo por
 func (t *CommitTransaction) Execute(transactionID, requester, requestId string) (string, error) {
 	tx, msg, err := t.validateAndGetTransaction(transactionID)
 	if err != nil {
-		if errors.Is(err, value.ErrTransactionCompleted) {
+		if errors.Is(err, custom_err.ErrTransactionCompleted) {
 			return msg, nil
 		}
 		return msg, err
@@ -47,7 +47,7 @@ func (t *CommitTransaction) Execute(transactionID, requester, requestId string) 
 	accounts, err := t.AccountRepo.GetAccountsInTransaction(transactionID)
 	if err != nil {
 		logging.Logger.Error().Err(err).Str("transaction_id", transactionID).Msg("Failed to verify account locks")
-		return "Failed to verify account locks", fmt.Errorf("%w: failed to verify account locks", value.ErrDatabase)
+		return "Failed to verify account locks", fmt.Errorf("%w: failed to verify account locks", custom_err.ErrDatabase)
 	}
 
 	expectedAccountCount := 1
@@ -119,7 +119,7 @@ func (t *CommitTransaction) Execute(transactionID, requester, requestId string) 
 	case entity.TransactionTypeAddAmount:
 		msg, err = t.executeAddAmount(tx, sourceAccount, requester)
 	default:
-		msg, err = "Invalid transaction type: "+tx.Type, value.ErrInvalidTransactionType
+		msg, err = "Invalid transaction type: "+tx.Type, custom_err.ErrInvalidTransactionType
 	}
 
 	if err != nil {
@@ -149,7 +149,7 @@ func (t *CommitTransaction) Execute(transactionID, requester, requestId string) 
 			Str("current_status", tx.TransactionStatus).
 			Int("current_version", tx.Version).
 			Msg("Failed to update transaction status to completed")
-		return "Failed to update transaction status to completed", fmt.Errorf("%w: failed to update transaction status", value.ErrDatabase)
+		return "Failed to update transaction status to completed", fmt.Errorf("%w: failed to update transaction status", custom_err.ErrDatabase)
 	}
 
 	// After exchanging balance and updating transaction status - complete the lifecycle
@@ -192,21 +192,21 @@ func (t *CommitTransaction) validateAndGetTransaction(transactionID string) (*en
 	tx, err := t.TransactionRepo.GetTransactionByID(transactionID)
 	if err != nil {
 		logging.Logger.Error().Err(err).Str("transaction_id", transactionID).Msg("Failed to get transaction")
-		return nil, "Failed to get transaction", value.ErrDatabase
+		return nil, "Failed to get transaction", custom_err.ErrDatabase
 	}
 	if tx == nil {
-		err := value.ErrTransactionNotFound
+		err := custom_err.ErrTransactionNotFound
 		logging.Logger.Error().Err(err).Str("transaction_id", transactionID).Msg("Transaction not found")
-		return nil, "Transaction not found", value.ErrTransactionNotFound
+		return nil, "Transaction not found", custom_err.ErrTransactionNotFound
 	}
 
 	if tx.TransactionStatus == entity.TransactionStatusCompleted {
 		logging.Logger.Info().Err(err).Str("transaction_id", transactionID).Msg("Transaction already completed")
-		return nil, "Transaction already completed", value.ErrTransactionCompleted
+		return nil, "Transaction already completed", custom_err.ErrTransactionCompleted
 	}
 
 	if tx.TransactionStatus == entity.TransactionStatusFailed || tx.TransactionStatus == entity.TransactionStatusCancelled {
-		err := fmt.Errorf("%w", value.ErrTransactionFailed)
+		err := fmt.Errorf("%w", custom_err.ErrTransactionFailed)
 		logging.Logger.Error().Err(err).Str("transaction_id", transactionID).Msg("Transaction failed")
 		return nil, "Transaction failed", err
 	}
@@ -215,7 +215,7 @@ func (t *CommitTransaction) validateAndGetTransaction(transactionID string) (*en
 
 func (t *CommitTransaction) executeTransfer(tx *entity.Transaction, sourceAccount, destinationAccount *entity.Account, requester string) (string, error) {
 	if sourceAccount.Balance < tx.Amount {
-		return "Insufficient balance", value.ErrInsufficientBalance
+		return "Insufficient balance", custom_err.ErrInsufficientBalance
 	}
 
 	// Update balances
@@ -229,7 +229,7 @@ func (t *CommitTransaction) executeTransfer(tx *entity.Transaction, sourceAccoun
 			Float64("old_balance", sourceAccount.Balance).
 			Float64("new_balance", newSourceBalance).
 			Msg("Failed to update source account balance")
-		return "Failed to update source account balance", fmt.Errorf("%w: failed to update source account balance", value.ErrDatabase)
+		return "Failed to update source account balance", fmt.Errorf("%w: failed to update source account balance", custom_err.ErrDatabase)
 	}
 
 	// Update destination account balance
@@ -248,7 +248,7 @@ func (t *CommitTransaction) executeTransfer(tx *entity.Transaction, sourceAccoun
 			Float64("old_balance", destinationAccount.Balance).
 			Float64("new_balance", newDestBalance).
 			Msg("Failed to update destination account balance, rolled back source account")
-		return "Failed to update destination account balance, rolled back source account", fmt.Errorf("%w: failed to update destination account balance", value.ErrDatabase)
+		return "Failed to update destination account balance, rolled back source account", fmt.Errorf("%w: failed to update destination account balance", custom_err.ErrDatabase)
 	}
 
 	return "", nil
@@ -256,7 +256,7 @@ func (t *CommitTransaction) executeTransfer(tx *entity.Transaction, sourceAccoun
 
 func (t *CommitTransaction) executeWithdrawFull(tx *entity.Transaction, sourceAccount *entity.Account, requester string) (string, error) {
 	if sourceAccount.Balance <= 0 {
-		return "Account already empty", value.ErrAccountEmpty
+		return "Account already empty", custom_err.ErrAccountEmpty
 	}
 
 	// Set amount to full balance and withdraw all
@@ -268,14 +268,14 @@ func (t *CommitTransaction) executeWithdrawFull(tx *entity.Transaction, sourceAc
 			Float64("old_balance", sourceAccount.Balance).
 			Float64("new_balance", newBalance).
 			Msg("Failed to update account balance for full withdrawal")
-		return "Failed to update account balance for full withdrawal", fmt.Errorf("%w: failed to update account balance", value.ErrDatabase)
+		return "Failed to update account balance for full withdrawal", fmt.Errorf("%w: failed to update account balance", custom_err.ErrDatabase)
 	}
 	return "", nil
 }
 
 func (t *CommitTransaction) executeWithdrawAmount(tx *entity.Transaction, sourceAccount *entity.Account, requester string) (string, error) {
 	if sourceAccount.Balance < tx.Amount {
-		return "Insufficient balance", value.ErrInsufficientBalance
+		return "Insufficient balance", custom_err.ErrInsufficientBalance
 	}
 
 	newBalance := sourceAccount.Balance - tx.Amount
@@ -286,7 +286,7 @@ func (t *CommitTransaction) executeWithdrawAmount(tx *entity.Transaction, source
 			Float64("old_balance", sourceAccount.Balance).
 			Float64("new_balance", newBalance).
 			Msg("Failed to update account balance for amount withdrawal")
-		return "Failed to update account balance", fmt.Errorf("%w: failed to update account balance", value.ErrDatabase)
+		return "Failed to update account balance", fmt.Errorf("%w: failed to update account balance", custom_err.ErrDatabase)
 	}
 
 	return "", nil
@@ -301,7 +301,7 @@ func (t *CommitTransaction) executeAddAmount(tx *entity.Transaction, sourceAccou
 			Float64("old_balance", sourceAccount.Balance).
 			Float64("new_balance", newBalance).
 			Msg("Failed to update account balance for amount addition")
-		return "Failed to update account balance", fmt.Errorf("%w: failed to update account balance", value.ErrDatabase)
+		return "Failed to update account balance", fmt.Errorf("%w: failed to update account balance", custom_err.ErrDatabase)
 	}
 
 	return "", nil

@@ -1,12 +1,13 @@
 package auth
 
 import (
+	"auth-service/internal/ports"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"time"
 )
 
-// TokenSigner is responsible for signing JWT tokens.
+// TokenSignerRepo implements ports.TokenSignerRepo.
 type TokenSigner struct {
 	secretKey string
 }
@@ -19,14 +20,14 @@ type Claims struct {
 }
 
 // NewTokenSigner creates a new instance of TokenSigner.
-func NewTokenSigner(secretKey string) *TokenSigner {
+func NewTokenSigner(secretKey string) ports.TokenSigner {
 	return &TokenSigner{
 		secretKey: secretKey,
 	}
 }
 
-// Sign generates a SignJWT token for the user.
-func (t *TokenSigner) SignJWT(username, role, secretKey string, expiryTime time.Duration) (string, error) {
+// SignJWT generates a JWT token for the user.
+func (a *TokenSigner) SignJWT(username, role, secretKey string, expiryTime time.Duration) (string, error) {
 	expirationTime := time.Now().Add(expiryTime)
 	claims := &Claims{
 		Username: username,
@@ -47,7 +48,7 @@ func (t *TokenSigner) SignJWT(username, role, secretKey string, expiryTime time.
 }
 
 // SignJWTRefreshToken generates a refresh token for the user.
-func (t *TokenSigner) SignJWTRefreshToken(username, secretKey string) (string, error) {
+func (a *TokenSigner) SignJWTRefreshToken(username, secretKey string) (string, error) {
 	expirationTime := time.Now().Add(7 * 24 * time.Hour)
 	claims := &Claims{
 		Username: username,

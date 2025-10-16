@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"github.com/google/uuid"
 	"time"
 )
@@ -36,7 +36,7 @@ type Account struct {
 
 func NewAccount(customerID string, accountType string, initialDeposit float64, requester string) (*Account, error) {
 	if customerID == "" {
-		return nil, value.ErrInvalidCustomer
+		return nil, custom_err.ErrInvalidCustomer
 	}
 
 	if requester == "" {
@@ -86,10 +86,10 @@ func (a *Account) IncrementVersion() {
 
 func (a *Account) Validate() error {
 	if a.Balance < 0 {
-		return value.ErrNegativeBalance
+		return custom_err.ErrNegativeBalance
 	}
 	if a.CustomerID == "" {
-		return value.ErrMissingCustomerID
+		return custom_err.ErrMissingCustomerID
 	}
 	return nil
 }

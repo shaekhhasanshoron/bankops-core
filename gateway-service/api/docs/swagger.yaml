@@ -108,6 +108,20 @@ definitions:
       totalPages:
         type: integer
     type: object
+  handlers.ListEmployeeResponse:
+    properties:
+      employees: {}
+      message:
+        type: string
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
   handlers.ListTransactionResponse:
     properties:
       message:
@@ -219,6 +233,11 @@ paths:
         in: query
         name: pagesize
         type: integer
+      - default: desc
+        description: Sort order (asc/desc)
+        in: query
+        name: order
+        type: string
       - description: Bearer token for authorization, include 'Bearer ' followed by
           access_token
         in: header
@@ -359,6 +378,11 @@ paths:
         in: query
         name: pagesize
         type: integer
+      - default: desc
+        description: Sort order (asc/desc)
+        in: query
+        name: order
+        type: string
       - description: Bearer token for authorization, include 'Bearer ' followed by
           access_token
         in: header
@@ -499,6 +523,50 @@ paths:
       tags:
       - Customer
   /api/v1/employee:
+    get:
+      consumes:
+      - application/json
+      description: Get employee list.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Number of employee per page
+        in: query
+        name: pagesize
+        type: integer
+      - default: desc
+        description: Sort order (asc/desc)
+        in: query
+        name: order
+        type: string
+      - description: Bearer token for authorization, include 'Bearer ' followed by
+          access_token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved employee list
+          schema:
+            $ref: '#/definitions/handlers.ListEmployeeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get Employee List
+      tags:
+      - Employee
     post:
       consumes:
       - application/json

@@ -63,6 +63,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "default": "desc",
+                        "description": "Sort order (asc/desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
                         "name": "Authorization",
                         "in": "header",
@@ -326,6 +333,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "default": "desc",
+                        "description": "Sort order (asc/desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
                         "name": "Authorization",
                         "in": "header",
@@ -522,6 +536,69 @@ const docTemplate = `{
             }
         },
         "/api/v1/employee": {
+            "get": {
+                "description": "Get employee list.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Employee"
+                ],
+                "summary": "Get Employee List",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number for pagination",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of employee per page",
+                        "name": "pagesize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "description": "Sort order (asc/desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved employee list",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ListEmployeeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create employee - Username: lowercase + underscores only (in middle) | Role: viewer/admin/editor | Bearer token required",
                 "consumes": [
@@ -982,6 +1059,27 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "accounts": {},
+                "message": {
+                    "type": "string"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "totalCount": {
+                    "type": "integer"
+                },
+                "totalPages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.ListEmployeeResponse": {
+            "type": "object",
+            "properties": {
+                "employees": {},
                 "message": {
                     "type": "string"
                 },

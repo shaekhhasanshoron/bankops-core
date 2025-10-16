@@ -126,6 +126,21 @@ func (c *GRPCAuthClient) UpdateEmployee(ctx context.Context, req *protoauth.Upda
 	return client.UpdateRole(ctx, req)
 }
 
+func (c *GRPCAuthClient) ListEmployee(ctx context.Context, req *protoauth.ListEmployeeRequest) (*protoauth.ListEmployeeResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.ListEmployee(ctx, req)
+}
+
 func (c *GRPCAuthClient) Close() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()

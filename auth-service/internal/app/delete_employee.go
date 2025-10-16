@@ -19,15 +19,15 @@ func NewDeleteEmployee(employeeRepo ports.EmployeeRepo) *DeleteEmployee {
 }
 
 // Execute marks an employee as invalid (soft delete).
-func (d *DeleteEmployee) Execute(username, requester string) (string, error) {
+func (a *DeleteEmployee) Execute(username, requester string) (string, error) {
 	// Fetch the employee by username
-	_, err := d.EmployeeRepo.GetEmployeeByUsername(username)
+	_, err := a.EmployeeRepo.GetEmployeeByUsername(username)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", username).Msg("employee not found")
 		return "Employee not found", errors.New("employee not found")
 	}
 
-	err = d.EmployeeRepo.DeleteEmployee(username, requester)
+	err = a.EmployeeRepo.DeleteEmployee(username, requester)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", username).Msg("failed to mark employee as invalid")
 		return "Failed to delete employee", err

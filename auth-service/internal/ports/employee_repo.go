@@ -2,18 +2,11 @@ package ports
 
 import "auth-service/internal/domain/entity"
 
-// Employee represents an employee in the system
-type Employee struct {
-	Username  string
-	Password  string
-	Role      string
-	Requester string
-}
-
 // EmployeeRepo defines the interface for employee-related database operations
 type EmployeeRepo interface {
-	CreateEmployee(employee *Employee) (*entity.Employee, error)
+	CreateEmployee(input *entity.Employee) (*entity.Employee, error)
 	GetEmployeeByUsername(username string) (*entity.Employee, error)
-	UpdateEmployee(employee *Employee) (*entity.Employee, error)
+	UpdateEmployee(employee *entity.Employee) (*entity.Employee, error)
 	DeleteEmployee(username, requester string) error
+	ListEmployee(page, pageSize int, sortOrder string) ([]*entity.Employee, int64, error)
 }

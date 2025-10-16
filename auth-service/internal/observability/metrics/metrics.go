@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,7 +18,10 @@ var (
 	httpReqDuration *prometheus.HistogramVec
 	grpcReqTotal    *prometheus.CounterVec
 	grpcReqDuration *prometheus.HistogramVec
+	operationErrors *prometheus.CounterVec
 	dbConnections   prometheus.Gauge
+	activeRequests  prometheus.Gauge
+	operationTotal  *prometheus.CounterVec
 	mu              sync.RWMutex
 )
 
@@ -70,13 +74,39 @@ func Init() {
 		[]string{"method", "path"},
 	)
 
+	activeRequests = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "http_active_requests",
+			Help: "Number of active HTTP requests.",
+		},
+	)
+
+	operationTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "account_service_operations_total",
+			Help: "Total number of business operations.",
+		},
+		[]string{"operation", "type"},
+	)
+
+	operationErrors = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "account_service_operation_errors_total",
+			Help: "Total number of business operation errors.",
+		},
+		[]string{"operation", "error_type"},
+	)
+
 	// Register the metrics with Prometheus
 	prometheus.MustRegister(
 		httpReqTotal,
 		httpReqDuration,
 		grpcReqTotal,
 		grpcReqDuration,
+		activeRequests,
 		dbConnections,
+		operationTotal,
+		operationErrors,
 	)
 
 	logging.Logger.Info().Msg("metrics initialized")
@@ -108,6 +138,84 @@ func ObserveGRPC(method string, status string, duration time.Duration) {
 
 	grpcReqTotal.WithLabelValues(method, status).Inc()
 	grpcReqDuration.WithLabelValues(method).Observe(duration.Seconds())
+}
+func IncRequestActive() {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if !config.Current().Observability.MetricsConfig.Enabled || activeRequests == nil {
+		return
+	}
+	activeRequests.Inc()
+}
+
+func DecRequestActive() {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if !config.Current().Observability.MetricsConfig.Enabled || activeRequests == nil {
+		return
+	}
+	activeRequests.Dec()
+}
+
+func RecordOperation(operation string, err error) {
+	if !config.Current().Observability.MetricsConfig.Enabled {
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	labels := make(prometheus.Labels)
+	labels["operation"] = operation
+
+	if err != nil {
+		labels["type"] = "error"
+		operationTotal.With(labels).Inc()
+
+		errorLabels := make(prometheus.Labels)
+		errorLabels["operation"] = operation
+		errorLabels["error_type"] = classifyError(err)
+		operationErrors.With(errorLabels).Inc()
+	} else {
+		labels["type"] = "success"
+		operationTotal.With(labels).Inc()
+	}
+}
+
+func classifyError(err error) string {
+	if err == nil {
+		return "none"
+	}
+
+	errStr := err.Error()
+	switch {
+	case contains(errStr, "not found"):
+		return "not_found"
+	case contains(errStr, "already exists"), contains(errStr, "duplicate"):
+		return "duplicate"
+	case contains(errStr, "validation"), contains(errStr, "invalid"):
+		return "validation"
+	case contains(errStr, "timeout"), contains(errStr, "deadline"):
+		return "timeout"
+	case contains(errStr, "circuit breaker"):
+		return "circuit_breaker"
+	case contains(errStr, "database"), contains(errStr, "sql"):
+		return "database"
+	case contains(errStr, "insufficient balance"):
+		return "insufficient_balance"
+	case contains(errStr, "locked"):
+		return "locked"
+	case contains(errStr, "concurrent"):
+		return "concurrent_modification"
+	default:
+		return "general"
+	}
+}
+
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
 }
 
 func itoa(i int) string {

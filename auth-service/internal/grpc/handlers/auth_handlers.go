@@ -6,6 +6,7 @@ import (
 	"auth-service/internal/logging"
 	"context"
 	"fmt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // AuthHandler implements the AuthServiceServer interface.
@@ -15,15 +16,22 @@ type AuthHandler struct {
 	createEmployee *app.CreateEmployee
 	updateEmployee *app.UpdateEmployee
 	deleteEmployee *app.DeleteEmployee
+	listEmployee   *app.ListEmployee
 }
 
 // NewAuthHandler creates a new AuthHandler.
-func NewAuthHandler(authenticate *app.Authenticate, createEmployee *app.CreateEmployee, updateEmployee *app.UpdateEmployee, deleteEmployee *app.DeleteEmployee) *AuthHandler {
+func NewAuthHandler(authenticate *app.Authenticate,
+	createEmployee *app.CreateEmployee,
+	updateEmployee *app.UpdateEmployee,
+	deleteEmployee *app.DeleteEmployee,
+	listEmployeeRepo *app.ListEmployee) *AuthHandler {
+
 	return &AuthHandler{
 		authenticate:   authenticate,
 		createEmployee: createEmployee,
 		updateEmployee: updateEmployee,
 		deleteEmployee: deleteEmployee,
+		listEmployee:   listEmployeeRepo,
 	}
 }
 
@@ -86,5 +94,42 @@ func (h *AuthHandler) DeleteEmployee(ctx context.Context, req *proto.DeleteEmplo
 	return &proto.DeleteEmployeeResponse{
 		Message: message,
 		Success: true,
+	}, nil
+}
+
+// ListEmployee handles the list of employees.
+func (h *AuthHandler) ListEmployee(ctx context.Context, req *proto.ListEmployeeRequest) (*proto.ListEmployeeResponse, error) {
+	employees, totalCount, totalPage, message, err := h.listEmployee.Execute(int(req.GetPage()), int(req.GetPageSize()), req.GetSortOrder())
+	if err != nil {
+		logging.Logger.Warn().Err(err).Msg("list employee failed")
+		return &proto.ListEmployeeResponse{
+			Employees:  nil,
+			Page:       req.GetPage(),
+			PageSize:   req.GetPageSize(),
+			TotalCount: int32(totalCount),
+			TotalPages: int32(totalPage),
+			Message:    message,
+			Success:    false,
+		}, nil
+	}
+
+	protoEmployees := make([]*proto.Employee, len(employees))
+	for i, employee := range employees {
+		protoEmployees[i] = &proto.Employee{
+			Id:        employee.ID,
+			UserName:  employee.Username,
+			CreatedAt: timestamppb.New(employee.CreatedAt),
+			UpdatedAt: timestamppb.New(employee.UpdatedAt),
+		}
+	}
+
+	return &proto.ListEmployeeResponse{
+		Employees:  protoEmployees,
+		Page:       req.GetPage(),
+		PageSize:   req.GetPageSize(),
+		TotalCount: int32(totalCount),
+		TotalPages: int32(totalPage),
+		Message:    message,
+		Success:    true,
 	}, nil
 }

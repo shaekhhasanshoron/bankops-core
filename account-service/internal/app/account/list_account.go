@@ -2,7 +2,7 @@ package account
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
@@ -23,7 +23,7 @@ func NewListAccount(accountRepo ports.AccountRepo) *ListAccount {
 	}
 }
 
-func (a *ListAccount) Execute(customerID, minBalance, inTransaction string, page, pageSize int, requester, requestId string) ([]*entity.Account, int64, int64, string, error) {
+func (a *ListAccount) Execute(customerID, minBalance, inTransaction string, page, pageSize int, setOrder, requester, requestId string) ([]*entity.Account, int64, int64, string, error) {
 	metrics.IncRequestActive()
 	defer metrics.DecRequestActive()
 
@@ -43,13 +43,13 @@ func (a *ListAccount) Execute(customerID, minBalance, inTransaction string, page
 	if strings.TrimSpace(minBalance) != "" {
 		amount, err := strconv.ParseFloat(strings.TrimSpace(minBalance), 64)
 		if err != nil {
-			err = fmt.Errorf("%w: customer ID is required for customer scope", value.ErrValidationFailed)
+			err = fmt.Errorf("%w: customer ID is required for customer scope", custom_err.ErrValidationFailed)
 			logging.Logger.Error().Err(err).Str("min_balance", minBalance).Msg("Invalid request - invalid balance id")
-			return nil, 0, 0, "Invalid request - customer id missing", value.ErrValidationFailed
+			return nil, 0, 0, "Invalid request - customer id missing", custom_err.ErrValidationFailed
 		}
 
 		if amount < 0 {
-			err = fmt.Errorf("%w: valid balance amount is required for has_balance scope", value.ErrValidationFailed)
+			err = fmt.Errorf("%w: valid balance amount is required for has_balance scope", custom_err.ErrValidationFailed)
 			logging.Logger.Error().Err(err).Str("balance", minBalance).Msg("Invalid request - invalid balance")
 			return nil, 0, 0, "Invalid request - invalid balance", err
 		}
@@ -73,7 +73,7 @@ func (a *ListAccount) Execute(customerID, minBalance, inTransaction string, page
 		filters["locked_for_tx"] = false
 	}
 
-	accounts, totalCount, err := a.AccountRepo.GetAccountsByFiltersWithPagination(filters, page, pageSize)
+	accounts, totalCount, err := a.AccountRepo.GetAccountsByFiltersWithPagination(filters, page, pageSize, setOrder)
 
 	totalPages := int64(0)
 	if totalCount > 0 {

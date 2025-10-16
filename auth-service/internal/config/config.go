@@ -36,6 +36,9 @@ const (
 	EnvStaging  = "staging"
 	EnvProd     = "prod"
 
+	DefaultHttpAddr = ":8080"
+	DefaultGRPCAddr = ":50051"
+
 	// EnvPrefix keeps unique environment prefix
 	EnvPrefix = "AUTH_"
 
@@ -177,9 +180,8 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	setGlobal(*cfg)
 
 	logger.Debug().
-		Str("db_dsn", cfg.DB.DSN).
-		Msg("Env Variables")
-
+		Str("env", cfg.Env).
+		Msg("Environment Variables Initialized")
 	return cfg, nil
 }
 
@@ -244,10 +246,10 @@ func defaults() map[string]any {
 	return map[string]any{
 		"env": EnvProd,
 		"grpc": map[string]any{
-			"addr": ":50051",
+			"addr": DefaultGRPCAddr,
 		},
 		"http": map[string]any{
-			"addr":                  ":8080",
+			"addr":                  DefaultHttpAddr,
 			"read_timeout_seconds":  15,
 			"write_timeout_seconds": 15,
 			"idle_timeout_seconds":  120,

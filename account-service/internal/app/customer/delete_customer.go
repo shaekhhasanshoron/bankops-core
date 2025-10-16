@@ -2,7 +2,7 @@ package customer
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
@@ -35,13 +35,13 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 	}()
 
 	if id == "" {
-		err = fmt.Errorf("%w: customer ID is required", value.ErrValidationFailed)
+		err = fmt.Errorf("%w: customer ID is required", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("missing required value")
 		return "Missing required data", err
 	}
 
 	if requester == "" {
-		err = fmt.Errorf("%w: requester is required", value.ErrValidationFailed)
+		err = fmt.Errorf("%w: requester is required", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Unknown requester")
 		return "Unknown requester", err
 	}
@@ -49,7 +49,7 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 	customer, err := c.CustomerRepo.GetCustomerByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = value.ErrCustomerNotFound
+			err = custom_err.ErrCustomerNotFound
 			return "Customer not found", err
 		}
 		logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Failed to get customer")
@@ -57,7 +57,7 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 	}
 
 	if customer == nil {
-		err = value.ErrCustomerNotFound
+		err = custom_err.ErrCustomerNotFound
 		return "Customer not found", err
 	}
 
@@ -76,7 +76,7 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 
 	// Delete customer
 	if err = c.CustomerRepo.DeleteCustomerByID(id, requester); err != nil {
-		err = fmt.Errorf("%w: failed to delete customer", value.ErrDatabase)
+		err = fmt.Errorf("%w: failed to delete customer", custom_err.ErrDatabase)
 		logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Failed to  deletion customer")
 		return "Customer deletion failed", err
 	}

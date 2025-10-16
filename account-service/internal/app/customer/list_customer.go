@@ -2,7 +2,7 @@ package customer
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
@@ -22,7 +22,7 @@ func NewListCustomer(customerRepo ports.CustomerRepo) *ListCustomer {
 }
 
 // Execute list customers
-func (c *ListCustomer) Execute(page, pageSize int, requestId string) ([]*entity.Customer, int64, int64, string, error) {
+func (c *ListCustomer) Execute(page, pageSize int, setOrder string, requestId string) ([]*entity.Customer, int64, int64, string, error) {
 	metrics.IncRequestActive()
 	defer metrics.DecRequestActive()
 
@@ -38,10 +38,10 @@ func (c *ListCustomer) Execute(page, pageSize int, requestId string) ([]*entity.
 		pageSize = 100
 	}
 
-	customers, totalCount, err := c.CustomerRepo.ListCustomer(page, pageSize)
+	customers, totalCount, err := c.CustomerRepo.ListCustomer(page, pageSize, setOrder)
 	if err != nil {
 		logging.Logger.Error().Err(err).Int("page", page).Int("page_size", pageSize).Msg("Failed to list customers")
-		return nil, 0, 0, "Failed to list customer", fmt.Errorf("%w: failed to list customers", value.ErrDatabase)
+		return nil, 0, 0, "Failed to list customer", fmt.Errorf("%w: failed to list customers", custom_err.ErrDatabase)
 	}
 
 	totalPages := int64(0)

@@ -7,6 +7,8 @@ import (
 	"gateway-service/internal/logging"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 type AuthHandler struct {
@@ -52,6 +54,15 @@ type UpdateEmployeeResponse struct {
 
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+type ListEmployeeResponse struct {
+	Employees  interface{} `json:"employees"`
+	Page       int         `json:"page"`
+	PageSize   int         `json:"pageSize"`
+	TotalCount int         `json:"totalCount"`
+	TotalPages int         `json:"totalPages"`
+	Message    string      `json:"message" binding:"message"`
 }
 
 func NewAuthHandler(authClient clients.AuthClient) *AuthHandler {
@@ -249,6 +260,81 @@ func (h *AuthHandler) DeleteEmployee(c *gin.Context) {
 
 	res := DeleteEmployeeResponse{
 		Message: resp.Message,
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// ListEmployee for fetching employee list
+// @Tags Employee
+// @Summary Get Employee List
+// @Description Get employee list.
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number for pagination" default(1)
+// @Param pagesize query int false "Number of employee per page" default(50)
+// @Param order query string false "Sort order (asc/desc)" default(desc)
+// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+// @Success 200 {object} ListEmployeeResponse "Successfully retrieved employee list"
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /api/v1/employee [get]
+func (h *AuthHandler) ListEmployee(c *gin.Context) {
+	pageStr := strings.TrimSpace(c.Query("page"))
+	pageSizeStr := strings.TrimSpace(c.Query("pagesize"))
+	order := strings.TrimSpace(c.Query("order"))
+
+	var pageNo int = -1
+	var err error
+	if pageStr != "" {
+		pageNo, err = strconv.Atoi(pageStr)
+		if err != nil {
+			logging.Logger.Warn().Err(err).Msg("Invalid page no: " + pageStr)
+			pageNo = -1
+		}
+	}
+
+	var pageSize int = -1
+	if pageSizeStr != "" {
+		pageSize, err = strconv.Atoi(pageSizeStr)
+		if err != nil {
+			logging.Logger.Warn().Err(err).Msg("Invalid page size: " + pageSizeStr)
+			pageSize = -1
+		}
+	}
+
+	un, _ := c.Get("username") // middleware
+	requester, ok := un.(string)
+	if !ok {
+		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
+	}
+
+	grpcReq := &protoauth.ListEmployeeRequest{
+		SortOrder: order,
+		Page:      int32(pageNo),
+		PageSize:  int32(pageSize),
+	}
+
+	resp, err := h.AuthClient.ListEmployee(c.Request.Context(), grpcReq)
+	if err != nil {
+		logging.Logger.Error().Err(err).Msg("failed to get employee")
+		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	if !resp.Success {
+		logging.Logger.Error().Err(errors.New(resp.Message)).Msg("unable to get employee")
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: resp.Message})
+		return
+	}
+
+	res := ListEmployeeResponse{
+		Employees:  resp.Employees,
+		Page:       int(resp.Page),
+		PageSize:   int(resp.PageSize),
+		TotalCount: int(resp.TotalCount),
+		TotalPages: int(resp.TotalPages),
+		Message:    resp.Message,
 	}
 
 	c.JSON(http.StatusOK, res)

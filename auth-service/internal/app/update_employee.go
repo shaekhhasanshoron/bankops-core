@@ -20,8 +20,8 @@ func NewUpdateEmployee(employeeRepo ports.EmployeeRepo) *UpdateEmployee {
 }
 
 // Execute updates an employee's role.
-func (u *UpdateEmployee) Execute(username, role, requester string) (string, error) {
-	_, err := u.EmployeeRepo.GetEmployeeByUsername(username)
+func (a *UpdateEmployee) Execute(username, role, requester string) (string, error) {
+	employee, err := a.EmployeeRepo.GetEmployeeByUsername(username)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", username).Msg("employee not found")
 		return "Employee not found", errors.New("employee not found")
@@ -32,14 +32,10 @@ func (u *UpdateEmployee) Execute(username, role, requester string) (string, erro
 		return "Invalid role", errors.New("invalid role")
 	}
 
-	// Update the role
-	employee := ports.Employee{
-		Username:  username,
-		Role:      role,
-		Requester: requester,
-	}
+	employee.Role = role
+	employee.UpdatedBy = requester
 
-	_, err = u.EmployeeRepo.UpdateEmployee(&employee)
+	_, err = a.EmployeeRepo.UpdateEmployee(employee)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", username).Msg("failed to update employee role")
 		return "Failed to update employee role", err

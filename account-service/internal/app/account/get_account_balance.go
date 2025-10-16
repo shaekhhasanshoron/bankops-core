@@ -1,7 +1,7 @@
 package account
 
 import (
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
@@ -31,7 +31,7 @@ func (a *GetAccountBalance) Execute(id, requester, requestId string) (float64, s
 	}()
 
 	if strings.TrimSpace(id) == "" {
-		err = fmt.Errorf("%w: 'id' - account id required in param", value.ErrValidationFailed)
+		err = fmt.Errorf("%w: 'id' - account id required in param", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Invalid request - 'id' account id missing")
 		return 0, "Invalid request - 'id' account id missing", err
 	}
@@ -39,11 +39,11 @@ func (a *GetAccountBalance) Execute(id, requester, requestId string) (float64, s
 	account, err := a.AccountRepo.GetAccountByID(id)
 	if err != nil {
 		logging.Logger.Error().Err(err).Str("account_id", id).Msg("Failed to verify account")
-		return 0, "Failed to verify account", fmt.Errorf("%v: failed to verify account", value.ErrDatabase)
+		return 0, "Failed to verify account", fmt.Errorf("%v: failed to verify account", custom_err.ErrDatabase)
 	}
 
 	if account == nil {
-		err = fmt.Errorf("%v", value.ErrAccountNotFound)
+		err = fmt.Errorf("%v", custom_err.ErrAccountNotFound)
 		logging.Logger.Error().Err(err).Str("account_id", id).Msg("Account not found")
 		return 0, "Account not found", err
 	}

@@ -163,6 +163,11 @@ proto-auth:
 		--go-grpc_out=./gateway-service/api \
 		--go-grpc_opt=paths=import
 
+.PHONY: coverage-auth
+coverage-auth:
+	@echo "→ coverage of auth-service"
+	@cd auth-service && $(GO) test -cover ./...
+
 .PHONY: docker-build-auth docker-push-auth
 docker-build-auth:
 	@echo "→ running docker build for auth-service"
@@ -212,15 +217,15 @@ test-account:
 	@cd account-service && cd internal && cd app && $(GO) test ./...
 	@cd account-service && cd internal && cd grpc && cd account_handler && $(GO) test ./...
 
-#coverage-account:
-#	@echo "→ testing account-service"
-#	@cd account-service && $(GO) test -cover ./...
-
 coverage-account:
-	@echo "→ coverage of account-service business/service domain"
-	@cd account-service && cd internal && cd app && $(GO) test -cover ./...
-	@echo "→ coverage of account-service handler domain"
-	@cd account-service && cd internal && cd grpc && cd account_handler && $(GO) test -cover ./...
+	@echo "→ coverage of account-service"
+	@cd account-service && $(GO) test -cover ./...
+
+#coverage-account:
+#	@echo "→ coverage of account-service business/service domain"
+#	@cd account-service && cd internal && cd app && $(GO) test -cover ./...
+#	@echo "→ coverage of account-service handler domain"
+#	@cd account-service && cd internal && cd grpc && cd account_handler && $(GO) test -cover ./...
 
 
 proto-account-only:

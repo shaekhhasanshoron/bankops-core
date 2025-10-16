@@ -45,6 +45,7 @@ message GetCustomerResponse {
 }
 
 message ListCustomersRequest {
+  string sort_order = 5;
   common.PaginationRequest pagination = 1;
   common.Metadata metadata = 2;
 }

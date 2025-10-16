@@ -2,7 +2,7 @@ package transaction
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
@@ -46,7 +46,7 @@ func (t *GetTransactionHistory) Execute(accountID string, companyID string, type
 	}
 
 	if startDate != nil && endDate != nil && startDate.After(*endDate) {
-		err = fmt.Errorf("%w: start date cannot be after end date", value.ErrValidationFailed)
+		err = fmt.Errorf("%w: start date cannot be after end date", custom_err.ErrValidationFailed)
 		return nil, 0, err
 	}
 
@@ -57,7 +57,7 @@ func (t *GetTransactionHistory) Execute(accountID string, companyID string, type
 			Int("page", page).
 			Int("page_size", pageSize).
 			Msg("Failed to get transaction history")
-		return nil, 0, fmt.Errorf("%w: failed to get transaction history", value.ErrDatabase)
+		return nil, 0, fmt.Errorf("%w: failed to get transaction history", custom_err.ErrDatabase)
 	}
 
 	return transactions, total, nil

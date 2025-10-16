@@ -18,6 +18,6 @@ type AccountRepo interface {
 	GetCustomerAccountsInTransaction(customerID string) ([]*entity.Account, error)
 	GetCustomerAccountsInTransactionOrHasBalance(customerID string) ([]*entity.Account, error)
 	DeleteAccount(id, requester string) error
-	GetAccountsByFiltersWithPagination(filters map[string]interface{}, page, pageSize int) ([]*entity.Account, int64, error)
+	GetAccountsByFiltersWithPagination(filters map[string]interface{}, page, pageSize int, setOrder string) ([]*entity.Account, int64, error)
 	DeleteAllAccountsByCustomerID(customerID, requester string) error
 }

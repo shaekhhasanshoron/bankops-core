@@ -2,7 +2,7 @@ package account
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	mock_repo "account-service/internal/ports/mocks/repo"
 	"errors"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +53,7 @@ func TestCreateAccount_Execute_EmptyCustomerID(t *testing.T) {
 	account, message, err := createAccount.Execute("", 100.0, "user123", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Required missing fields", message)
 	assert.Nil(t, account)
 
@@ -72,7 +72,7 @@ func TestCreateAccount_Execute_NegativeInitialDeposit(t *testing.T) {
 	account, message, err := createAccount.Execute("cust-123", -50.0, "user123", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrInvalidAmount)
+	assert.ErrorIs(t, err, custom_err.ErrInvalidAmount)
 	assert.Equal(t, "Invalid request", message)
 	assert.Nil(t, account)
 
@@ -91,7 +91,7 @@ func TestCreateAccount_Execute_EmptyRequester(t *testing.T) {
 	account, message, err := createAccount.Execute("cust-123", 100.0, "", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Unknown requester", message)
 	assert.Nil(t, account)
 
@@ -117,7 +117,7 @@ func TestCreateAccount_Execute_DatabaseError_CheckCustomer(t *testing.T) {
 	account, message, err := createAccount.Execute(customerID, initialDeposit, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrDatabase)
+	assert.ErrorIs(t, err, custom_err.ErrDatabase)
 	assert.Equal(t, "Failed to verify customer", message)
 	assert.Nil(t, account)
 
@@ -143,7 +143,7 @@ func TestCreateAccount_Execute_CustomerNotFound(t *testing.T) {
 	account, message, err := createAccount.Execute(customerID, initialDeposit, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrCustomerNotFound)
+	assert.ErrorIs(t, err, custom_err.ErrCustomerNotFound)
 	assert.Equal(t, "Customer not found", message)
 	assert.Nil(t, account)
 
@@ -173,7 +173,7 @@ func TestCreateAccount_Execute_DatabaseError_CreateAccount(t *testing.T) {
 
 	// Assert
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrDatabase)
+	assert.ErrorIs(t, err, custom_err.ErrDatabase)
 	assert.Equal(t, "Failed to create account", message)
 	assert.Nil(t, account)
 

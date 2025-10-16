@@ -2,7 +2,7 @@ package customer
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	mock_repo "account-service/internal/ports/mocks/repo"
 	"errors"
 	"testing"
@@ -72,7 +72,7 @@ func TestCreateCustomer_Execute_CustomerAlreadyExists(t *testing.T) {
 	customer, message, err := createCustomer.Execute(name, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrCustomerExists)
+	assert.ErrorIs(t, err, custom_err.ErrCustomerExists)
 	assert.Equal(t, "Customer already exists", message)
 	assert.Nil(t, customer)
 
@@ -117,7 +117,7 @@ func TestCreateCustomer_Execute_EmptyName(t *testing.T) {
 	customer, message, err := createCustomer.Execute("", "user123", "req-123")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Required missing fields", message)
 	assert.Nil(t, customer)
 
@@ -142,7 +142,7 @@ func TestCreateCustomer_Execute_DatabaseError_CreateCustomer(t *testing.T) {
 	customer, message, err := createCustomer.Execute(name, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrDatabase)
+	assert.ErrorIs(t, err, custom_err.ErrDatabase)
 	assert.Equal(t, "Failed to create customer", message)
 	assert.Nil(t, customer)
 

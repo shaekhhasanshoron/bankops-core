@@ -2,7 +2,7 @@ package sqlite
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/ports"
 	"errors"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -59,7 +59,7 @@ func (r *CustomerRepo) GetCustomerByName(name string) (*entity.Customer, error) 
 	return &customer, err
 }
 
-func (r *CustomerRepo) ListCustomer(page, pageSize int) ([]*entity.Customer, int64, error) {
+func (r *CustomerRepo) ListCustomer(page, pageSize int, setOrder string) ([]*entity.Customer, int64, error) {
 	var customers []*entity.Customer
 	var total int64
 
@@ -71,12 +71,15 @@ func (r *CustomerRepo) ListCustomer(page, pageSize int) ([]*entity.Customer, int
 		return nil, 0, err
 	}
 
-	// Query only valid customers
+	order := "created_at DESC"
+	if setOrder == "asc" {
+		order = "created_at ASC"
+	}
+
 	err := r.DB.Where("status = ?", entity.CustomerStatusValid).
-		//Preload("Accounts", "status = ?", entity.AccountStatusValid).
 		Offset(offset).
 		Limit(pageSize).
-		Order("created_at DESC").
+		Order(order).
 		Find(&customers).Error
 
 	return customers, total, err
@@ -104,15 +107,15 @@ func (r *CustomerRepo) CheckModificationAllowed(id string) error {
 		return err
 	}
 	if customer == nil {
-		return value.ErrCustomerNotFound
+		return custom_err.ErrCustomerNotFound
 	}
 
 	if customer.LockedForOperation {
-		return value.ErrCustomerLocked
+		return custom_err.ErrCustomerLocked
 	}
 
 	if customer.HasAccountsInTransaction() {
-		return value.ErrCustomerHasActiveTx
+		return custom_err.ErrCustomerHasActiveTx
 	}
 
 	return nil

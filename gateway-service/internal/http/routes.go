@@ -14,8 +14,7 @@ import (
 
 // setRoutes sets up all the routes for the API Gateway.
 func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
-	// Swagger documentation route
-	docs.SwaggerInfo.Title = "API Gateway"
+	docs.SwaggerInfo.Title = "BankOps Core - API Docs"
 	docs.SwaggerInfo.Description = "API documentation for the BankOps Core"
 	docs.SwaggerInfo.Version = "1.0"
 	// Serve static files (for swagger, images, etc.)
@@ -69,6 +68,7 @@ func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
 		protectedGroup.POST("/employee", authHandler.CreateEmployee)
 		protectedGroup.DELETE("/employee/:username", authHandler.DeleteEmployee)
 		protectedGroup.PUT("/employee/:username", authHandler.UpdateEmployee)
+		protectedGroup.GET("/employee", authHandler.ListEmployee)
 		// Customer API
 		protectedGroup.POST("/customer", accountHandler.CreateCustomer)
 		//protectedGroup.PUT("/customer/:id", accountHandler.UpdateCustomer)

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type Customer struct {
@@ -274,14 +275,16 @@ func (h *AccountHandler) DeleteCustomer(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number for pagination" default(1)
 // @Param pagesize query int false "Number of customers per page" default(50)
+// @Param order query string false "Sort order (asc/desc)" default(desc)
 // @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
 // @Success 200 {string} {object} ListCustomerResponse
 // @Failure 400 {string} {object} ErrorResponse
 // @Failure 401 {string} {object} ErrorResponse
 // @Router /api/v1/customer [get]
 func (h *AccountHandler) ListCustomer(c *gin.Context) {
-	pageStr := c.Query("page")
-	pageSizeStr := c.Query("pagesize")
+	pageStr := strings.TrimSpace(c.Query("page"))
+	pageSizeStr := strings.TrimSpace(c.Query("pagesize"))
+	order := strings.TrimSpace(c.Query("order"))
 
 	var pageNo int = -1
 	var err error
@@ -309,6 +312,7 @@ func (h *AccountHandler) ListCustomer(c *gin.Context) {
 	}
 
 	grpcReq := &protoacc.ListCustomersRequest{
+		SortOrder: order,
 		Pagination: &protoacc.PaginationRequest{
 			Page:     int32(pageNo),
 			PageSize: int32(pageSize),

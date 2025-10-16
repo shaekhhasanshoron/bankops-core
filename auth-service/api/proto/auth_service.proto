@@ -73,22 +73,24 @@ message GetEmployeeResponse {
 }
 
 message ListEmployeeRequest {
-  int32 page = 1;
-  int32 page_size = 2;
+  string sort_order = 1;
+  int32 page = 2;
+  int32 page_size = 3;
 }
 
 message ListEmployeeResponse {
   repeated Employee employees = 1;
-  int32 total_count = 2;
-  int32 page = 3;
-  int32 page_size = 4;
-  string message = 5;
-  bool success = 6;
+  int32 page = 2;
+  int32 page_size = 3;
+  int32 total_count = 4;
+  int32 total_pages = 5;
+  string message = 6;
+  bool success = 7;
 }
 
 message Employee {
   string id = 1;
-  string name = 2;
+  string user_name = 2;
   string role = 3;
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;

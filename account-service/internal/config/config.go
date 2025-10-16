@@ -36,6 +36,9 @@ const (
 	EnvStaging  = "staging"
 	EnvProd     = "prod"
 
+	DefaultHttpAddr = ":8080"
+	DefaultGRPCAddr = ":50051"
+
 	// EnvPrefix keeps unique environment prefix
 	EnvPrefix = "ACCOUNT_"
 
@@ -141,6 +144,7 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	// Setting default env
 	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("ACCOUNT_ENV")))
 	if appEnv == "" {
+		// TODO : needs to make it Production
 		appEnv = EnvDev
 	}
 
@@ -252,10 +256,10 @@ func defaults() map[string]any {
 	return map[string]any{
 		"env": EnvProd,
 		"grpc": map[string]any{
-			"addr": ":50051",
+			"addr": DefaultGRPCAddr,
 		},
 		"http": map[string]any{
-			"addr":                  ":8080",
+			"addr":                  DefaultHttpAddr,
 			"read_timeout_seconds":  15,
 			"write_timeout_seconds": 15,
 			"idle_timeout_seconds":  120,

@@ -2,7 +2,7 @@ package transaction
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	mock_repo "account-service/internal/ports/mocks/repo"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -214,7 +214,7 @@ func TestCommitTransaction_Execute_ErrorTransactionNotFound(t *testing.T) {
 	message, err := commitTransaction.Execute(transactionID, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrTransactionNotFound)
+	assert.ErrorIs(t, err, custom_err.ErrTransactionNotFound)
 	assert.Contains(t, message, "Transaction not found")
 	mockTransactionRepo.AssertExpectations(t)
 	mockAccountRepo.AssertNotCalled(t, "GetAccountsInTransaction")
@@ -620,7 +620,7 @@ func TestCommitTransaction_Execute_ErrorTransferInsufficientBalance(t *testing.T
 	message, err := commitTransaction.Execute(transactionID, requester, requestId)
 
 	assert.Error(t, err)
-	assert.Equal(t, value.ErrInsufficientBalance, err)
+	assert.Equal(t, custom_err.ErrInsufficientBalance, err)
 	assert.Contains(t, message, "Transaction execution failed")
 	mockTransactionRepo.AssertExpectations(t)
 	mockAccountRepo.AssertExpectations(t)
@@ -661,7 +661,7 @@ func TestCommitTransaction_Execute_ErrorWithdrawAmountInsufficientBalance(t *tes
 	message, err := commitTransaction.Execute(transactionID, requester, requestId)
 
 	assert.Error(t, err)
-	assert.Equal(t, value.ErrInsufficientBalance, err)
+	assert.Equal(t, custom_err.ErrInsufficientBalance, err)
 	assert.Contains(t, message, "Transaction execution failed")
 	mockTransactionRepo.AssertExpectations(t)
 	mockAccountRepo.AssertExpectations(t)
@@ -701,7 +701,7 @@ func TestCommitTransaction_Execute_ErrorWithdrawFullEmptyAccount(t *testing.T) {
 	message, err := commitTransaction.Execute(transactionID, requester, requestId)
 
 	assert.Error(t, err)
-	assert.Equal(t, value.ErrAccountEmpty, err)
+	assert.Equal(t, custom_err.ErrAccountEmpty, err)
 	assert.Contains(t, message, "Transaction execution failed")
 	mockTransactionRepo.AssertExpectations(t)
 	mockAccountRepo.AssertExpectations(t)

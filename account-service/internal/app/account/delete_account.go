@@ -2,7 +2,7 @@ package account
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
@@ -40,25 +40,25 @@ func (a *DeleteAccount) Execute(scope, id, requester, requestId string) (string,
 	id = strings.TrimSpace(id)
 
 	if scope == "" || (scope != "single" && scope != "all") {
-		err = fmt.Errorf("%w: scope required or invalid", value.ErrValidationFailed)
+		err = fmt.Errorf("%w: scope required or invalid", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Invalid request - 'scope' missing or invalid")
 		return "Invalid request - 'scope' missing or invalid", err
 	}
 
 	if id == "" {
 		if scope == "all" {
-			err = fmt.Errorf("%w: 'id' - company id required in param", value.ErrValidationFailed)
+			err = fmt.Errorf("%w: 'id' - company id required in param", custom_err.ErrValidationFailed)
 			logging.Logger.Error().Err(err).Msg("Invalid request - 'id' company id missing")
 			return "Invalid request - 'id' company id missing", err
 		} else {
-			err = fmt.Errorf("%w: 'id' - account id required in param", value.ErrValidationFailed)
+			err = fmt.Errorf("%w: 'id' - account id required in param", custom_err.ErrValidationFailed)
 			logging.Logger.Error().Err(err).Msg("Invalid request - 'id' account id missing")
 			return "Invalid request - 'id' account id missing", err
 		}
 	}
 
 	if requester == "" {
-		err = fmt.Errorf("%w: requester is required", value.ErrValidationFailed)
+		err = fmt.Errorf("%w: requester is required", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Unknown requester")
 		return "Unknown requester", err
 	}
@@ -69,32 +69,32 @@ func (a *DeleteAccount) Execute(scope, id, requester, requestId string) (string,
 	if scope == "all" {
 		customerExists, err := a.CustomerRepo.Exists(id)
 		if err != nil {
-			err = fmt.Errorf("%w: failed to verify customer", value.ErrDatabase)
+			err = fmt.Errorf("%w: failed to verify customer", custom_err.ErrDatabase)
 			logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Failed to verify customer")
 			return "Failed to verify customer", err
 		}
 
 		if !customerExists {
-			err = fmt.Errorf("%w", value.ErrCustomerNotFound)
+			err = fmt.Errorf("%w", custom_err.ErrCustomerNotFound)
 			logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Customer not found")
 			return "Customer not found", err
 		}
 
 		accounts, err := a.AccountRepo.GetCustomerAccountsInTransactionOrHasBalance(id)
 		if err != nil {
-			err = fmt.Errorf("%w: failed to verify accounts", value.ErrDatabase)
+			err = fmt.Errorf("%w: failed to verify accounts", custom_err.ErrDatabase)
 			logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Failed to verify accounts")
 			return "Failed to verify accounts", err
 		}
 
 		if accounts != nil && len(accounts) > 0 {
-			err = fmt.Errorf("%w: either accounts are in transaction or has balance", value.ErrAccountLocked)
+			err = fmt.Errorf("%w: either accounts are in transaction or has balance", custom_err.ErrAccountLocked)
 			logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Account deletion blocked - either accounts are in transaction or has balance")
 			return "Account deletion blocked. Some accounts are in transaction or has balance", err
 		}
 
 		if err = a.AccountRepo.DeleteAllAccountsByCustomerID(id, requester); err != nil {
-			err = fmt.Errorf("%w: failed to delete accounts", value.ErrDatabase)
+			err = fmt.Errorf("%w: failed to delete accounts", custom_err.ErrDatabase)
 			logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Failed to delete accounts")
 			return "Failed to delete accounts", err
 		}
@@ -107,11 +107,11 @@ func (a *DeleteAccount) Execute(scope, id, requester, requestId string) (string,
 		account, err := a.AccountRepo.GetAccountByID(id)
 		if err != nil {
 			logging.Logger.Error().Err(err).Str("account_id", id).Msg("Failed to verify account")
-			return "Failed to verify account", fmt.Errorf("%v: failed to verify account", value.ErrDatabase)
+			return "Failed to verify account", fmt.Errorf("%v: failed to verify account", custom_err.ErrDatabase)
 		}
 
 		if account == nil {
-			err = fmt.Errorf("%v", value.ErrAccountNotFound)
+			err = fmt.Errorf("%v", custom_err.ErrAccountNotFound)
 			logging.Logger.Error().Err(err).Str("account_id", id).Msg("Account not found")
 			return "Account not found", err
 		}
@@ -129,7 +129,7 @@ func (a *DeleteAccount) Execute(scope, id, requester, requestId string) (string,
 
 		if err = a.AccountRepo.DeleteAccount(id, requester); err != nil {
 			logging.Logger.Error().Err(err).Str("account_id", id).Msg("Failed to delete account")
-			return "Failed to delete account", fmt.Errorf("%w: failed to delete account", value.ErrDatabase)
+			return "Failed to delete account", fmt.Errorf("%w: failed to delete account", custom_err.ErrDatabase)
 		}
 
 		accountIDs = append(accountIDs, id)

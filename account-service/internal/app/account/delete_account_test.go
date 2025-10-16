@@ -2,7 +2,7 @@ package account
 
 import (
 	"account-service/internal/domain/entity"
-	"account-service/internal/domain/value"
+	custom_err "account-service/internal/domain/error"
 	mock_repo "account-service/internal/ports/mocks/repo"
 	"errors"
 	"github.com/stretchr/testify/assert"
@@ -82,7 +82,7 @@ func TestDeleteAccount_Execute_InvalidScope(t *testing.T) {
 	message, err := deleteAccount.Execute("invalid", "acc-123", "user123", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Invalid request - 'scope' missing or invalid", message)
 
 	mockCustomerRepo.AssertNotCalled(t, "Exists")
@@ -100,7 +100,7 @@ func TestDeleteAccount_Execute_EmptyScope(t *testing.T) {
 	message, err := deleteAccount.Execute("", "acc-123", "user123", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Invalid request - 'scope' missing or invalid", message)
 
 	mockCustomerRepo.AssertNotCalled(t, "Exists")
@@ -118,7 +118,7 @@ func TestDeleteAccount_Execute_EmptyID_SingleScope(t *testing.T) {
 	message, err := deleteAccount.Execute("single", "", "user123", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Invalid request - 'id' account id missing", message)
 
 	mockCustomerRepo.AssertNotCalled(t, "Exists")
@@ -136,7 +136,7 @@ func TestDeleteAccount_Execute_EmptyRequester(t *testing.T) {
 	message, err := deleteAccount.Execute("single", "acc-123", "", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrValidationFailed)
+	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
 	assert.Equal(t, "Unknown requester", message)
 
 	mockCustomerRepo.AssertNotCalled(t, "Exists")
@@ -161,7 +161,7 @@ func TestDeleteAccount_Execute_CustomerNotFound_AllScope(t *testing.T) {
 	message, err := deleteAccount.Execute(scope, id, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrCustomerNotFound)
+	assert.ErrorIs(t, err, custom_err.ErrCustomerNotFound)
 	assert.Equal(t, "Customer not found", message)
 
 	mockCustomerRepo.AssertExpectations(t)
@@ -186,7 +186,7 @@ func TestDeleteAccount_Execute_DatabaseError_CheckCustomer_AllScope(t *testing.T
 	message, err := deleteAccount.Execute(scope, id, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrDatabase)
+	assert.ErrorIs(t, err, custom_err.ErrDatabase)
 	assert.Equal(t, "Failed to verify customer", message)
 
 	mockCustomerRepo.AssertExpectations(t)
@@ -217,7 +217,7 @@ func TestDeleteAccount_Execute_AccountsLockedOrHasBalance_AllScope(t *testing.T)
 	message, err := deleteAccount.Execute(scope, id, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrAccountLocked)
+	assert.ErrorIs(t, err, custom_err.ErrAccountLocked)
 	assert.Equal(t, "Account deletion blocked. Some accounts are in transaction or has balance", message)
 
 	mockCustomerRepo.AssertExpectations(t)
@@ -244,7 +244,7 @@ func TestDeleteAccount_Execute_DatabaseError_CheckAccounts_AllScope(t *testing.T
 	message, err := deleteAccount.Execute(scope, id, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrDatabase)
+	assert.ErrorIs(t, err, custom_err.ErrDatabase)
 	assert.Equal(t, "Failed to verify accounts", message)
 
 	mockCustomerRepo.AssertExpectations(t)
@@ -272,7 +272,7 @@ func TestDeleteAccount_Execute_DatabaseError_DeleteAllAccounts(t *testing.T) {
 	message, err := deleteAccount.Execute(scope, id, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrDatabase)
+	assert.ErrorIs(t, err, custom_err.ErrDatabase)
 	assert.Equal(t, "Failed to delete accounts", message)
 
 	mockCustomerRepo.AssertExpectations(t)
@@ -417,7 +417,7 @@ func TestDeleteAccount_Execute_DatabaseError_DeleteAccount_SingleScope(t *testin
 	message, err := deleteAccount.Execute(scope, id, requester, requestId)
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, value.ErrDatabase)
+	assert.ErrorIs(t, err, custom_err.ErrDatabase)
 	assert.Equal(t, "Failed to delete account", message)
 
 	mockAccountRepo.AssertExpectations(t)
