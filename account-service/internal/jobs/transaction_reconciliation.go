@@ -1,4 +1,4 @@
-package service
+package jobs
 
 import (
 	apptx "account-service/internal/app/transaction"
@@ -12,15 +12,17 @@ import (
 	"time"
 )
 
-type RecoveryService struct {
+// TransactionReconciliationJob is a use-case for recovering invalid transactions
+type TransactionReconciliationJob struct {
 	TransactionRepo ports.TransactionRepo
 	AccountRepo     ports.AccountRepo
 	CustomerRepo    ports.CustomerRepo
 	EventRepo       ports.EventRepo
 }
 
-func NewRecoveryService(customerRepo ports.CustomerRepo, accountRepo ports.AccountRepo, transactionRepo ports.TransactionRepo, eventRepo ports.EventRepo) *RecoveryService {
-	return &RecoveryService{
+// NewTransactionReconciliationJob creates a new TransactionReconciliationJob use-case
+func NewTransactionReconciliationJob(customerRepo ports.CustomerRepo, accountRepo ports.AccountRepo, transactionRepo ports.TransactionRepo, eventRepo ports.EventRepo) *TransactionReconciliationJob {
+	return &TransactionReconciliationJob{
 		TransactionRepo: transactionRepo,
 		AccountRepo:     accountRepo,
 		CustomerRepo:    customerRepo,
@@ -28,8 +30,7 @@ func NewRecoveryService(customerRepo ports.CustomerRepo, accountRepo ports.Accou
 	}
 }
 
-// Start begins the transaction recovery process
-func (s *RecoveryService) Start(ctx context.Context) {
+func (s *TransactionReconciliationJob) Start(ctx context.Context) {
 	logging.Logger.Info().Msg("Starting transaction recovery service")
 
 	// Handle locked inconsistent states on startup (if money moved but transaction state not 'completed')
@@ -41,7 +42,6 @@ func (s *RecoveryService) Start(ctx context.Context) {
 		logging.Logger.Error().Err(err).Msg("Initial transaction recovery failed")
 	}
 
-	// Start periodic recovery
 	ticker := time.NewTicker(config.Current().Recovery.Interval)
 	defer ticker.Stop()
 
@@ -62,7 +62,7 @@ func (s *RecoveryService) Start(ctx context.Context) {
 }
 
 // RecoverStuckTransactions recovers all stuck transactions
-func (s *RecoveryService) RecoverStuckTransactions(ctx context.Context) error {
+func (s *TransactionReconciliationJob) RecoverStuckTransactions(ctx context.Context) error {
 	logging.Logger.Debug().Msg("Starting stuck transaction recovery")
 
 	// Get stuck transactions (past timeout)
@@ -87,7 +87,7 @@ func (s *RecoveryService) RecoverStuckTransactions(ctx context.Context) error {
 }
 
 // RecoverSingleTransaction recovers a single stuck transaction
-func (s *RecoveryService) RecoverSingleTransaction(ctx context.Context, transaction *entity.Transaction) error {
+func (s *TransactionReconciliationJob) RecoverSingleTransaction(ctx context.Context, transaction *entity.Transaction) error {
 	logging.Logger.Info().
 		Str("transaction_id", transaction.ID).
 		Str("type", transaction.Type).
@@ -128,7 +128,7 @@ func (s *RecoveryService) RecoverSingleTransaction(ctx context.Context, transact
 }
 
 // handleTimeout handles transactions that have timed out
-func (s *RecoveryService) handleTimeout(ctx context.Context, transaction *entity.Transaction, accounts []*entity.Account) error {
+func (s *TransactionReconciliationJob) handleTimeout(ctx context.Context, transaction *entity.Transaction, accounts []*entity.Account) error {
 	// Force unlock accounts first
 	if err := s.TransactionRepo.ForceUnlockAccounts(transaction.ID); err != nil {
 		return fmt.Errorf("failed to unlock accounts: %w", err)
@@ -152,14 +152,14 @@ func (s *RecoveryService) handleTimeout(ctx context.Context, transaction *entity
 }
 
 // retryTransaction attempts to retry a transaction
-func (s *RecoveryService) retryTransaction(ctx context.Context, transaction *entity.Transaction) error {
+func (s *TransactionReconciliationJob) retryTransaction(ctx context.Context, transaction *entity.Transaction) error {
 	transaction.MarkForRetry()
 	if err := s.TransactionRepo.UpdateTransactionOnRecovery(transaction); err != nil {
 		return fmt.Errorf("failed to mark transaction for retry: %w", err)
 	}
 
 	// Attempt to commit the transaction
-	commitTransactionService := apptx.NewCommitTransaction(s.AccountRepo, s.CustomerRepo, s.TransactionRepo, s.EventRepo)
+	commitTransactionService := apptx.NewCommitTransaction(s.TransactionRepo, s.AccountRepo, s.EventRepo)
 	_, err := commitTransactionService.Execute(transaction.ID, "system", "system-"+uuid.NewString())
 	if err != nil {
 		logging.Logger.Error().
@@ -178,7 +178,7 @@ func (s *RecoveryService) retryTransaction(ctx context.Context, transaction *ent
 }
 
 // handleMaxRetriesExceeded handles transactions that exceeded max retries
-func (s *RecoveryService) handleMaxRetriesExceeded(ctx context.Context, transaction *entity.Transaction, accounts []*entity.Account) error {
+func (s *TransactionReconciliationJob) handleMaxRetriesExceeded(ctx context.Context, transaction *entity.Transaction, accounts []*entity.Account) error {
 	if err := s.TransactionRepo.ForceUnlockAccounts(transaction.ID); err != nil {
 		return fmt.Errorf("failed to unlock accounts: %w", err)
 	}
@@ -202,7 +202,7 @@ func (s *RecoveryService) handleMaxRetriesExceeded(ctx context.Context, transact
 }
 
 // RecoverAllOnStartup recovers all pending transactions on service startup
-func (s *RecoveryService) RecoverAllOnStartup(ctx context.Context) error {
+func (s *TransactionReconciliationJob) RecoverAllOnStartup(ctx context.Context) error {
 	logging.Logger.Info().Msg("Starting comprehensive transaction recovery on startup")
 
 	// Get all pending and recovering transactions
@@ -237,7 +237,7 @@ func (s *RecoveryService) RecoverAllOnStartup(ctx context.Context) error {
 	return nil
 }
 
-func (s *RecoveryService) handleLockedInconsistentTransactions() error {
+func (s *TransactionReconciliationJob) handleLockedInconsistentTransactions() error {
 	// Find transactions where accounts are locked but transaction isn't completed
 	lockedTransactions, err := s.TransactionRepo.GetLockedButIncompleteTransactions()
 	if err != nil {

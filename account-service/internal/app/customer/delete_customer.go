@@ -96,5 +96,5 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 	}
 
 	logging.Logger.Debug().Str("customer_id", customer.ID).Str("requester", requester).Msg("Customer deleted successfully")
-	return "Customer delete successfully", nil
+	return "Customer deleted successfully", nil
 }

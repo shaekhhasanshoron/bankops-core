@@ -6,6 +6,7 @@ import (
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
+	"errors"
 	"fmt"
 )
 
@@ -18,25 +19,21 @@ type CommitTransaction struct {
 }
 
 // NewCommitTransaction creates a new CommitTransaction use-case
-func NewCommitTransaction(accountRepo ports.AccountRepo, customerRepo ports.CustomerRepo, transactionRepo ports.TransactionRepo, eventRepo ports.EventRepo) *CommitTransaction {
+func NewCommitTransaction(transactionRepo ports.TransactionRepo, accountRepo ports.AccountRepo, eventRepo ports.EventRepo) *CommitTransaction {
 	return &CommitTransaction{
 		AccountRepo:     accountRepo,
-		CustomerRepo:    customerRepo,
 		EventRepo:       eventRepo,
 		TransactionRepo: transactionRepo,
 	}
 }
 
 func (t *CommitTransaction) Execute(transactionID, requester, requestId string) (string, error) {
-	tx, err := t.TransactionRepo.GetTransactionByID(transactionID)
+	tx, msg, err := t.validateAndGetTransaction(transactionID)
 	if err != nil {
-		logging.Logger.Error().Err(err).Str("transaction_id", transactionID).Msg("Failed to get transaction")
-		return "Failed to get transaction", fmt.Errorf("%w: failed to get transaction", value.ErrDatabase)
-	}
-
-	if tx.TransactionStatus == entity.TransactionStatusCompleted {
-		logging.Logger.Info().Err(err).Str("transaction_id", transactionID).Msg("Transaction already completed")
-		return "Transaction already completed", nil
+		if errors.Is(err, value.ErrTransactionCompleted) {
+			return msg, nil
+		}
+		return msg, err
 	}
 
 	metrics.IncRequestActive()
@@ -45,11 +42,6 @@ func (t *CommitTransaction) Execute(transactionID, requester, requestId string) 
 	defer func() {
 		metrics.RecordOperation("commit_transaction", err)
 	}()
-
-	msg, err := t.validateTransaction(tx, transactionID)
-	if err != nil {
-		return msg, err
-	}
 
 	// Verify accounts are still locked for the transaction
 	accounts, err := t.AccountRepo.GetAccountsInTransaction(transactionID)
@@ -196,25 +188,29 @@ func (t *CommitTransaction) Execute(transactionID, requester, requestId string) 
 	return "", nil
 }
 
-func (t *CommitTransaction) validateTransaction(tx *entity.Transaction, transactionID string) (string, error) {
+func (t *CommitTransaction) validateAndGetTransaction(transactionID string) (*entity.Transaction, string, error) {
+	tx, err := t.TransactionRepo.GetTransactionByID(transactionID)
+	if err != nil {
+		logging.Logger.Error().Err(err).Str("transaction_id", transactionID).Msg("Failed to get transaction")
+		return nil, "Failed to get transaction", value.ErrDatabase
+	}
 	if tx == nil {
-		err := fmt.Errorf("%w", value.ErrTransactionNotFound)
+		err := value.ErrTransactionNotFound
 		logging.Logger.Error().Err(err).Str("transaction_id", transactionID).Msg("Transaction not found")
-		return "Transaction not found", err
+		return nil, "Transaction not found", value.ErrTransactionNotFound
 	}
 
 	if tx.TransactionStatus == entity.TransactionStatusCompleted {
-		err := fmt.Errorf("%w", value.ErrTransactionCompleted)
-		logging.Logger.Error().Err(err).Str("transaction_id", transactionID).Msg("Transaction already completed")
-		return "Transaction already completed", err
+		logging.Logger.Info().Err(err).Str("transaction_id", transactionID).Msg("Transaction already completed")
+		return nil, "Transaction already completed", value.ErrTransactionCompleted
 	}
 
 	if tx.TransactionStatus == entity.TransactionStatusFailed || tx.TransactionStatus == entity.TransactionStatusCancelled {
 		err := fmt.Errorf("%w", value.ErrTransactionFailed)
 		logging.Logger.Error().Err(err).Str("transaction_id", transactionID).Msg("Transaction failed")
-		return "Transaction failed", err
+		return nil, "Transaction failed", err
 	}
-	return "", nil
+	return tx, "", nil
 }
 
 func (t *CommitTransaction) executeTransfer(tx *entity.Transaction, sourceAccount, destinationAccount *entity.Account, requester string) (string, error) {

@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"net/http"
 )
 
 // setRoutes sets up all the routes for the API Gateway.
@@ -17,6 +18,23 @@ func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
 	docs.SwaggerInfo.Title = "API Gateway"
 	docs.SwaggerInfo.Description = "API documentation for the BankOps Core"
 	docs.SwaggerInfo.Version = "1.0"
+	// Serve static files (for swagger, images, etc.)
+	router.Static("/static", "./static")
+
+	// Load templates
+	router.LoadHTMLGlob("static/*.html")
+
+	// Route for serving the index page
+	router.GET("/", func(c *gin.Context) {
+		// Define the Swagger URL dynamically
+		swaggerURL := "/swagger/index.html"
+
+		// Render the index.html file with the dynamic Swagger URL
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"SwaggerURL": swaggerURL,
+		})
+	})
+
 	router.GET("/swagger", func(c *gin.Context) {
 		c.Redirect(302, "/swagger/index.html")
 	})

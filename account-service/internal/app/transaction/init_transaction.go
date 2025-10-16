@@ -14,16 +14,14 @@ import (
 // IniTransaction is a use-case for initiating a transaction
 type IniTransaction struct {
 	AccountRepo     ports.AccountRepo
-	CustomerRepo    ports.CustomerRepo
 	EventRepo       ports.EventRepo
 	TransactionRepo ports.TransactionRepo
 }
 
 // NewInitTransaction creates a new IniTransaction use-case
-func NewInitTransaction(accountRepo ports.AccountRepo, customerRepo ports.CustomerRepo, transactionRepo ports.TransactionRepo, eventRepo ports.EventRepo) *IniTransaction {
+func NewInitTransaction(transactionRepo ports.TransactionRepo, accountRepo ports.AccountRepo, eventRepo ports.EventRepo) *IniTransaction {
 	return &IniTransaction{
 		AccountRepo:     accountRepo,
-		CustomerRepo:    customerRepo,
 		EventRepo:       eventRepo,
 		TransactionRepo: transactionRepo,
 	}

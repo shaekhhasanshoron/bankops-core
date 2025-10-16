@@ -12,14 +12,12 @@ import (
 // ListCustomer is a use-case for list of customers
 type ListCustomer struct {
 	CustomerRepo ports.CustomerRepo
-	EventRepo    ports.EventRepo
 }
 
 // NewListCustomer creates a new ListCustomer use-case
-func NewListCustomer(customerRepo ports.CustomerRepo, eventRepo ports.EventRepo) *ListCustomer {
+func NewListCustomer(customerRepo ports.CustomerRepo) *ListCustomer {
 	return &ListCustomer{
 		CustomerRepo: customerRepo,
-		EventRepo:    eventRepo,
 	}
 }
 

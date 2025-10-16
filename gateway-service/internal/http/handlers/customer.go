@@ -362,7 +362,6 @@ func (h *AccountHandler) ListCustomerAccounts(c *gin.Context) {
 	customerId := c.Param("id")
 	pageStr := c.Query("page")
 	pageSizeStr := c.Query("pagesize")
-	scopes := "customer"
 
 	var pageNo int = -1
 	var err error
@@ -390,7 +389,6 @@ func (h *AccountHandler) ListCustomerAccounts(c *gin.Context) {
 	}
 
 	grpcReq := &protoacc.ListAccountsRequest{
-		Scopes:     scopes,
 		CustomerId: customerId,
 		Metadata: &protoacc.Metadata{
 			RequestId: c.GetHeader("X-Request-ID"),

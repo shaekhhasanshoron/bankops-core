@@ -72,7 +72,7 @@ func (s *AccountHandlerService) GetBalance(ctx context.Context, req *protoacc.Ge
 }
 
 func (h *AccountHandlerService) ListAccount(ctx context.Context, req *protoacc.ListAccountsRequest) (*protoacc.ListAccountsResponse, error) {
-	accounts, totalCount, totalPages, message, err := h.ListAccountService.Execute(req.Scopes, req.CustomerId, req.MinBalance, int(req.GetPagination().GetPage()), int(req.GetPagination().GetPageSize()), req.GetMetadata().GetRequester(), req.GetMetadata().GetRequestId())
+	accounts, totalCount, totalPages, message, err := h.ListAccountService.Execute(req.CustomerId, req.MinBalance, req.InTransaction, int(req.GetPagination().GetPage()), int(req.GetPagination().GetPageSize()), req.GetMetadata().GetRequester(), req.GetMetadata().GetRequestId())
 	if err != nil {
 		logging.Logger.Warn().Err(err).Msg("list customer failed")
 		return &protoacc.ListAccountsResponse{

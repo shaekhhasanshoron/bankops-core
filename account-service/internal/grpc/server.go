@@ -25,17 +25,24 @@ type ServiceRepos struct {
 }
 
 func StartGRPCServer(repos ServiceRepos) {
-	//// Create gRPC server options including interceptors
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(
-			grpc_middleware.ChainUnaryServer(
-				interceptors.MetricsInterceptor,
-				interceptors.TracingInterceptor,
-				interceptors.LoggingInterceptor,
-				interceptors.RecoveryInterceptor,
-			),
-		),
-	)
+	var unaryInterceptors []grpc.UnaryServerInterceptor
+
+	if config.Current().Observability.MetricsConfig.Enabled {
+		unaryInterceptors = append(unaryInterceptors, interceptors.MetricsInterceptor)
+	}
+
+	if config.Current().Observability.TracingConfig.Enabled {
+		unaryInterceptors = append(unaryInterceptors, interceptors.TracingInterceptor)
+	}
+
+	unaryInterceptors = append(unaryInterceptors, interceptors.RecoveryInterceptor, interceptors.LoggingInterceptor)
+	var options []grpc.ServerOption
+	if len(unaryInterceptors) > 0 {
+		options = append(options, grpc.UnaryInterceptor(
+			grpc_middleware.ChainUnaryServer(unaryInterceptors...),
+		))
+	}
+	grpcServer := grpc.NewServer(options...)
 
 	// Register gRPC services
 	protoacc.RegisterAccountServiceServer(grpcServer, generateAggregatedHandlers(repos))
@@ -61,14 +68,14 @@ func StartGRPCServer(repos ServiceRepos) {
 func generateAggregatedHandlers(repos ServiceRepos) *handlers.AccountHandlerService {
 	accountAggregatedHandler := handlers.NewAggregatedHandler()
 	accountAggregatedHandler.CreateCustomerService = appcustomer.NewCreateCustomer(repos.CustomerRepo, repos.EventRepo)
-	accountAggregatedHandler.ListCustomerService = appcustomer.NewListCustomer(repos.CustomerRepo, repos.EventRepo)
+	accountAggregatedHandler.ListCustomerService = appcustomer.NewListCustomer(repos.CustomerRepo)
 	accountAggregatedHandler.DeleteCustomerService = appcustomer.NewDeleteCustomer(repos.CustomerRepo, repos.EventRepo)
 	accountAggregatedHandler.CreateAccountService = appaccount.NewCreateAccount(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
 	accountAggregatedHandler.DeleteAccountService = appaccount.NewDeleteAccount(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
-	accountAggregatedHandler.GetAccountBalanceService = appaccount.NewGetAccountBalance(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
-	accountAggregatedHandler.ListAccountService = appaccount.NewListAccount(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
-	accountAggregatedHandler.InitTransactionService = apptx.NewInitTransaction(repos.AccountRepo, repos.CustomerRepo, repos.TransactionRepo, repos.EventRepo)
-	accountAggregatedHandler.CommitTransactionService = apptx.NewCommitTransaction(repos.AccountRepo, repos.CustomerRepo, repos.TransactionRepo, repos.EventRepo)
-	accountAggregatedHandler.GetTransactionHistoryService = apptx.NewGetTransactionHistory(repos.AccountRepo, repos.CustomerRepo, repos.TransactionRepo, repos.EventRepo)
+	accountAggregatedHandler.GetAccountBalanceService = appaccount.NewGetAccountBalance(repos.AccountRepo)
+	accountAggregatedHandler.ListAccountService = appaccount.NewListAccount(repos.AccountRepo)
+	accountAggregatedHandler.InitTransactionService = apptx.NewInitTransaction(repos.TransactionRepo, repos.AccountRepo, repos.EventRepo)
+	accountAggregatedHandler.CommitTransactionService = apptx.NewCommitTransaction(repos.TransactionRepo, repos.AccountRepo, repos.EventRepo)
+	accountAggregatedHandler.GetTransactionHistoryService = apptx.NewGetTransactionHistory(repos.TransactionRepo)
 	return accountAggregatedHandler
 }

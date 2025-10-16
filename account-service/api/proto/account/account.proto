@@ -33,11 +33,11 @@ message CreateAccountResponse {
 }
 
 message ListAccountsRequest {
-  string scopes = 1; // comma separated; (customer/in_transaction/has_balance)
-  string customer_id = 2;
-  double min_balance = 3;
-  common.Metadata metadata = 5;
-  common.PaginationRequest pagination = 6;
+  string customer_id = 1;
+  string min_balance = 2;
+  string in_transaction = 3;
+  common.Metadata metadata = 4;
+  common.PaginationRequest pagination = 5;
 }
 
 message ListAccountsResponse {

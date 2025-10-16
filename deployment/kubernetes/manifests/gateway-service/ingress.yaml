@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  labels:
+    app: gateway-service
+    role: bankops-core
+  name: gateway-service
+  namespace: bankops-core
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: bankops-core.135.235.192.122.nip.io
+      http:
+        paths:
+          - backend:
+              service:
+                name: gateway-service
+                port:
+                  number: 80
+            path: /
+            pathType: ImplementationSpecific

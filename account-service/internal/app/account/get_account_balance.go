@@ -6,21 +6,18 @@ import (
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"fmt"
+	"strings"
 )
 
 // GetAccountBalance is a use-case for getting balance of an account
 type GetAccountBalance struct {
-	AccountRepo  ports.AccountRepo
-	CustomerRepo ports.CustomerRepo
-	EventRepo    ports.EventRepo
+	AccountRepo ports.AccountRepo
 }
 
 // NewGetAccountBalance creates a new GetAccountBalance use-case
-func NewGetAccountBalance(accountRepo ports.AccountRepo, customerRepo ports.CustomerRepo, eventRepo ports.EventRepo) *GetAccountBalance {
+func NewGetAccountBalance(accountRepo ports.AccountRepo) *GetAccountBalance {
 	return &GetAccountBalance{
-		AccountRepo:  accountRepo,
-		CustomerRepo: customerRepo,
-		EventRepo:    eventRepo,
+		AccountRepo: accountRepo,
 	}
 }
 
@@ -33,7 +30,7 @@ func (a *GetAccountBalance) Execute(id, requester, requestId string) (float64, s
 		metrics.RecordOperation("get_balance", err)
 	}()
 
-	if id == "" {
+	if strings.TrimSpace(id) == "" {
 		err = fmt.Errorf("%w: 'id' - account id required in param", value.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Invalid request - 'id' account id missing")
 		return 0, "Invalid request - 'id' account id missing", err

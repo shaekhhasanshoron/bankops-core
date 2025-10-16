@@ -49,7 +49,9 @@ func main() {
 		log.Fatalf("failed to initialize tracing: %v", err)
 	}
 	defer func() {
-		_ = traceShutdown(context.Background())
+		if config.Current().Observability.TracingConfig.Enabled {
+			_ = traceShutdown(context.Background())
+		}
 	}()
 
 	// JWT Token Signer

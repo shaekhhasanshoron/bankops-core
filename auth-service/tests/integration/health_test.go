@@ -12,7 +12,7 @@ import (
 	httpserver "auth-service/internal/http"
 )
 
-// TestHttpHealthEndpoints (Integration Test) tests health check endpoints
+// TestHttpHealthEndpoints tests health check endpoints
 func TestHttpHealthEndpoints(t *testing.T) {
 	// Listener with a random port
 	ln, err := net.Listen("tcp", "127.0.0.1:0")

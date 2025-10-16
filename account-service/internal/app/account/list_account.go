@@ -7,26 +7,23 @@ import (
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
 // ListAccount is a use-case for getting account list
 type ListAccount struct {
-	AccountRepo  ports.AccountRepo
-	CustomerRepo ports.CustomerRepo
-	EventRepo    ports.EventRepo
+	AccountRepo ports.AccountRepo
 }
 
 // NewListAccount creates a new ListAccount use-case
-func NewListAccount(accountRepo ports.AccountRepo, customerRepo ports.CustomerRepo, eventRepo ports.EventRepo) *ListAccount {
+func NewListAccount(accountRepo ports.AccountRepo) *ListAccount {
 	return &ListAccount{
-		AccountRepo:  accountRepo,
-		CustomerRepo: customerRepo,
-		EventRepo:    eventRepo,
+		AccountRepo: accountRepo,
 	}
 }
 
-func (a *ListAccount) Execute(scopes, customerID string, minBalance float64, page, pageSize int, requester, requestId string) ([]*entity.Account, int64, int64, string, error) {
+func (a *ListAccount) Execute(customerID, minBalance, inTransaction string, page, pageSize int, requester, requestId string) ([]*entity.Account, int64, int64, string, error) {
 	metrics.IncRequestActive()
 	defer metrics.DecRequestActive()
 
@@ -35,11 +32,6 @@ func (a *ListAccount) Execute(scopes, customerID string, minBalance float64, pag
 		metrics.RecordOperation("list_accounts", err)
 	}()
 
-	scopeArr := strings.Split(scopes, ",")
-	if len(scopeArr) == 0 {
-		scopeArr = append(scopeArr, "all")
-	}
-
 	if page < 1 {
 		page = 1
 	}
@@ -47,44 +39,38 @@ func (a *ListAccount) Execute(scopes, customerID string, minBalance float64, pag
 		pageSize = 100
 	}
 
-	var hasCustomer, hasBalance, hasTransaction bool
-
-	for _, scope := range scopeArr {
-		switch strings.TrimSpace(scope) {
-		case "customer":
-			hasCustomer = true
-		case "has_balance":
-			hasBalance = true
-		case "in_transaction":
-			hasTransaction = true
+	var minBalanceAmount *float64
+	if strings.TrimSpace(minBalance) != "" {
+		amount, err := strconv.ParseFloat(strings.TrimSpace(minBalance), 64)
+		if err != nil {
+			err = fmt.Errorf("%w: customer ID is required for customer scope", value.ErrValidationFailed)
+			logging.Logger.Error().Err(err).Str("min_balance", minBalance).Msg("Invalid request - invalid balance id")
+			return nil, 0, 0, "Invalid request - customer id missing", value.ErrValidationFailed
 		}
-	}
 
-	if hasCustomer && customerID == "" {
-		err = fmt.Errorf("%w: customer ID is required for customer scope", value.ErrValidationFailed)
-		logging.Logger.Error().Err(err).Msg("Invalid request - customer ID is required for customer scope")
-		return nil, 0, 0, "Invalid request - customer id missing", err
-	}
-
-	if hasBalance && minBalance < 0 {
-		err = fmt.Errorf("%w: valid balance amount is required for has_balance scope", value.ErrValidationFailed)
-		logging.Logger.Error().Err(err).Str("balance", fmt.Sprintf("%.2f", minBalance)).Msg("Invalid request - invalid balance")
-		return nil, 0, 0, "Invalid request - invalid balance", err
+		if amount < 0 {
+			err = fmt.Errorf("%w: valid balance amount is required for has_balance scope", value.ErrValidationFailed)
+			logging.Logger.Error().Err(err).Str("balance", minBalance).Msg("Invalid request - invalid balance")
+			return nil, 0, 0, "Invalid request - invalid balance", err
+		}
+		minBalanceAmount = &amount
 	}
 
 	filters := make(map[string]interface{})
 	filters["status"] = "valid"
 
-	if hasCustomer {
-		filters["customer_id"] = customerID
+	if strings.TrimSpace(customerID) != "" {
+		filters["customer_id"] = strings.TrimSpace(customerID)
 	}
 
-	if hasBalance {
-		filters["min_balance"] = minBalance
+	if minBalanceAmount != nil {
+		filters["min_balance"] = *minBalanceAmount
 	}
 
-	if hasTransaction {
+	if strings.TrimSpace(inTransaction) == "true" {
 		filters["locked_for_tx"] = true
+	} else if strings.TrimSpace(inTransaction) == "false" {
+		filters["locked_for_tx"] = false
 	}
 
 	accounts, totalCount, err := a.AccountRepo.GetAccountsByFiltersWithPagination(filters, page, pageSize)

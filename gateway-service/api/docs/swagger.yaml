@@ -151,8 +151,8 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete an account or all accounts for a customer by scope (scope=single;
-        id = account_id / scope=all; id = customer_id)
+      description: Delete a single account or all accounts under customer for a customer
+        by scope (scope=single -> id = account_id / scope=all -> id = customer_id)
       parameters:
       - description: Bearer token for authorization, include 'Bearer ' followed by
           access_token
@@ -160,7 +160,8 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: Scope (single/all)
+      - default: single
+        description: Scope (single/all)
         in: query
         name: scope
         required: true
@@ -191,22 +192,23 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get account list based on scopes. scopes is optional, value of
-        scope (customer/in_transaction/has_balance).
+      description: Get account list. default gets all, if requested can be filtered
+        by customer_id, minimum_balance, in_transaction (if true; get accounts that
+        are currently locked for transaction)
       parameters:
-      - default: all
-        description: Scope filter (comma separated) (customer,in_transaction,has_balance)
-        in: query
-        name: scopes
-        type: string
-      - description: Customer ID (required when adding 'customer' to scopes)
+      - description: Customer ID
         in: query
         name: customer_id
         type: string
-      - description: Minimum balance (required when adding 'has_balance' to scopes)
+      - description: 'Account In Transaction (value: true/false; default won''t affect
+          the filter)'
+        in: query
+        name: in_transaction
+        type: string
+      - description: Minimum balance
         in: query
         name: min_balance
-        type: number
+        type: string
       - default: 1
         description: Page number for pagination
         in: query

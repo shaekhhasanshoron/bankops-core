@@ -22,7 +22,7 @@ type Account struct {
 	ID                  string  `gorm:"primaryKey"`
 	CustomerID          string  `gorm:"not null;index"`
 	Balance             float64 `gorm:"not null;default:0;check:balance >= 0"`
-	ActiveType          string  `gorm:"not null;default:'savings'"`
+	AccountType         string  `gorm:"not null;default:'savings'"`
 	ActiveStatus        string  `gorm:"not null;default:'active'"`
 	LockedForTx         bool    `gorm:"default:false;index"` // locked for Transaction
 	ActiveTransactionID *string `gorm:"index"`
@@ -48,7 +48,7 @@ func NewAccount(customerID string, accountType string, initialDeposit float64, r
 		ID:           uuid.New().String(),
 		CustomerID:   customerID,
 		Balance:      initialDeposit,
-		ActiveType:   accountType,
+		AccountType:  accountType,
 		ActiveStatus: AccountActiveStatusActive,
 		Version:      1,
 		Status:       AccountStatusValid,

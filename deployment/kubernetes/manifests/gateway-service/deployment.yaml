@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gateway-service
+    role: bankops-core
+  name: gateway-service
+  namespace: bankops-core
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: gateway-service
+      role: bankops-core
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+      labels:
+        app: gateway-service
+        role: bankops-core
+    spec:
+      containers:
+        - name: gateway
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+          - name: GATEWAY_ENV
+            value: "prod"
+          - name: GATEWAY_HTTP__ADDR
+            value: ":8080"
+          - name: GATEWAY_GRPC__AUTH_SVC_ADDR
+            value: "auth-service:50051"
+          - name: GATEWAY_GRPC__ACCOUNT_SVC_ADDR
+            value: "account-service:50051"
+          - name: GATEWAY_LOGGING__LEVEL
+            value: "info"
+          - name: GATEWAY_LOGGING__ENCODING
+            value: "console"
+          - name: GATEWAY_OBSERVABILITY__METRICS__ENABLED
+            value: "true"
+          - name: GATEWAY_OBSERVABILITY__TRACING__ENABLED
+            value: "false"
+          image: shaekhhasan/bankapp-core:gateway-service-v1.0.0
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 15
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 15
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: 20m
+              memory: 32Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+      restartPolicy: Always

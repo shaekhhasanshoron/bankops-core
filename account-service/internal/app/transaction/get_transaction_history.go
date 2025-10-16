@@ -19,11 +19,8 @@ type GetTransactionHistory struct {
 }
 
 // NewGetTransactionHistory creates a new GetTransactionHistory use-case
-func NewGetTransactionHistory(accountRepo ports.AccountRepo, customerRepo ports.CustomerRepo, transactionRepo ports.TransactionRepo, eventRepo ports.EventRepo) *GetTransactionHistory {
+func NewGetTransactionHistory(transactionRepo ports.TransactionRepo) *GetTransactionHistory {
 	return &GetTransactionHistory{
-		AccountRepo:     accountRepo,
-		CustomerRepo:    customerRepo,
-		EventRepo:       eventRepo,
 		TransactionRepo: transactionRepo,
 	}
 }
@@ -40,7 +37,7 @@ func (t *GetTransactionHistory) Execute(accountID string, companyID string, type
 	if page < 1 {
 		page = 1
 	}
-	if pageSize < 1 || pageSize > 100 {
+	if pageSize < 1 || pageSize > 50 {
 		pageSize = 50
 	}
 

@@ -29,7 +29,14 @@ func StartServer(gRPCClients GrpcClients) {
 	corsConfig.AddAllowMethods("OPTIONS")
 
 	// setting middleware
-	r.Use(gin.LoggerWithWriter(gin.DefaultWriter, "/health", "/ready", "/metrics"), cors.New(corsConfig), middleware.Metrics(), middleware.Tracing(), gin.Recovery())
+	r.Use(gin.LoggerWithWriter(gin.DefaultWriter, "/health", "/ready", "/metrics"), cors.New(corsConfig), gin.Recovery())
+	if config.Current().Observability.MetricsConfig.Enabled {
+		r.Use(middleware.Metrics())
+	}
+
+	if config.Current().Observability.TracingConfig.Enabled {
+		r.Use(middleware.Tracing())
+	}
 
 	// Setup routes
 	setRoutes(r, gRPCClients)

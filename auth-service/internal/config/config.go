@@ -175,6 +175,11 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 
 	// Setting environment globally
 	setGlobal(*cfg)
+
+	logger.Debug().
+		Str("db_dsn", cfg.DB.DSN).
+		Msg("Env Variables")
+
 	return cfg, nil
 }
 

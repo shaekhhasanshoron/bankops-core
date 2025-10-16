@@ -96,11 +96,11 @@ func (h *AccountHandler) CreateAccount(c *gin.Context) {
 // DeleteAccount for delete account by scope (scope=single; id = account_id / scope=all; id = customer_id)
 // @Tags Account
 // @Summary Delete Account (single/all)
-// @Description Delete an account or all accounts for a customer by scope (scope=single; id = account_id / scope=all; id = customer_id)
+// @Description Delete a single account or all accounts under customer for a customer by scope (scope=single -> id = account_id / scope=all -> id = customer_id)
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
-// @Param scope query string true "Scope (single/all)"
+// @Param scope query string true "Scope (single/all)" default(single)
 // @Param id query string true "AccountID or CustomerID"
 // @Success 200 {string} {object} DeleteAccountResponse
 // @Failure 400 {string} {object} ErrorResponse
@@ -198,13 +198,12 @@ func (h *AccountHandler) GetAccountBalance(c *gin.Context) {
 // ListAccounts for fetching account list
 // @Tags Account
 // @Summary Get Account List
-// @Description Get account list based on scopes. scopes is optional, value of scope (customer/in_transaction/has_balance).
-// if scope is customer then provide customer_id in query, if scope=has_balance provide min_balance in query
+// @Description Get account list. default gets all, if requested can be filtered by customer_id, minimum_balance, in_transaction (if true; get accounts that are currently locked for transaction)
 // @Accept json
 // @Produce json
-// @Param scopes query string false "Scope filter (comma separated) (customer,in_transaction,has_balance)" default(all)
-// @Param customer_id query string false "Customer ID (required when adding 'customer' to scopes)"
-// @Param min_balance query number false "Minimum balance (required when adding 'has_balance' to scopes)"
+// @Param customer_id query string false "Customer ID"
+// @Param in_transaction query string false "Account In Transaction (value: true/false; default won't affect the filter)"
+// @Param min_balance query string false "Minimum balance"
 // @Param page query int false "Page number for pagination" default(1)
 // @Param pagesize query int false "Number of accounts per page" default(50)
 // @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
@@ -215,9 +214,9 @@ func (h *AccountHandler) GetAccountBalance(c *gin.Context) {
 func (h *AccountHandler) ListAccounts(c *gin.Context) {
 	pageStr := c.Query("page")
 	pageSizeStr := c.Query("pagesize")
-	scopes := c.Query("scopes")
 	customerID := c.Query("customer_id")
 	minBalanceStr := c.Query("min_balance")
+	inTransactionStr := c.Query("in_transaction")
 
 	var pageNo int = -1
 	var err error
@@ -238,15 +237,6 @@ func (h *AccountHandler) ListAccounts(c *gin.Context) {
 		}
 	}
 
-	var minBalance int
-	if minBalanceStr != "" {
-		minBalance, err = strconv.Atoi(minBalanceStr)
-		if err != nil {
-			logging.Logger.Warn().Err(err).Msg("Invalid minimum balance: " + minBalanceStr)
-			minBalance = -1
-		}
-	}
-
 	un, _ := c.Get("username") // middleware
 	requester, ok := un.(string)
 	if !ok {
@@ -254,9 +244,9 @@ func (h *AccountHandler) ListAccounts(c *gin.Context) {
 	}
 
 	grpcReq := &protoacc.ListAccountsRequest{
-		Scopes:     scopes,
-		CustomerId: customerID,
-		MinBalance: float64(minBalance),
+		CustomerId:    customerID,
+		MinBalance:    minBalanceStr,
+		InTransaction: inTransactionStr,
 		Metadata: &protoacc.Metadata{
 			RequestId: c.GetHeader("X-Request-ID"),
 			Requester: requester,

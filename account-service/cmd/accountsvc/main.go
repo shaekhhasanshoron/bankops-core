@@ -6,11 +6,11 @@ import (
 	"account-service/internal/db"
 	"account-service/internal/grpc"
 	httpserver "account-service/internal/http"
+	"account-service/internal/jobs"
 	"account-service/internal/logging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/observability/tracing"
 	"account-service/internal/runtime"
-	"account-service/internal/service"
 	"context"
 	"fmt"
 	"log"
@@ -49,11 +49,13 @@ func main() {
 		log.Fatalf("failed to initialize tracing: %v", err)
 	}
 	defer func() {
-		_ = traceShutdown(context.Background())
+		if config.Current().Observability.TracingConfig.Enabled {
+			_ = traceShutdown(context.Background())
+		}
 	}()
 
 	// Initialize and start recovery service
-	recoveryService := service.NewRecoveryService(
+	recoveryService := jobs.NewTransactionReconciliationJob(
 		sqlite.NewCustomerRepo(dbInstance),
 		sqlite.NewAccountRepo(dbInstance),
 		sqlite.NewTransactionRepo(dbInstance),

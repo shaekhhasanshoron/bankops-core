@@ -17,17 +17,24 @@ import (
 )
 
 func StartGRPCServer(employeeRepo ports.EmployeeRepo, tokenSigner *auth.TokenSigner) {
-	//// Create gRPC server options including interceptors
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(
-			grpc_middleware.ChainUnaryServer(
-				interceptors.MetricsInterceptor,
-				interceptors.TracingInterceptor,
-				interceptors.LoggingInterceptor,
-				interceptors.RecoveryInterceptor,
-			),
-		),
-	)
+	var unaryInterceptors []grpc.UnaryServerInterceptor
+
+	if config.Current().Observability.MetricsConfig.Enabled {
+		unaryInterceptors = append(unaryInterceptors, interceptors.MetricsInterceptor)
+	}
+
+	if config.Current().Observability.TracingConfig.Enabled {
+		unaryInterceptors = append(unaryInterceptors, interceptors.TracingInterceptor)
+	}
+
+	unaryInterceptors = append(unaryInterceptors, interceptors.RecoveryInterceptor, interceptors.LoggingInterceptor)
+	var options []grpc.ServerOption
+	if len(unaryInterceptors) > 0 {
+		options = append(options, grpc.UnaryInterceptor(
+			grpc_middleware.ChainUnaryServer(unaryInterceptors...),
+		))
+	}
+	grpcServer := grpc.NewServer(options...)
 
 	// Register gRPC services
 	authHandler := handlers.NewAuthHandler(

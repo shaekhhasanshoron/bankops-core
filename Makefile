@@ -5,6 +5,7 @@
 # Basic toolchain variables
 GO           ?= go
 SHELL        := /usr/bin/env bash
+DOCKER_REGISTRY        := shaekhhasan
 CUR          := $(abspath .)
 
 TOOLS_DIR    := $(CUR)/.tools/bin
@@ -35,6 +36,8 @@ help:
 	@echo "  make lint              - run golangci-lint for existing modules"
 	@echo "  make test              - run unit + integration tests with race detector"
 	@echo "  make docs              - generate swagger docs"
+	@echo "  make docker-build      - docker build all services"
+	@echo "  make docker-push       - docker push all services"
 	@echo
 	@echo "Auth service helpers:"
 	@echo "  make run-auth          - run auth-service"
@@ -84,6 +87,21 @@ tidy:
 	for d in $(MODULE_DIRS); do \
 	  echo "→ go mod tidy in $$d"; \
 	  (cd $$d && $(GO) mod tidy); \
+	done
+
+.PHONY: docker-build docker-push
+docker-build:
+	@set -e; \
+	for d in $(MODULE_DIRS); do \
+	  echo "→ docker build $$d"; \
+	  (cd $$d && docker build -t $(DOCKER_REGISTRY)/bankapp-core:$$d-v1.0.0 .); \
+	done
+
+docker-push:
+	@set -e; \
+	for d in $(MODULE_DIRS); do \
+	  echo "→ docker push $$d"; \
+	  (cd $$d && docker push $(DOCKER_REGISTRY)/bankapp-core:$$d-v1.0.0); \
 	done
 
 # Lint all modules
@@ -145,6 +163,15 @@ proto-auth:
 		--go-grpc_out=./gateway-service/api \
 		--go-grpc_opt=paths=import
 
+.PHONY: docker-build-auth docker-push-auth
+docker-build-auth:
+	@echo "→ running docker build for auth-service"
+	@cd auth-service && docker build -t $(DOCKER_REGISTRY)/bankapp-core:auth-service-v1.0.0 .
+
+docker-push-auth:
+	@echo "→ running docker push for auth-service"
+	@cd auth-service && docker push $(DOCKER_REGISTRY)/bankapp-core:auth-service-v1.0.0
+
 # run/air for gateway-service
 .PHONY: air-gateway run-gateway
 run-gateway:
@@ -158,6 +185,15 @@ test-gateway:
 	@echo "→ testing gateway-service"
 	@cd gateway-service && $(GO) test ./...
 
+.PHONY: docker-build-gateway docker-push-gateway
+docker-build-gateway:
+	@echo "→ running docker build for gateway-service"
+	@cd gateway-service && docker build -t $(DOCKER_REGISTRY)/bankapp-core:gateway-service-v1.0.0 .
+
+docker-push-gateway:
+	@echo "→ running docker push for gateway-service"
+	@cd gateway-service && docker push $(DOCKER_REGISTRY)/bankapp-core:gateway-service-v1.0.0
+
 # run/air for account-service
 .PHONY: air-account run-account proto-account proto-account-all
 run-account:
@@ -167,9 +203,25 @@ run-account:
 air-account: $(AIR)
 	@cd account-service && $(AIR) -c .air.toml
 
+#test-account:
+#	@echo "→ testing account-service"
+#	@cd account-service && $(GO) test ./...
+
 test-account:
 	@echo "→ testing account-service"
-	@cd account-service && $(GO) test ./...
+	@cd account-service && cd internal && cd app && $(GO) test ./...
+	@cd account-service && cd internal && cd grpc && cd account_handler && $(GO) test ./...
+
+#coverage-account:
+#	@echo "→ testing account-service"
+#	@cd account-service && $(GO) test -cover ./...
+
+coverage-account:
+	@echo "→ coverage of account-service business/service domain"
+	@cd account-service && cd internal && cd app && $(GO) test -cover ./...
+	@echo "→ coverage of account-service handler domain"
+	@cd account-service && cd internal && cd grpc && cd account_handler && $(GO) test -cover ./...
+
 
 proto-account-only:
 	@protoc \
@@ -208,3 +260,12 @@ proto-account:
      		account-service/api/proto/transaction/*.proto \
      		account-service/api/proto/customer/*.proto \
      		account-service/api/proto/*.proto
+
+.PHONY: docker-build-account docker-push-account
+docker-build-account:
+	@echo "→ running docker build for account-service"
+	@cd account-service && docker build -t $(DOCKER_REGISTRY)/bankapp-core:account-service-v1.0.0 .
+
+docker-push-account:
+	@echo "→ running docker push for account-service"
+	@cd account-service && docker push $(DOCKER_REGISTRY)/bankapp-core:account-service-v1.0.0

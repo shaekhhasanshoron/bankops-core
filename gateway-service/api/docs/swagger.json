@@ -6,7 +6,7 @@
     "paths": {
         "/api/v1/account": {
             "get": {
-                "description": "Get account list based on scopes. scopes is optional, value of scope (customer/in_transaction/has_balance).",
+                "description": "Get account list. default gets all, if requested can be filtered by customer_id, minimum_balance, in_transaction (if true; get accounts that are currently locked for transaction)",
                 "consumes": [
                     "application/json"
                 ],
@@ -20,20 +20,19 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "all",
-                        "description": "Scope filter (comma separated) (customer,in_transaction,has_balance)",
-                        "name": "scopes",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Customer ID (required when adding 'customer' to scopes)",
+                        "description": "Customer ID",
                         "name": "customer_id",
                         "in": "query"
                     },
                     {
-                        "type": "number",
-                        "description": "Minimum balance (required when adding 'has_balance' to scopes)",
+                        "type": "string",
+                        "description": "Account In Transaction (value: true/false; default won't affect the filter)",
+                        "name": "in_transaction",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Minimum balance",
                         "name": "min_balance",
                         "in": "query"
                     },
@@ -132,7 +131,7 @@
                 }
             },
             "delete": {
-                "description": "Delete an account or all accounts for a customer by scope (scope=single; id = account_id / scope=all; id = customer_id)",
+                "description": "Delete a single account or all accounts under customer for a customer by scope (scope=single -\u003e id = account_id / scope=all -\u003e id = customer_id)",
                 "consumes": [
                     "application/json"
                 ],
@@ -153,6 +152,7 @@
                     },
                     {
                         "type": "string",
+                        "default": "single",
                         "description": "Scope (single/all)",
                         "name": "scope",
                         "in": "query",
