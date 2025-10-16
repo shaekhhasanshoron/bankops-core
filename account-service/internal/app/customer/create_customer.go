@@ -4,6 +4,7 @@ import (
 	"account-service/internal/domain/entity"
 	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
+	"account-service/internal/message_publisher"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"fmt"
@@ -77,6 +78,7 @@ func (c *CreateCustomer) Execute(name, requester, requestId string) (*entity.Cus
 		if createErr := c.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("customer_id", customer.ID).Msg("Failed to create customer create event")
 		}
+		_ = message_publisher.Publish(message_publisher.MessagePublishRequest{Message: event.ToString()})
 	}
 	logging.Logger.Debug().Str("customer_id", customer.ID).Msg("Customer created successfully")
 	return customer, "Customer created successfully", nil

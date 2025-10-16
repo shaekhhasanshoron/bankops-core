@@ -31,10 +31,14 @@ import (
 )
 
 const (
-	ServiceName = "account-service"
-	EnvDev      = "dev"
-	EnvStaging  = "staging"
-	EnvProd     = "prod"
+	ServiceName     = "account-service"
+	EnvDev          = "dev"
+	EnvStaging      = "staging"
+	EnvProd         = "prod"
+	BrokerTypeKafka = "kafka"
+
+	DefaultMessageBrokerMessagePublishTopic = "bank-events"
+	DefaultMessageBrokerMessageEnabled      = false
 
 	DefaultHttpAddr = ":8080"
 	DefaultGRPCAddr = ":50051"
@@ -47,16 +51,17 @@ const (
 )
 
 type Config struct {
-	Env           string           `koanf:"env" validate:"required,oneof=dev staging prod"`
-	Auth          AuthConfig       `koanf:"auth" validate:"required"`
-	GRPC          GrpcConfig       `koanf:"grpc" validate:"required"`
-	HTTP          HTTPConfig       `koanf:"http" validate:"required"`
-	Logging       LoggingCfg       `koanf:"logging" validate:"required"`
-	Observability ObservabilityCfg `koanf:"observability" validate:"required"`
-	Recovery      RecoveryConfig   `koanf:"recovery" validate:"required"`
-	Cleanup       CleanupConfig    `koanf:"cleanup" validate:"required"`
-	DB            DBConfig         `koanf:"db" validate:"required"`
-	AccountConfig AccountConfig    `koanf:"account" validate:"required"`
+	Env              string                 `koanf:"env" validate:"required,oneof=dev staging prod"`
+	Auth             AuthConfig             `koanf:"auth" validate:"required"`
+	GRPC             GrpcConfig             `koanf:"grpc" validate:"required"`
+	HTTP             HTTPConfig             `koanf:"http" validate:"required"`
+	Logging          LoggingCfg             `koanf:"logging" validate:"required"`
+	Observability    ObservabilityCfg       `koanf:"observability" validate:"required"`
+	Recovery         RecoveryConfig         `koanf:"recovery" validate:"required"`
+	Cleanup          CleanupConfig          `koanf:"cleanup" validate:"required"`
+	DB               DBConfig               `koanf:"db" validate:"required"`
+	MessagePublisher MessagePublisherConfig `koanf:"message_publisher" validate:"required"`
+	AccountConfig    AccountConfig          `koanf:"account" validate:"required"`
 }
 
 type AccountConfig struct {
@@ -101,6 +106,13 @@ type TracingCfg struct {
 type DBConfig struct {
 	DSN  string `koanf:"dsn"`
 	Type string `koanf:"type"`
+}
+
+type MessagePublisherConfig struct {
+	Enabled      bool   `koanf:"enabled"`
+	BrokerAddr   string `koanf:"broker_addr"`
+	PublishTopic string `koanf:"publish_topic"`
+	BrokerType   string `koanf:"broker_type"`
 }
 
 type RecoveryConfig struct {
@@ -299,6 +311,12 @@ func defaults() map[string]any {
 		},
 		"account": map[string]any{
 			"min_deposit_amount": 0,
+		},
+		"message_publisher": map[string]any{
+			"enabled":       DefaultMessageBrokerMessageEnabled,
+			"broker_addr":   "",
+			"publish_topic": "",
+			"broker_type":   "",
 		},
 	}
 }

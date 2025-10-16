@@ -2,11 +2,13 @@ syntax = "proto3";
 
 option go_package = "protogen/accountservice/proto";
 
+import "common/health_check.proto";
 import "customer/customer.proto";
 import "account/account.proto";
 import "transaction/transaction.proto";
 
 service AccountService {
+  rpc HealthCheck(common.HealthCheckRequest) returns (common.HealthCheckResponse);
   rpc CreateCustomer(customer.CreateCustomerRequest) returns (customer.CreateCustomerResponse);
   rpc GetCustomer(customer.GetCustomerRequest) returns (customer.GetCustomerResponse);
   rpc ListCustomers(customer.ListCustomersRequest) returns (customer.ListCustomersResponse);

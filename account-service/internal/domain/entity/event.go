@@ -53,3 +53,8 @@ func NewEvent(eventType, aggregateID, aggregateType, requester string, data inte
 		Version:       1,
 	}, nil
 }
+
+func (e *Event) ToString() string {
+	jsonData, _ := json.Marshal(&e)
+	return string(jsonData)
+}

@@ -570,8 +570,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 'Create employee - Username: lowercase + underscores only (in middle)
-        | Role: viewer/admin/editor | Bearer token required'
+      description: '|'
       parameters:
       - description: Bearer token for authorization, include 'Bearer ' followed by
           access_token

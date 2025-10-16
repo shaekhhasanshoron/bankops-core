@@ -4,6 +4,7 @@ import (
 	"account-service/internal/domain/entity"
 	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
+	"account-service/internal/message_publisher"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"errors"
@@ -175,6 +176,7 @@ func (t *CommitTransaction) Execute(transactionID, requester, requestId string) 
 		if createErr := t.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("transaction_id", tx.ID).Msg("Failed to create transaction commit event")
 		}
+		_ = message_publisher.Publish(message_publisher.MessagePublishRequest{Message: event.ToString()})
 	}
 
 	logging.Logger.Info().

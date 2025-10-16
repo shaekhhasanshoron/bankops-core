@@ -36,7 +36,7 @@ func (c *GRPCAuthClient) Connect() error {
 		c.conn.Close()
 	}
 
-	_, cancel := context.WithTimeout(context.Background(), c.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
 	conn, err := grpc.NewClient(
@@ -52,7 +52,16 @@ func (c *GRPCAuthClient) Connect() error {
 
 	c.conn = conn
 	c.client = protoauth.NewAuthServiceClient(conn)
-	logging.Logger.Info().Str("service", config.Current().GRPC.AuthServiceAddr).Msg("connected to auth service")
+	resp, err := c.client.HealthCheck(ctx, &protoauth.HealthCheckRequest{
+		Message: "ping",
+	})
+	if err != nil || resp.Message != "pong" {
+		_ = c.conn.Close()
+		logging.Logger.Warn().Err(err).Str("service", config.Current().GRPC.AuthServiceAddr).
+			Msg("failed to connect to auth service. Retrying to connect...")
+	} else {
+		logging.Logger.Info().Str("service", config.Current().GRPC.AuthServiceAddr).Msg("connected to auth service")
+	}
 	return nil
 }
 
@@ -154,7 +163,7 @@ func (c *GRPCAuthClient) Close() {
 }
 
 func (c *GRPCAuthClient) StartConnectionMonitor(ctx context.Context) {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(7 * time.Second)
 	defer ticker.Stop()
 
 	for {

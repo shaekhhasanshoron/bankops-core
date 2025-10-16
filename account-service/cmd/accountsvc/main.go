@@ -8,6 +8,7 @@ import (
 	httpserver "account-service/internal/http"
 	"account-service/internal/jobs"
 	"account-service/internal/logging"
+	"account-service/internal/message_publisher"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/observability/tracing"
 	"account-service/internal/runtime"
@@ -51,6 +52,17 @@ func main() {
 	defer func() {
 		if config.Current().Observability.TracingConfig.Enabled {
 			_ = traceShutdown(context.Background())
+		}
+	}()
+
+	// Initiating Message Publisher
+	err = message_publisher.Init()
+	if err != nil {
+		log.Fatalf("failed to initialize message publisher: %v", err)
+	}
+	defer func() {
+		if config.Current().MessagePublisher.Enabled {
+			_ = message_publisher.CloseConnection()
 		}
 	}()
 

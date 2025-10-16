@@ -5,23 +5,22 @@ option go_package = "protogen/authservice/proto";
 import "google/protobuf/timestamp.proto";
 
 service AuthService {
-  // Authenticate user and generate JWT token
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
   rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
-
-  // Create a new employee
   rpc CreateEmployee (CreateEmployeeRequest) returns (CreateEmployeeResponse);
-
-  // Update role for an employee
   rpc UpdateRole (UpdateRoleRequest) returns (UpdateRoleResponse);
-
-  // Get employee
   rpc GetEmployee (GetEmployeeRequest) returns (GetEmployeeResponse);
-
-  // List employee
   rpc ListEmployee (ListEmployeeRequest) returns (ListEmployeeResponse);
-
-  // Delete an employee
   rpc DeleteEmployee (DeleteEmployeeRequest) returns (DeleteEmployeeResponse);
+}
+
+message HealthCheckRequest {
+  string message = 1;
+}
+
+message HealthCheckResponse {
+  string message = 1;
+  int64 timestamp = 2;
 }
 
 message AuthenticateRequest {

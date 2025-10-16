@@ -36,7 +36,7 @@ func (c *GRPCAccountClient) Connect() error {
 		c.conn.Close()
 	}
 
-	_, cancel := context.WithTimeout(context.Background(), c.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
 	conn, err := grpc.NewClient(
@@ -50,9 +50,19 @@ func (c *GRPCAccountClient) Connect() error {
 		return fmt.Errorf("failed to connect to account service: %w", err)
 	}
 
+	// Testing connection
 	c.conn = conn
 	c.client = protoacc.NewAccountServiceClient(conn)
-	logging.Logger.Info().Str("service", config.Current().GRPC.AccountServiceAddr).Msg("connected to account service")
+	resp, err := c.client.HealthCheck(ctx, &protoacc.HealthCheckRequest{
+		Message: "ping",
+	})
+	if err != nil || resp.Message != "pong" {
+		_ = c.conn.Close()
+		logging.Logger.Warn().Err(err).Str("service", config.Current().GRPC.AccountServiceAddr).
+			Msg("failed to connect to account service. Retrying to connect...")
+	} else {
+		logging.Logger.Info().Str("service", config.Current().GRPC.AccountServiceAddr).Msg("connected to account service")
+	}
 	return nil
 }
 
@@ -79,7 +89,7 @@ func (c *GRPCAccountClient) Close() {
 }
 
 func (c *GRPCAccountClient) StartConnectionMonitor(ctx context.Context) {
-	ticker := time.NewTicker(20 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {

@@ -274,7 +274,7 @@ func defaults() map[string]any {
 		},
 		"user": map[string]any{
 			"admin_username": "admin",
-			"admin_password": "Admin123",
+			"admin_password": "admin",
 		},
 		"auth": map[string]any{
 			"hash_key":           "fc5c6816998c7173ba5bc7a3c53bfabf",

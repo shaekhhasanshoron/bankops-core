@@ -600,7 +600,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create employee - Username: lowercase + underscores only (in middle) | Role: viewer/admin/editor | Bearer token required",
+                "description": "|",
                 "consumes": [
                     "application/json"
                 ],

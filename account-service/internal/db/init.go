@@ -64,9 +64,8 @@ func prePopulateDefaultCustomer(db *gorm.DB) error {
 	customerList := []*entity.Customer{}
 	newCustomerOne, _ := entity.NewCustomer("Customer One", "system")
 	newCustomerTwo, _ := entity.NewCustomer("Customer Two", "system")
-	newCustomerOneDup, _ := entity.NewCustomer("Customer One", "system")
 	newCustomerThree, _ := entity.NewCustomer("Customer Three", "system")
-	customerList = append(customerList, newCustomerOne, newCustomerTwo, newCustomerOneDup, newCustomerThree)
+	customerList = append(customerList, newCustomerOne, newCustomerTwo, newCustomerThree)
 
 	for _, cus := range customerList {
 		var customer entity.Customer
