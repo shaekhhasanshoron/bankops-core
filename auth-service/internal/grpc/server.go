@@ -38,7 +38,7 @@ func StartGRPCServer(employeeRepo ports.EmployeeRepo, tokenSigner ports.TokenSig
 	// Register gRPC services
 	authHandler := handlers.NewAuthHandler(
 		app.NewAuthenticate(employeeRepo, tokenSigner, hashing),
-		app.NewCreateEmployee(employeeRepo, tokenSigner, hashing),
+		app.NewCreateEmployee(employeeRepo, hashing),
 		app.NewUpdateEmployee(employeeRepo),
 		app.NewDeleteEmployee(employeeRepo),
 		app.NewListEmployee(employeeRepo),

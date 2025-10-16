@@ -193,6 +193,8 @@ func classifyError(err error) string {
 	switch {
 	case contains(errStr, "not found"):
 		return "not_found"
+	case contains(errStr, "missing"):
+		return "missing"
 	case contains(errStr, "already exists"), contains(errStr, "duplicate"):
 		return "duplicate"
 	case contains(errStr, "validation"), contains(errStr, "invalid"):
@@ -203,12 +205,6 @@ func classifyError(err error) string {
 		return "circuit_breaker"
 	case contains(errStr, "database"), contains(errStr, "sql"):
 		return "database"
-	case contains(errStr, "insufficient balance"):
-		return "insufficient_balance"
-	case contains(errStr, "locked"):
-		return "locked"
-	case contains(errStr, "concurrent"):
-		return "concurrent_modification"
 	default:
 		return "general"
 	}

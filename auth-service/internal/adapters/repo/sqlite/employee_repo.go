@@ -41,9 +41,6 @@ func (r *EmployeeRepo) CreateEmployee(employee *entity.Employee) (*entity.Employ
 
 // GetEmployeeByUsername returns the employee if valid
 func (r *EmployeeRepo) GetEmployeeByUsername(username string) (*entity.Employee, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
 	var employee entity.Employee
 	if err := r.DB.Where("username = ? AND status = ?", username, entity.EmployeeStatusValid).First(&employee).Error; err != nil {
 		return nil, err

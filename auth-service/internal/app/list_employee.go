@@ -30,8 +30,8 @@ func (a *ListEmployee) Execute(page, pageSize int, sortOrder string) ([]*entity.
 	if page < 1 {
 		page = 1
 	}
-	if pageSize < 1 || pageSize > 100 {
-		pageSize = 100
+	if pageSize < 1 || pageSize > 50 {
+		pageSize = 50
 	}
 
 	employee, totalCount, err := a.EmployeeRepo.ListEmployee(page, pageSize, sortOrder)

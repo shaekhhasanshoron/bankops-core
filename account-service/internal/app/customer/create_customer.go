@@ -7,6 +7,7 @@ import (
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"fmt"
+	"strings"
 )
 
 // CreateCustomer is a use-case for creating a new customer
@@ -33,11 +34,13 @@ func (c *CreateCustomer) Execute(name, requester, requestId string) (*entity.Cus
 		metrics.RecordOperation("create_customer", err)
 	}()
 
-	if name == "" {
+	if strings.TrimSpace(name) == "" {
 		err = fmt.Errorf("%w: customer name is required", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Required missing fields")
 		return nil, "Required missing fields", err
 	}
+
+	name = strings.TrimSpace(name)
 
 	if requester == "" {
 		err = fmt.Errorf("%w: requester is required", custom_err.ErrValidationFailed)
