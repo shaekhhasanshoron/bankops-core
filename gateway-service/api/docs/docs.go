@@ -368,7 +368,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create customer - Bearer token required",
+                "description": "Create employee - Name: required | Bearer token required",
                 "consumes": [
                     "application/json"
                 ],
@@ -600,7 +600,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "|",
+                "description": "Create employee - Username: lowercase + underscores only (in middle) | Role: viewer/admin/editor | Bearer token required",
                 "consumes": [
                     "application/json"
                 ],

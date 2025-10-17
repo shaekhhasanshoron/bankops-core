@@ -410,7 +410,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create customer - Bearer token required
+      description: 'Create employee - Name: required | Bearer token required'
       parameters:
       - description: Bearer token for authorization, include 'Bearer ' followed by
           access_token
@@ -570,7 +570,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: '|'
+      description: 'Create employee - Username: lowercase + underscores only (in middle)
+        | Role: viewer/admin/editor | Bearer token required'
       parameters:
       - description: Bearer token for authorization, include 'Bearer ' followed by
           access_token

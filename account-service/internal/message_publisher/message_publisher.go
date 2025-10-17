@@ -82,25 +82,3 @@ func CloseConnection() error {
 	}
 	return nil
 }
-
-//func initKafkaBroker() error {
-//	p, err := kafka.NewProducer(&kafka.ConfigMap{
-//		"bootstrap.servers": config.Current().MessagePublisher.BrokerAddr,
-//	})
-//
-//	if err != nil {
-//		logging.Logger.Warn().Err(err).Str("broker", "kafka").
-//			Str("broker_addr", config.Current().MessagePublisher.BrokerAddr).
-//			Msg("Failed to inti kafka producer")
-//
-//		setGlobal(nil, true)
-//	} else {
-//		logging.Logger.Info().Str("broker", "kafka").
-//			Str("broker_addr", config.Current().MessagePublisher.BrokerAddr).
-//			Msg("Kafka Producer Initialized")
-//
-//		mp := kafka_adapter.NewMessagePublisher(p)
-//		setGlobal(&mp, true)
-//	}
-//	return nil
-//}

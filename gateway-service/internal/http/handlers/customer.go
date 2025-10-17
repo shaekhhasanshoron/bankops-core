@@ -53,7 +53,7 @@ type ListCustomerResponse struct {
 // CreateCustomer for creating new customer
 // @Tags Customer
 // @Summary Create Customer
-// @Description Create customer - Bearer token required
+// @Description Create employee - Name: required | Bearer token required
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
