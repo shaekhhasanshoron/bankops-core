@@ -8,17 +8,55 @@ import "account/account.proto";
 import "transaction/transaction.proto";
 
 service AccountService {
+  // HealthCheck sends the health status of the account service
   rpc HealthCheck(common.HealthCheckRequest) returns (common.HealthCheckResponse);
+
+  /*
+    Customer Management
+   */
+  // CreateCustomer registers a new customer
   rpc CreateCustomer(customer.CreateCustomerRequest) returns (customer.CreateCustomerResponse);
+
+  // GetCustomer retrieves detailed customer information
   rpc GetCustomer(customer.GetCustomerRequest) returns (customer.GetCustomerResponse);
+
+  // ListCustomers returns a paginated list of all customers with optional filtering
   rpc ListCustomers(customer.ListCustomersRequest) returns (customer.ListCustomersResponse);
+
+  // UpdateCustomer modifies existing customer
   rpc UpdateCustomer(customer.UpdateCustomerRequest) returns (customer.UpdateCustomerResponse);
+
+  // DeleteCustomer deletes a customer from the system (soft delete)
   rpc DeleteCustomer(customer.DeleteCustomerRequest) returns (customer.DeleteCustomerResponse);
+
+  /*
+    Account Management
+ */
+  // CreateAccount opens a new bank account for an existing customer
   rpc CreateAccount(account.CreateAccountRequest) returns (account.CreateAccountResponse);
+
+  // GetAccount retrieves detailed account information
   rpc GetAccount(account.GetAccountRequest) returns (account.GetAccountResponse);
+
+  // ListAccount returns a paginated list of accounts with filtering options
   rpc ListAccount(account.ListAccountsRequest) returns (account.ListAccountsResponse);
+
+  // GetBalance queries the current available balance for a specific account
   rpc GetBalance(account.GetBalanceRequest) returns (account.GetBalanceResponse);
+
+  // DeleteAccount deletes an account from the system (soft delete)
   rpc DeleteAccount(account.DeleteAccountRequest) returns (account.DeleteAccountResponse);
+
+  /*
+    Transaction Management
+   */
+  // InitTransaction processes transactions between accounts:
+  // type=transfer -> transfer between accounts;
+  // type=withdraw_full -> removes all amount from the source account
+  // type=withdraw_amount -> withdraws specific amount from the source account
+  // type=add_amount -> adds specific amount from the source account
   rpc InitTransaction(transaction.InitTransactionRequest) returns (transaction.InitTransactionResponse);
+
+  // GetTransactionHistory returns a paginated list of transaction records
   rpc GetTransactionHistory(transaction.GetTransactionHistoryRequest) returns (transaction.GetTransactionHistoryResponse);
 }

@@ -15,7 +15,7 @@
     * [Observability](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#323-observability)
     * [Technology and Tools](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#324-technology-and-tools)
 * [Project Structure & Maintainability](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#4-project-structure--maintainability)
-  * [Why This Structure?](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#41-why-this-strcture)
+  * [Why This Structure?](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#41-why-this-structure)
 * [Testing, Security & Observability](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#5-testing-security--observability)
   * [Testing Strategy and Coverage](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#51-testing-strategy-and-coverage)
   * [Security](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#52-security)

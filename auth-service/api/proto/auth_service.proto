@@ -5,12 +5,25 @@ option go_package = "protogen/authservice/proto";
 import "google/protobuf/timestamp.proto";
 
 service AuthService {
+  // HealthCheck sends the health status of the auth service
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+
+  // Authenticate validates user credentials and returns an JWT auth token
   rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse);
+
+  // CreateEmployee registers a new employee account in the system
   rpc CreateEmployee (CreateEmployeeRequest) returns (CreateEmployeeResponse);
+
+  // UpdateRole modifies the access permissions and role assignments for an employee
   rpc UpdateRole (UpdateRoleRequest) returns (UpdateRoleResponse);
+
+  // GetEmployee retrieves detailed information for a specific employee by identifier
   rpc GetEmployee (GetEmployeeRequest) returns (GetEmployeeResponse);
+
+  // ListEmployee returns a paginated list of all registered employees with filtering options
   rpc ListEmployee (ListEmployeeRequest) returns (ListEmployeeResponse);
+
+  // DeleteEmployee deletes an employee account from the system (soft delete)
   rpc DeleteEmployee (DeleteEmployeeRequest) returns (DeleteEmployeeResponse);
 }
 
