@@ -5,7 +5,7 @@ import (
 	"account-service/internal/domain/entity"
 	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
-	"account-service/internal/message_publisher"
+	"account-service/internal/messaging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"fmt"
@@ -110,7 +110,7 @@ func (t *IniTransaction) Execute(sourceAccountID string, destinationAccountID *s
 		if createErr := t.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("transaction_id", transaction.ID).Msg("Failed to create transaction init event")
 		}
-		_ = message_publisher.Publish(message_publisher.MessagePublishRequest{Message: event.ToString()})
+		_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: event.ToString(), Status: true, Type: messaging.MessageTypeTransactionInit})
 	}
 
 	logging.Logger.Info().

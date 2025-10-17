@@ -153,7 +153,7 @@ monitor its liveness and readiness, ensuring traffic is only sent to healthy ins
 * **Automatic Transaction Recovery:** Background jobs are created that scans for and recovers transactions stuck in an intermediate state 
 due to a service crash. This ensures data consistency and solves the problem of manual intervention after a failure.
 
-* **Exponential Backoff & Retry:** For gRPC calls, retry mechanisms is implemented with exponential backoff. 
+* **Exponential Backoff & Retry:** For gRPC calls and kafka health check, retry mechanisms is implemented with exponential backoff. 
 This makes the system resilient to temporary network glitches or brief downtime of a dependent service.
 
 * **Graceful Shutdown:** Upon receiving a shutdown signal, the service stops accepting new requests, finishes processing current ones, and cleanly closes all database and network connections. This prevents data corruption and dropped transactions during deployments.
@@ -241,7 +241,7 @@ account-service/
 │   ├── message_publisher/        # Event publishing initialization
 │   ├── logging/                  # Logging initialization (e.g., zap or logrus)
 │   ├── jobs/                     # Internal continuously running jobs (e.g., cron jobs)
-└── └── tests/                    # Unit and integration tests
+└── └── tests/                    # Common Unit and integration tests
 ````
 
 ### 4.1 Why This Structure?

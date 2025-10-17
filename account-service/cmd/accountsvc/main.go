@@ -8,7 +8,7 @@ import (
 	httpserver "account-service/internal/http"
 	"account-service/internal/jobs"
 	"account-service/internal/logging"
-	"account-service/internal/message_publisher"
+	"account-service/internal/messaging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/observability/tracing"
 	"account-service/internal/runtime"
@@ -55,14 +55,11 @@ func main() {
 		}
 	}()
 
-	// Initiating Message Publisher
-	err = message_publisher.Init()
-	if err != nil {
-		log.Fatalf("failed to initialize message publisher: %v", err)
-	}
+	// Initiating message queues
+	messaging.SetupMessaging()
 	defer func() {
 		if config.Current().MessagePublisher.Enabled {
-			_ = message_publisher.CloseConnection()
+			_ = messaging.GetService().Close()
 		}
 	}()
 

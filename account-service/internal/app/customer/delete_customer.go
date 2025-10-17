@@ -4,7 +4,7 @@ import (
 	"account-service/internal/domain/entity"
 	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
-	"account-service/internal/message_publisher"
+	"account-service/internal/messaging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"errors"
@@ -94,7 +94,7 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 		if createErr := c.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("customer_id", customer.ID).Msg("Failed to create customer deletion event")
 		}
-		_ = message_publisher.Publish(message_publisher.MessagePublishRequest{Message: event.ToString()})
+		_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: event.ToString(), Status: true, Type: messaging.MessageTypeDeleteCustomer})
 	}
 
 	logging.Logger.Debug().Str("customer_id", customer.ID).Str("requester", requester).Msg("Customer deleted successfully")

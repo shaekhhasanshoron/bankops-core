@@ -5,7 +5,7 @@ import (
 	"account-service/internal/domain/entity"
 	custom_err "account-service/internal/domain/error"
 	"account-service/internal/logging"
-	"account-service/internal/message_publisher"
+	"account-service/internal/messaging"
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"fmt"
@@ -106,7 +106,7 @@ func (a *CreateAccount) Execute(customerID string, initialDeposit float64, reque
 		if createErr := a.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("account_id", account.ID).Str("customer_id", customerID).Msg("Failed to create account create event")
 		}
-		_ = message_publisher.Publish(message_publisher.MessagePublishRequest{Message: event.ToString()})
+		_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: event.ToString(), Status: true, Type: messaging.MessageTypeCreateAccount})
 	}
 	return account, "Account successfully created", nil
 }

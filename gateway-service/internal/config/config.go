@@ -117,7 +117,8 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	// Setting default env
 	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("GATEWAY_ENV")))
 	if appEnv == "" {
-		appEnv = EnvProd
+		// TODO : prod
+		appEnv = EnvDev
 	}
 
 	if appEnv != EnvProd {
