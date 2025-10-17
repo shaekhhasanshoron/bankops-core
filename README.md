@@ -282,6 +282,10 @@ You can run the entire system in several ways:
 
 **Live URL:** http://bankops-core.135.235.192.122.nip.io
 
+**To use the system, a default employee with `admin` privileges has been created** 
+* Username: `admin`
+* Password: `admin`
+
 ## 7. API Documentation
 Interactive API documentation, generated using Swagger/OpenAPI, is available once the Gateway service is running. 
 This provides a live, explorable reference for all available endpoints, their parameters, and responses.
