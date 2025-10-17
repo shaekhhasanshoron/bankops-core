@@ -1,0 +1,305 @@
+# BankOps-Core: System Architecture & Design Documentation
+
+## 1. Introduction
+This document provides a detailed overview of the architecture and implementation of BankOps-Core, 
+a microservice-based backend API designed to serve core banking operations for bank employees. The objective was to 
+build a system that is not only functionally reliable but also resilient, scalable, secure, and capable of enduring over time. 
+
+The idea was to create a robust foundation that could upgrade and adapt to the evolving needs of the bank, 
+while avoiding vendor lock-in and ensuring that each component remains independently scalable and maintainable.
+
+## 2. Business Architecture & Service Design
+
+The system is divided into three distinct services, each representing a clearly defined domain. 
+This separation allows each team to own their domain logic independently, enabling parallel development and reducing operational complexity.
+
+Here's, the system top level overview:
+
+![]()
+
+### 2.1 Service Description
+
+**Gateway Service**: This service serves as the central access point for all employee requests. 
+It acts as a proxy, routing requests to the respective internal services, ensuring security, role-based access control (RBAC), and observability.
+
+**Auth Service**: The authentication service manages employee identities, roles, and permissions. 
+It provides authentication for all employees and ensures that access is granted based on predefined roles.
+
+**Account Service**: This is the core service that manages customer and account data. 
+It processes customer account creation, transactions between accounts, and maintains transaction logs. 
+It is the central point for managing all business logic related to bank accounts.
+
+### 2.2 Service Responsibilities
+
+**Gateway Service:**
+* Acts as a single entry point for all employee requests.
+* Ensuring internal services can focus purely on business logic.
+* Routes requests to appropriate internal services (Auth and Account services).
+* Provides logging, and observability features for monitoring.
+* It authorizes the JWT token to reduce load on the Auth service.
+
+**Auth Service:**
+* Ensures authentication and authorization via JWT tokens.
+* Handles employee creation, authentication, and role management.
+* Admins can create, update, or delete employee accounts.
+* Supports RBAC (Role-Based Access Control) where employees can have different roles (`admin`, `editor`, `viewer`).
+* Issues JWT tokens upon successful login to authenticate employees for future requests.
+
+**Account Service:**
+* The heart of the banking operations 
+* Manages customer data and account-related operations.
+* Handles account creation, viewing of account details, and transaction management.
+* Tracks all events (customer creation, transactions) for auditing and anomaly detection. 
+* Ensures transaction integrity with multi-level locking and concurrent request handling.
+
+### 2.3 Why This Separation?
+The separation of concerns into distinct services allows for better scalability, maintainability, and flexibility. 
+
+Each service has a clear responsibility:
+* The **Gateway Service** provides a unified interface to the outside world while keeping internal logic separate.
+* The **Auth Service** encapsulates authentication and authorization, ensuring role-based access without affecting other services.
+* The **Account Service** focuses purely on business logic related to customers and accounts, ensuring modularity and a clean architecture.
+
+### 2.4 Inter-Service Communication:
+* **External (Employee to System)**: All access is through the Gateway via RESTful HTTP APIs. 
+This provides a familiar and well-structured interface for clients.
+* **Internal (Service to Service)**: The Gateway communicates with the Auth and Account services using gRPC. 
+**gRPC** is integrated because of its performance, strong contract-first API definitions via Protocol Buffers, and built-in connection pooling.
+* **Asynchronous Events (Service to Service)**: For decoupled, event-driven workflows, **message queue** (e.g kafka) has been integrated.
+The Account service publishes events (e.g., `TransactionCompleted`, `CustomerCreated`) to topics. 
+This allows future services (like a Notification Service or Analytics Service) to react to these events without the Account service needing to know they exist, 
+solving the problem of tight coupling and enabling system-wide scalability.
+
+## 3. Technical Overview
+
+The focus was on creating a system that is not just a prototype but a production-ready platform. 
+Every pattern and technology was chosen to solve a specific production challenge.
+
+Here's the architecture
+
+![]()
+
+### 3.1 Architectural Patterns & Principles
+**Microservice Foundation with Bounded Contexts**: 
+
+The services are modeled around clear business domains (Auth, Account). This allows each service to have its own 
+independent data model, technology, and team.
+
+**Hexagonal Architecture (Ports & Adapters):** 
+
+This is the cornerstone of the design to prevent vendor lock-in. The core business logic is completely isolated 
+from external concerns like databases and APIs. It only interacts with abstract interfaces (Ports). 
+The concrete implementations (Adapters) for GORM, gRPC, or Kafka can be swapped without touching the core domain. 
+This makes the system incredibly adaptable and testable.
+
+**Domain-Driven Design (DDD):** 
+
+Banking has a complex, rule-heavy domain. By modeling entities like Customer, Account, and Transaction as rich objects 
+with their own business rules and invariants, the code becomes a direct reflection of the business. 
+This makes it easier to maintain and ensures that complex rules, like those governing transactions, are encapsulated correctly.
+
+**Repository Pattern:** 
+
+This pattern is used to abstract the data access layer. The business logic calls methods on a `CustomerRepo` interface, not a database. 
+This cleanly separates the "what" (get a customer by ID) from the "how" (using GORM to query PostgreSQL/SQlite/MongoDB). 
+It makes the code testable and easy to mock the repository that allows changing the underlying database with minimal impact.
+
+**Singleton Pattern:** 
+
+This is applied for infrastructure components that must have a single instance. 
+The configuration manager, the database connection pool, the Kafka producer, and the logging instance are all initialized as singletons. 
+This solves the problem of wasteful resource duplication and ensures consistent, coordinated access across the application.
+
+**API Gateway Pattern:** 
+
+This creates one strong entry point for the system. It centralizes critical cross-cutting concerns like security and observability, 
+ensuring they are applied consistently without every internal service having to re-implement them.
+
+### 3.2 Production Excellence and Key Features
+
+#### 3.2.1 Resilience & Reliability:
+
+* **State Monitoring & Health Checks:** Each service exposes health endpoints, allowing Kubernetes or a load balancer to 
+monitor its liveness and readiness, ensuring traffic is only sent to healthy instances.
+
+* **Automatic Transaction Recovery:** Background jobs are created that scans for and recovers transactions stuck in an intermediate state 
+due to a service crash. This ensures data consistency and solves the problem of manual intervention after a failure.
+
+* **Exponential Backoff & Retry:** For gRPC calls, retry mechanisms is implemented with exponential backoff. 
+This makes the system resilient to temporary network glitches or brief downtime of a dependent service.
+
+* **Graceful Shutdown:** Upon receiving a shutdown signal, the service stops accepting new requests, finishes processing current ones, and cleanly closes all database and network connections. This prevents data corruption and dropped transactions during deployments.
+
+#### 3.2.2 Data Integrity & Security:
+
+* **ACID Transactions:** All financial operations, especially fund transfers, are wrapped in database transactions. 
+This guarantees that operations are Atomic, Consistent, Isolated, and Durable.
+
+* **Optimistic Locking:** To handle concurrent requests for the same account, **version** field were used. 
+If two requests try to update the same account version, the latter one fails and must retry. 
+This prevents race conditions and lost updates without the performance penalty of full database locks.
+
+* **Multi-level Locking:** For huge requests at the same time for a same account, optimistic locking has been implemented 
+with explicit database locks to ensure absolute consistency.
+
+* **JWT Authentication & RBAC:** The Gateway validates JWT tokens and enforces role-based access. 
+An employee with a "`viewer`" role cannot perform actions reserved for an "`editor`" securing the system from unauthorized use.
+
+* **SQL Injection Prevention:** The GORM ORM and prepared statements automatically sanitize all inputs, 
+making SQL injection attacks impossible.
+
+#### 3.2.3 Observability Stack:
+
+* **Prometheus:** Prometheus is integrated to collect and expose business and system metrics (e.g., number of transactions, active connections). 
+This allows for real-time monitoring and alerting.
+
+* **OpenTelemetry (OTel):** Distributed tracing added to track a request as it flows through the Gateway, Auth, and Account services. 
+This is invaluable for debugging complex issues and understanding performance bottlenecks across service boundaries.
+
+* **Structured Logging (Zerolog):** All logs are structured as JSON, making them easy to parse, search, and analyze 
+in tools like Elasticsearch or Loki. Errors are categorized for quick filtering.
+
+#### 3.2.4 Technology & Tooling:
+
+* **Language & Frameworks:** 
+  * [Go](https://go.dev/) for its performance, excellent concurrency model, and robust standard library. 
+  * [Gin](https://gin-gonic.com/) powers the HTTP server in the Gateway. 
+  * [Testify](https://github.com/stretchr/testify) is used for a clean and powerful testing experience.
+
+* **Event Streaming:** 
+  * [Kafka Go](https://github.com/segmentio/kafka-go) is used to reliably publish domain events from the Account service.
+
+* **Configuration Management**: 
+  * [Koanf](https://github.com/knadh/koanf) allows for flexible configuration from multiple sources (env vars, files (injected through secret management tools like HashiCorp Vault)), 
+  making the application easy to deploy in any environment.
+
+* **Development Experience:** 
+  * [Air](https://github.com/air-verse/air) for live reloading during development 
+  * [golangci-lint](https://golangci-lint.run/) to enforce code quality and consistency automatically.
+
+## 4. Project Structure & Maintainability
+
+The project structure is a direct physical manifestation of the Hexagonal Architecture, designed for clarity and ease of development.
+
+````
+account-service/
+├── .air.toml                     # Live reload config for development
+├── go.mod                        # Go modules for dependencies
+├── Dockerfile                    # Dockerfile for containerization
+├── .env                          # Environment variables for development
+├── cmd/
+│   └── accountsvc/
+│       └── main.go               # Entry point to the service
+├── api/
+│   └── proto/
+│       └── account_service.proto # gRPC service definitions
+├── internal/
+│   ├── domain/                   # Core domain logic (Customer, Account, Transaction...)
+│   ├── app/                      # Business logic and use cases and unit tests
+│   ├── ports/                    # Interfaces for external communication (repos, message publishers)
+│   ├── adapters/                 # Infrastructure components (e.g., repositories, message publisher)
+│   │   ├── repo/                 # Database interactions
+│   │   └── message_publisher/    # Event/message publishing logic
+│   ├── grpc/                     # gRPC server and handlers
+│   │   ├── server.go             # gRPC server setup
+│   │   └── interceptors.go       # gRPC interceptors
+│   ├── http/                     # HTTP server, health check, metrics export
+│   ├── observability/            # Metrics and tracing (Prometheus, OpenTelemetry)
+│   │   ├── metrics.go            # Prometheus metrics initialization
+│   │   └── tracing.go            # OpenTelemetry tracing setup
+│   ├── db/                       # Database initialization
+│   ├── config/                   # Configuration management
+│   │   └── config.go             # Config loading and management
+│   ├── message_publisher/        # Event publishing initialization
+│   ├── logging/                  # Logging initialization (e.g., zap or logrus)
+│   ├── jobs/                     # Internal continuously running jobs (e.g., cron jobs)
+└── └── tests/                    # Unit and integration tests
+````
+
+**Why This Structure?**
+
+* **Maintainability:** 
+  * The internal directory enforces a clear dependency flow. 
+  * The domain layer is the most stable and has no dependencies on external frameworks. 
+  * This makes the business logic easy to locate and reason about.
+
+* **Testability:** 
+  * Because the core logic depends on interfaces (ports), test codes can be written fast by injecting mocks.
+
+* **Development:** 
+  * A new developer can immediately understand where to add a new feature. 
+  * Domain logic goes in `domain/`, a new use case in `app/`, and a new way to store data in `adapters/`. 
+  * This consistency across services accelerates onboarding and development.
+
+## 5. Testing, Security & Observability
+
+### 5.1 Testing Strategy
+High test coverage where it matters most. 
+* The business domain logic has over `90%` coverage with unit tests, ensuring all financial rules are correct. 
+* The HTTP/gRPC handlers have over `80%` coverage, validating API contracts and error handling. 
+* The use of interfaces makes mocking dependencies straightforward.
+
+### 5.2 Security
+* SQL injection prevention at the database layer
+* JWT and RBAC at the gateway
+* hashed passwords in the Auth service
+* security is layered throughout the system. 
+* The single API Gateway acts as a security choke point.
+
+### 5.3 Observability
+* The system is built to be transparent. Metrics (Prometheus), logs (Zerolog), and traces (OpenTelemetry) are exported, 
+allowing us to monitor health, debug issues, and understand performance bottlenecks in real-time.
+
+## 6. Installation & Deployment
+
+The system is designed for modern deployment practices and is fully containerized.
+
+You can run the entire system in several ways:
+
+* **Locally with Go**: 
+  * Prerequisite:
+    * Go 1.24+
+    * [Make](https://makefiletutorial.com/)
+  * You can add a `.env` and update the env variables according to your need
+  * Run Make Commands: Go to the root folder of this project and run make commands. 
+  Make sure to run each service in a different terminal
+      ```
+     make run-auth # Runs Auth Service on ()
+     make run-account 
+     nake run-gateway
+      ```
+* **Docker Compose**
+  * Prerequisite: 
+    * [Docker](https://www.docker.com/) 
+    * [Docker Compose](https://docs.docker.com/compose/)
+    * [Make](https://makefiletutorial.com/)
+  * Run make command
+    ```
+    make compose-up
+    ```
+* **Kubernetes:** 
+  * All the manifests are inside `deployment/kubernetes/manifests` folder
+
+**Live URL:** http://bankops-core.135.235.192.122.nip.io
+
+## 7. API Documentation
+Interactive API documentation, generated using Swagger/OpenAPI, is available once the Gateway service is running. 
+This provides a live, explorable reference for all available endpoints, their parameters, and responses.
+
+Access it: Just click on the **View API Documentation** button or just  go `http://<gateway-endpoint>/swagger`
+
+## 8. Future Goals
+The current architecture is built with future evolution in mind. 
+The event-driven design and hexagonal structure make these enhancements natural next steps:
+
+* **Distributed Caching (Redis):** To improve performance and instantly reflect role changes from the Auth service, 
+I plan to introduce a Redis cache. The Auth service would publish RoleUpdated events, which the Gateway would consume to invalidate its local cache.
+
+* **Enhanced Resilience Patterns:** I've laid the groundwork for integrating circuit breakers (to prevent cascade failures) 
+and a more sophisticated rate-limiting system at the Gateway.
+
+* **SSO & Passkey Integration:** The Auth service's port-adapter design makes it trivial to add new authentication providers 
+like Single Sign-On (SSO) or modern passkeys by simply writing a new adapter.
+
+* **Saga Pattern for Complex Transactions:** If business processes become more complex, spanning multiple services, 
+I can use the event-driven system to implement the Saga pattern for managing distributed transactions reliably.

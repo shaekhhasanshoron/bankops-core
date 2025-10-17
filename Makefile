@@ -38,12 +38,13 @@ help:
 	@echo "  make docs              - generate swagger docs"
 	@echo "  make docker-build      - docker build all services"
 	@echo "  make docker-push       - docker push all services"
+	@echo "  make compose-up        - docker-compose up all services"
+	@echo "  make compose-down       - docker-compose down all services"
 	@echo
 	@echo "Auth service helpers:"
 	@echo "  make run-auth          - run auth-service"
 	@echo "  make air-auth          - run auth-service with Air"
 	@echo "  make proto-auth        - generate proto buf to all services"
-	@echo "  make proto-auth-only   - generate proto buf for auth service"
 	@echo
 	@echo "Gateway service helpers:"
 	@echo "  make run-gateway       - run gateway-service"
@@ -51,8 +52,7 @@ help:
 	@echo "Account service helpers:"
 	@echo "  make run-account        - run account-service"
 	@echo "  make air-account        - run account-service with Air"
-	@echo "  make proto-gateway      - generate proto buf to all services"
-	@echo "  make proto-account-only - generate proto buf for account service"
+	@echo "  make proto-account      - generate proto buf to all services"
 
 
 
@@ -79,6 +79,14 @@ $(SWAGGER):
 docs:
 	@echo "→ running auth-service"
 	@cd gateway-service && swag init -g cmd/gatewaysvc/main.go --output api/docs
+
+compose-up:
+	@echo "→ running service on docker"
+	@cd deployment && cd docker && docker-compose up
+
+compose-down:
+	@echo "→ running service on docker"
+	@cd deployment && cd docker && docker-compose down
 
 # go tidy for all modules
 .PHONY: tidy
