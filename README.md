@@ -1,32 +1,32 @@
 # BankOps-Core: System Architecture & Design Documentation
 
 ## Index
-* [Introduction]()
-* [Business Architecture & Service Design]()
-   * [Service Description]()
-   * [Service Responsibilities]()
-   * [Why This Separation?]()
-   * [Inter-Service Communication]()
-   * [Inter-Service Communication]()
-* [Technical Overview]()
-  * [Architectural Patterns & Principles]()
-  * [Production Excellence and Key Features]()
-    * [Resilience & Reliability]()
-    * [Data Integrity & Security]()
-    * [Observability]()
-    * [Technology and Tools]()
-* [Project Structure & Maintainability]()
-* [Testing, Security & Observability]()
-  * [Testing Strategy and Coverage]()
-  * [Security]()
-  * [Observability]()
-* [Installation & Deployment]()
-  * [Install locally]()
-  * [Run on Docker]()
-  * [Kubernetes]()
-* [Live Demo]()
-* [API Documentation]()
-* [Future Goals]()
+* [Introduction](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#1-introduction)
+* [Business Architecture & Service Design](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#2-business-architecture--service-design)
+   * [Service Description](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#21-service-description)
+   * [Service Responsibilities](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#22-service-responsibilities)
+   * [Why This Separation?](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#23-why-this-separation)
+   * [Inter-Service Communication](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#24-inter-service-communication)
+* [Technical Overview](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#3-technical-overview)
+  * [Architectural Patterns & Principles](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#31-architectural-patterns--principles)
+  * [Production Excellence and Key Features](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#32-production-excellence-and-key-features)
+    * [Resilience & Reliability](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#321-resilience--reliability)
+    * [Data Integrity & Security](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#322-data-integrity--security)
+    * [Observability](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#323-observability)
+    * [Technology and Tools](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#324-technology-and-tools)
+* [Project Structure & Maintainability](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#4-project-structure--maintainability)
+  * [Why This Structure?](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#41-why-this-strcture)
+* [Testing, Security & Observability](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#5-testing-security--observability)
+  * [Testing Strategy and Coverage](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#51-testing-strategy-and-coverage)
+  * [Security](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#52-security)
+  * [Observability](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#53-observability)
+* [Installation & Deployment](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#6-installation--deployment)
+  * [Install locally](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#61-install-locally)
+  * [Run on Docker](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#62-run-on-docker)
+  * [Kubernetes](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#63-kubernetes)
+* [Live Demo](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#7-live-demo)
+* [API Documentation](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#8-api-documentation)
+* [Future Enhancements](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#9-future-enhancements)
 
 ## 1. Introduction
 This document provides a detailed overview of the architecture and implementation of BankOps-Core, 
@@ -41,9 +41,9 @@ while avoiding vendor lock-in and ensuring that each component remains independe
 The system is divided into three distinct services, each representing a clearly defined domain. 
 This separation allows each team to own their domain logic independently, enabling parallel development and reducing operational complexity.
 
-Here's, the system top level overview:
+Here's, the top level overview of the system:
 
-![](https://github.com/shaekhhasanshoron/bankops-core/blob/develop/static/system-overview.jpeg)
+![](https://github.com/shaekhhasanshoron/bankops-core/blob/master/static/system-overview.jpeg)
 
 ### 2.1 Service Description
 
@@ -103,9 +103,9 @@ solving the problem of tight coupling and enabling system-wide scalability.
 The focus was on creating a system that is not just a prototype but a production-ready platform. 
 Every pattern and technology was chosen to solve a specific production challenge.
 
-Here's the architecture
+Here's the system architecture of **"Account Service"**:
 
-![](https://github.com/shaekhhasanshoron/bankops-core/blob/develop/static/system-architecture.jpeg)
+![](https://github.com/shaekhhasanshoron/bankops-core/blob/master/static/system-architecture.jpeg)
 
 ### 3.1 Architectural Patterns & Principles
 **Microservice Foundation with Bounded Contexts**: 
@@ -244,7 +244,7 @@ account-service/
 └── └── tests/                    # Unit and integration tests
 ````
 
-**Why This Structure?**
+### 4.1 Why This Structure?
 
 * **Maintainability:** 
   * The internal directory enforces a clear dependency flow. 
@@ -353,7 +353,7 @@ This provides a live, explorable reference for all available endpoints, their pa
 
 Access it: Just click on the **View API Documentation** button or just  go `http://<gateway-endpoint>/swagger`
 
-## 9. Future Goals
+## 9. Future Enhancements
 The current architecture is built with future evolution in mind. 
 The event-driven design and hexagonal structure make these enhancements natural next steps:
 
