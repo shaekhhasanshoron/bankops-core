@@ -80,5 +80,9 @@ func (a *ListAccount) Execute(customerID, minBalance, inTransaction string, page
 		totalPages = (totalCount + int64(pageSize) - 1) / int64(pageSize)
 	}
 
+	if accounts == nil {
+		accounts = []*entity.Account{}
+	}
+
 	return accounts, totalCount, totalPages, "Account List", nil
 }

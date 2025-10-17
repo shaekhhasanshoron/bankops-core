@@ -35,6 +35,8 @@ const (
 	EnvStaging  = "staging"
 	EnvProd     = "prod"
 
+	DefaultHttpAddr = ":8080"
+
 	// EnvPrefix keeps unique environment prefix
 	EnvPrefix = "GATEWAY_"
 
@@ -115,7 +117,7 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	// Setting default env
 	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("GATEWAY_ENV")))
 	if appEnv == "" {
-		appEnv = EnvDev
+		appEnv = EnvProd
 	}
 
 	if appEnv != EnvProd {
@@ -230,7 +232,7 @@ func defaults() map[string]any {
 			"account_svc_addr": ":50052",
 		},
 		"http": map[string]any{
-			"addr":                  ":8080",
+			"addr":                  DefaultHttpAddr,
 			"read_timeout_seconds":  15,
 			"write_timeout_seconds": 15,
 			"idle_timeout_seconds":  120,

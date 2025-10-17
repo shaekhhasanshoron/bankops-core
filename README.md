@@ -1,5 +1,33 @@
 # BankOps-Core: System Architecture & Design Documentation
 
+## Index
+* [Introduction]()
+* [Business Architecture & Service Design]()
+   * [Service Description]()
+   * [Service Responsibilities]()
+   * [Why This Separation?]()
+   * [Inter-Service Communication]()
+   * [Inter-Service Communication]()
+* [Technical Overview]()
+  * [Architectural Patterns & Principles]()
+  * [Production Excellence and Key Features]()
+    * [Resilience & Reliability]()
+    * [Data Integrity & Security]()
+    * [Observability]()
+    * [Technology and Tools]()
+* [Project Structure & Maintainability]()
+* [Testing, Security & Observability]()
+  * [Testing Strategy and Coverage]()
+  * [Security]()
+  * [Observability]()
+* [Installation & Deployment]()
+  * [Install locally]()
+  * [Run on Docker]()
+  * [Kubernetes]()
+* [Live Demo]()
+* [API Documentation]()
+* [Future Goals]()
+
 ## 1. Introduction
 This document provides a detailed overview of the architecture and implementation of BankOps-Core, 
 a microservice-based backend API designed to serve core banking operations for bank employees. The objective was to 
@@ -60,7 +88,7 @@ Each service has a clear responsibility:
 * The **Auth Service** encapsulates authentication and authorization, ensuring role-based access without affecting other services.
 * The **Account Service** focuses purely on business logic related to customers and accounts, ensuring modularity and a clean architecture.
 
-### 2.4 Inter-Service Communication:
+### 2.4 Inter-Service Communication
 * **External (Employee to System)**: All access is through the Gateway via RESTful HTTP APIs. 
 This provides a familiar and well-structured interface for clients.
 * **Internal (Service to Service)**: The Gateway communicates with the Auth and Account services using gRPC. 
@@ -117,7 +145,7 @@ ensuring they are applied consistently without every internal service having to 
 
 ### 3.2 Production Excellence and Key Features
 
-#### 3.2.1 Resilience & Reliability:
+#### 3.2.1 Resilience & Reliability
 
 * **State Monitoring & Health Checks:** Each service exposes health endpoints, allowing Kubernetes or a load balancer to 
 monitor its liveness and readiness, ensuring traffic is only sent to healthy instances.
@@ -130,7 +158,7 @@ This makes the system resilient to temporary network glitches or brief downtime 
 
 * **Graceful Shutdown:** Upon receiving a shutdown signal, the service stops accepting new requests, finishes processing current ones, and cleanly closes all database and network connections. This prevents data corruption and dropped transactions during deployments.
 
-#### 3.2.2 Data Integrity & Security:
+#### 3.2.2 Data Integrity & Security
 
 * **ACID Transactions:** All financial operations, especially fund transfers, are wrapped in database transactions. 
 This guarantees that operations are Atomic, Consistent, Isolated, and Durable.
@@ -148,7 +176,7 @@ An employee with a "`viewer`" role cannot perform actions reserved for an "`edit
 * **SQL Injection Prevention:** The GORM ORM and prepared statements automatically sanitize all inputs, 
 making SQL injection attacks impossible.
 
-#### 3.2.3 Observability Stack:
+#### 3.2.3 Observability
 
 * **Prometheus:** Prometheus is integrated to collect and expose business and system metrics (e.g., number of transactions, active connections). 
 This allows for real-time monitoring and alerting.
@@ -159,7 +187,7 @@ This is invaluable for debugging complex issues and understanding performance bo
 * **Structured Logging (Zerolog):** All logs are structured as JSON, making them easy to parse, search, and analyze 
 in tools like Elasticsearch or Loki. Errors are categorized for quick filtering.
 
-#### 3.2.4 Technology & Tooling:
+#### 3.2.4 Technology and Tools
 
 * **Language & Frameworks:** 
   * [Go](https://go.dev/) for its performance, excellent concurrency model, and robust standard library. 
@@ -233,7 +261,7 @@ account-service/
 
 ## 5. Testing, Security & Observability
 
-### 5.1 Testing Strategy
+### 5.1 Testing Strategy and Coverage
 High test coverage where it matters most. 
 * The business domain logic has over `90%` coverage with unit tests, ensuring all financial rules are correct. 
 * The HTTP/gRPC handlers have over `80%` coverage, validating API contracts and error handling. 
@@ -256,31 +284,62 @@ The system is designed for modern deployment practices and is fully containerize
 
 You can run the entire system in several ways:
 
-* **Locally with Go**: 
-  * Prerequisite:
-    * Go 1.24+
-    * [Make](https://makefiletutorial.com/)
-  * You can add a `.env` and update the env variables according to your need
-  * Run Make Commands: Go to the root folder of this project and run make commands. 
-  Make sure to run each service in a different terminal
-      ```
-     make run-auth # Runs Auth Service on ()
-     make run-account 
-     nake run-gateway
-      ```
-* **Docker Compose**
-  * Prerequisite: 
-    * [Docker](https://www.docker.com/) 
-    * [Docker Compose](https://docs.docker.com/compose/)
-    * [Make](https://makefiletutorial.com/)
-  * Run make command
-    ```
-    make compose-up
-    ```
-* **Kubernetes:** 
-  * All the manifests are inside `deployment/kubernetes/manifests` folder
+### 6.1 Install locally
+Install on local machine local 
 
-**Live URL:** http://bankops-core.135.235.192.122.nip.io
+Prerequisite:
+  * **Go** 1.24+
+  * [Make](https://makefiletutorial.com/)
+
+You can add a `.env` and update the env variables according to your need. A sample `.env.sample` file is
+also provided in each service.
+
+**Run Make Commands:** 
+
+Go to the root folder of this project and run make commands. Make sure to run each service in a different terminal
+```
+# Runs Auth Service on default port (gRPC = 50051; http = 8080)
+# Add .env file and add 
+#  * AUTH_ENV=dev
+#  * AUTH_HTTP__ADDR=:8081
+#  * AUTH_GRPC__ADDR=:50051
+
+make run-auth 
+
+# Runs Account Service on default port (gRPC = 50051; http = 8080)
+# Add .env file and add 
+#  * AUTH_ENV=dev
+#  * AUTH_HTTP__ADDR=:8082
+#  * AUTH_GRPC__ADDR=:50052
+
+make run-account
+
+# Runs Account Service on default port (gRPC = 50051; http = 8080)
+# Add .env file and add 
+#  * AUTH_ENV=dev
+#  * GATEWAY_GRPC__AUTH_SVC_ADDR=:50051
+#  * GATEWAY_GRPC__ACCOUNT_SVC_ADDR=:50052
+
+nake run-gateway
+```
+### 6.2 Run on Docker
+Running the system inside docker using [Docker Compose](https://docs.docker.com/compose/)
+
+Prerequisite: 
+  * [Docker](https://www.docker.com/) 
+  * [Docker Compose](https://docs.docker.com/compose/)
+  * [Make](https://makefiletutorial.com/)
+
+Now run the make command
+```
+make compose-up
+```
+### 6.3 Kubernetes 
+
+All the manifests are inside `deployment/kubernetes/manifests` folder
+
+## 7. Live Demo
+You can find the live url. Go to http://bankops-core.135.235.192.122.nip.io
 
 **To use the system, a default employee with `admin` privileges has been created. Use the `login` api to authenticate and get JWT
 token:** 
@@ -288,13 +347,13 @@ token:**
 * Password: `admin`
 
 
-## 7. API Documentation
+## 8. API Documentation
 Interactive API documentation, generated using Swagger/OpenAPI, is available once the Gateway service is running. 
 This provides a live, explorable reference for all available endpoints, their parameters, and responses.
 
 Access it: Just click on the **View API Documentation** button or just  go `http://<gateway-endpoint>/swagger`
 
-## 8. Future Goals
+## 9. Future Goals
 The current architecture is built with future evolution in mind. 
 The event-driven design and hexagonal structure make these enhancements natural next steps:
 

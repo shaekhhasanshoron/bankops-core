@@ -156,8 +156,7 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	// Setting default env
 	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("ACCOUNT_ENV")))
 	if appEnv == "" {
-		// TODO : needs to make it Production
-		appEnv = EnvDev
+		appEnv = EnvProd
 	}
 
 	if appEnv != EnvProd {
