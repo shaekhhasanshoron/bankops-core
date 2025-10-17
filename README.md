@@ -15,7 +15,7 @@ This separation allows each team to own their domain logic independently, enabli
 
 Here's, the system top level overview:
 
-![]()
+![](https://github.com/shaekhhasanshoron/bankops-core/blob/develop/static/system-overview.jpeg)
 
 ### 2.1 Service Description
 
@@ -77,7 +77,7 @@ Every pattern and technology was chosen to solve a specific production challenge
 
 Here's the architecture
 
-![]()
+![](https://github.com/shaekhhasanshoron/bankops-core/blob/develop/static/system-architecture.jpeg)
 
 ### 3.1 Architectural Patterns & Principles
 **Microservice Foundation with Bounded Contexts**: 
