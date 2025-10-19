@@ -40,57 +40,58 @@ func (a *CreateAccount) Execute(customerID string, initialDeposit float64, reque
 	if customerID == "" {
 		err = fmt.Errorf("%w: customer ID is required", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Required missing fields")
-		return nil, "Required missing fields", err
+		return nil, err.Error(), custom_err.ErrValidationFailed
 	}
 	if initialDeposit < 0 {
 		err = fmt.Errorf("%w", custom_err.ErrInvalidAmount)
 		logging.Logger.Error().Err(err).Msg("Invalid request")
-		return nil, "Invalid request", err
+		return nil, err.Error(), custom_err.ErrInvalidAmount
 	}
 	if initialDeposit < config.Current().AccountConfig.MinDepositAmount {
 		err = fmt.Errorf("%w: minimum deposit amount - %.2f", custom_err.ErrInvalidAmount, config.Current().AccountConfig.MinDepositAmount)
 		logging.Logger.Error().Err(err).Msg(fmt.Sprintf("Minimum deposit amount %.2f", config.Current().AccountConfig.MinDepositAmount))
-		return nil, fmt.Sprintf("Minimum deposit amount %.2f", config.Current().AccountConfig.MinDepositAmount), err
+		return nil, err.Error(), custom_err.ErrInvalidAmount
 	}
 
 	if requester == "" {
-		err = fmt.Errorf("%w: requester is required", custom_err.ErrValidationFailed)
+		err = fmt.Errorf("%w: requester not found", custom_err.ErrUnauthorizedRequest)
 		logging.Logger.Error().Err(err).Msg("Unknown requester")
-		return nil, "Unknown requester", err
+		return nil, err.Error(), custom_err.ErrUnauthorizedRequest
 	}
 
 	customerExists, err := a.CustomerRepo.Exists(customerID)
 	if err != nil {
 		err = fmt.Errorf("%w: failed to verify customer", custom_err.ErrDatabase)
 		logging.Logger.Error().Err(err).Msg("Failed to verify customer")
-		return nil, "Failed to verify customer", err
+		return nil, "Failed to verify customer", custom_err.ErrDatabase
 	}
 
 	if !customerExists {
 		err = fmt.Errorf("%w", custom_err.ErrCustomerNotFound)
 		logging.Logger.Error().Err(err).Msg("Customer not found")
-		return nil, "Customer not found", err
+		return nil, "Customer not found", custom_err.ErrCustomerNotFound
 	}
 
 	account, err := entity.NewAccount(customerID, entity.AccountTypeSavings, initialDeposit, requester)
 	if err != nil {
 		err = fmt.Errorf("%w", custom_err.ErrInvalidAccount)
 		logging.Logger.Error().Err(err).Msg("Failed to verify account")
-		return nil, "Failed to verify account", err
+		return nil, "Failed to verify account", custom_err.ErrInvalidAccount
 	}
 
 	if err = account.Validate(); err != nil {
 		err = fmt.Errorf("%w", custom_err.ErrInvalidAccount)
 		logging.Logger.Error().Err(err).Msg("Failed to validate account")
-		return nil, "Failed to validate account", err
+		return nil, "Failed to validate account", custom_err.ErrInvalidAccount
 	}
 
 	account.CreatedBy = requester
 
 	// Create account
 	if err = a.AccountRepo.CreateAccount(account); err != nil {
+		err = fmt.Errorf("%w: failed to create account", custom_err.ErrDatabase)
 		logging.Logger.Error().Err(err).Str("account_id", account.ID).Str("customer_id", customerID).Msg("Failed to create account")
-		return nil, "Failed to create account", fmt.Errorf("%w: failed to create account", custom_err.ErrDatabase)
+		return nil, err.Error(), custom_err.ErrDatabase
 	}
 
 	eventData := map[string]interface{}{
@@ -106,7 +107,7 @@ func (a *CreateAccount) Execute(customerID string, initialDeposit float64, reque
 		if createErr := a.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("account_id", account.ID).Str("customer_id", customerID).Msg("Failed to create account create event")
 		}
-		_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: event.ToString(), Status: true, Type: messaging.MessageTypeCreateAccount})
 	}
+	_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: account.ToString(), Status: true, Type: messaging.MessageTypeCreateAccount})
 	return account, "Account successfully created", nil
 }

@@ -24,6 +24,11 @@ func (m *MockAuthClient) Close() {
 	m.Called()
 }
 
+func (m *MockAuthClient) IsHealthy() bool {
+	args := m.Called()
+	return args.Bool(0)
+}
+
 func (m *MockAuthClient) Authenticate(ctx context.Context, req *protoauth.AuthenticateRequest) (*protoauth.AuthenticateResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {

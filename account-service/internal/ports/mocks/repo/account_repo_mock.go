@@ -2,10 +2,10 @@ package repo
 
 import (
 	"account-service/internal/domain/entity"
+	"account-service/internal/grpc/types"
 	"github.com/stretchr/testify/mock"
 )
 
-// MockAccountRepo implements ports.AccountRepo for testing
 type MockAccountRepo struct {
 	mock.Mock
 }
@@ -23,28 +23,12 @@ func (m *MockAccountRepo) GetAccountByID(id string) (*entity.Account, error) {
 	return args.Get(0).(*entity.Account), args.Error(1)
 }
 
-func (m *MockAccountRepo) GetAccountByCustomerID(id string) ([]*entity.Account, error) {
-	args := m.Called(id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*entity.Account), args.Error(1)
-}
-
 func (m *MockAccountRepo) GetAccountByIDForUpdate(id string) (*entity.Account, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*entity.Account), args.Error(1)
-}
-
-func (m *MockAccountRepo) GetAccountsByCustomerID(customerID string) ([]*entity.Account, error) {
-	args := m.Called(customerID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*entity.Account), args.Error(1)
 }
 
 func (m *MockAccountRepo) UpdateAccount(account *entity.Account) error {
@@ -82,6 +66,24 @@ func (m *MockAccountRepo) IncrementVersion(id string, currentVersion int) error 
 	return args.Error(0)
 }
 
+func (m *MockAccountRepo) GetCustomerAccountsInTransactionOrHasBalance(customerID string) ([]*entity.Account, error) {
+	args := m.Called(customerID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1) // Return nil slice, not a typed nil
+	}
+	return args.Get(0).([]*entity.Account), args.Error(1)
+}
+
+// Also update other slice-returning methods with the same pattern:
+
+func (m *MockAccountRepo) GetAccountByCustomerID(customerID string) ([]*entity.Account, error) {
+	args := m.Called(customerID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*entity.Account), args.Error(1)
+}
+
 func (m *MockAccountRepo) GetAccountsInTransaction(transactionID string) ([]*entity.Account, error) {
 	args := m.Called(transactionID)
 	if args.Get(0) == nil {
@@ -98,12 +100,20 @@ func (m *MockAccountRepo) GetCustomerAccountsInTransaction(customerID string) ([
 	return args.Get(0).([]*entity.Account), args.Error(1)
 }
 
-func (m *MockAccountRepo) GetCustomerAccountsInTransactionOrHasBalance(customerID string) ([]*entity.Account, error) {
-	args := m.Called(customerID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+func (m *MockAccountRepo) GetAccountsByFiltersWithPagination(filters map[string]interface{}, page, pageSize int, setOrder string) ([]*entity.Account, int64, error) {
+	args := m.Called(filters, page, pageSize, setOrder) // Make sure all 4 parameters are passed to Called()
+
+	var accounts []*entity.Account
+	if args.Get(0) != nil {
+		accounts = args.Get(0).([]*entity.Account)
 	}
-	return args.Get(0).([]*entity.Account), args.Error(1)
+
+	var total int64
+	if args.Get(1) != nil {
+		total = args.Get(1).(int64)
+	}
+
+	return accounts, total, args.Error(2)
 }
 
 func (m *MockAccountRepo) DeleteAccount(id, requester string) error {
@@ -111,15 +121,25 @@ func (m *MockAccountRepo) DeleteAccount(id, requester string) error {
 	return args.Error(0)
 }
 
-func (m *MockAccountRepo) GetAccountsByFiltersWithPagination(filters map[string]interface{}, page, pageSize int, setOrder string) ([]*entity.Account, int64, error) {
-	args := m.Called(filters, page, pageSize)
-	if args.Get(0) == nil {
-		return nil, args.Get(1).(int64), args.Error(2)
-	}
-	return args.Get(0).([]*entity.Account), args.Get(1).(int64), args.Error(2)
-}
-
 func (m *MockAccountRepo) DeleteAllAccountsByCustomerID(customerID, requester string) error {
 	args := m.Called(customerID, requester)
 	return args.Error(0)
+}
+
+func (m *MockAccountRepo) LockAccountsForTransaction(transactionID string, accountIDs []string) error {
+	args := m.Called(transactionID, accountIDs)
+	return args.Error(0)
+}
+
+func (m *MockAccountRepo) UnlockAccountsForTransaction(transactionID string) error {
+	args := m.Called(transactionID)
+	return args.Error(0)
+}
+
+func (m *MockAccountRepo) UpdateAccountBalanceLifecycle(balanceUpdates []types.AccountBalance, requester string) ([]types.AccountBalanceResponse, error) {
+	args := m.Called(balanceUpdates, requester)
+	if args.Get(0) == nil {
+		return nil, args.Error(1) // Return nil slice, not a typed nil
+	}
+	return args.Get(0).([]types.AccountBalanceResponse), args.Error(1)
 }

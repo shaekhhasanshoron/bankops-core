@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"gateway-service/internal/adapter/grpc/clients"
+	clients2 "gateway-service/internal/adapter/grpc/clients"
 	"gateway-service/internal/config"
-	"gateway-service/internal/grpc/clients"
 	"gateway-service/internal/http"
 	"gateway-service/internal/logging"
 	"gateway-service/internal/observability/tracing"
@@ -38,17 +39,23 @@ func main() {
 	}()
 
 	// Initialize auth client
-	authClient := clients.NewAuthClient(30 * time.Second)
+	authClient := clients2.NewAuthClient(30*time.Second, config.Current().GRPC.AuthServiceAddr)
 	if err := authClient.Connect(); err != nil {
 		logging.Logger.Fatal().Err(err).Msg("failed to connect to auth service")
 	}
 	defer authClient.Close()
 
-	accountClient := clients.NewAccountClient(30 * time.Second)
+	accountClient := clients.NewAccountClient(30*time.Second, config.Current().GRPC.AccountServiceAddr)
 	if err := accountClient.Connect(); err != nil {
 		logging.Logger.Fatal().Err(err).Msg("failed to connect to account service")
 	}
 	defer accountClient.Close()
+
+	transactionClient := clients.NewTransactionClient(30*time.Second, config.Current().GRPC.TransactionServiceAddr)
+	if err := accountClient.Connect(); err != nil {
+		logging.Logger.Fatal().Err(err).Msg("failed to connect to transaction service")
+	}
+	defer transactionClient.Close()
 
 	// Start connection monitor
 	ctx, cancel := context.WithCancel(context.Background())
@@ -56,6 +63,11 @@ func main() {
 
 	go accountClient.StartConnectionMonitor(ctx)
 	go authClient.StartConnectionMonitor(ctx)
+	go transactionClient.StartConnectionMonitor(ctx)
 
-	http.StartServer(http.GrpcClients{AuthClient: &authClient, AccountClient: &accountClient})
+	http.StartServer(http.GrpcClients{
+		AuthClient:        &authClient,
+		AccountClient:     &accountClient,
+		TransactionClient: &transactionClient,
+	})
 }

@@ -50,11 +50,10 @@ func TestCreateAccount_Execute_EmptyCustomerID(t *testing.T) {
 
 	createAccount := NewCreateAccount(mockAccountRepo, mockCustomerRepo, mockEventRepo)
 
-	account, message, err := createAccount.Execute("", 100.0, "user123", "req-456")
+	account, _, err := createAccount.Execute("", 100.0, "user123", "req-456")
 
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
-	assert.Equal(t, "Required missing fields", message)
 	assert.Nil(t, account)
 
 	mockCustomerRepo.AssertNotCalled(t, "Exists")
@@ -69,18 +68,17 @@ func TestCreateAccount_Execute_NegativeInitialDeposit(t *testing.T) {
 
 	createAccount := NewCreateAccount(mockAccountRepo, mockCustomerRepo, mockEventRepo)
 
-	account, message, err := createAccount.Execute("cust-123", -50.0, "user123", "req-456")
+	account, _, err := createAccount.Execute("cust-123", -50.0, "user123", "req-456")
 
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrInvalidAmount)
-	assert.Equal(t, "Invalid request", message)
 	assert.Nil(t, account)
 
 	mockCustomerRepo.AssertNotCalled(t, "Exists")
 	mockAccountRepo.AssertNotCalled(t, "CreateAccount")
 }
 
-// TestCreateAccount_Execute_EmptyRequester check if request is empty
+// TestCreateAccount_Execute_EmptyRequester check if requester is empty
 func TestCreateAccount_Execute_EmptyRequester(t *testing.T) {
 	mockCustomerRepo := new(mock_repo.MockCustomerRepo)
 	mockAccountRepo := new(mock_repo.MockAccountRepo)
@@ -88,11 +86,10 @@ func TestCreateAccount_Execute_EmptyRequester(t *testing.T) {
 
 	createAccount := NewCreateAccount(mockAccountRepo, mockCustomerRepo, mockEventRepo)
 
-	account, message, err := createAccount.Execute("cust-123", 100.0, "", "req-456")
+	account, _, err := createAccount.Execute("cust-123", 100.0, "", "req-456")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
-	assert.Equal(t, "Unknown requester", message)
+	assert.ErrorIs(t, err, custom_err.ErrUnauthorizedRequest)
 	assert.Nil(t, account)
 
 	mockCustomerRepo.AssertNotCalled(t, "Exists")
@@ -114,11 +111,10 @@ func TestCreateAccount_Execute_DatabaseError_CheckCustomer(t *testing.T) {
 
 	mockCustomerRepo.On("Exists", customerID).Return(false, errors.New("database error"))
 
-	account, message, err := createAccount.Execute(customerID, initialDeposit, requester, requestId)
+	account, _, err := createAccount.Execute(customerID, initialDeposit, requester, requestId)
 
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrDatabase)
-	assert.Equal(t, "Failed to verify customer", message)
 	assert.Nil(t, account)
 
 	mockCustomerRepo.AssertExpectations(t)
@@ -140,11 +136,10 @@ func TestCreateAccount_Execute_CustomerNotFound(t *testing.T) {
 
 	mockCustomerRepo.On("Exists", customerID).Return(false, nil)
 
-	account, message, err := createAccount.Execute(customerID, initialDeposit, requester, requestId)
+	account, _, err := createAccount.Execute(customerID, initialDeposit, requester, requestId)
 
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrCustomerNotFound)
-	assert.Equal(t, "Customer not found", message)
 	assert.Nil(t, account)
 
 	mockCustomerRepo.AssertExpectations(t)
@@ -169,12 +164,11 @@ func TestCreateAccount_Execute_DatabaseError_CreateAccount(t *testing.T) {
 	mockAccountRepo.On("CreateAccount", mock.AnythingOfType("*entity.Account")).Return(errors.New("database error"))
 
 	// Execute
-	account, message, err := createAccount.Execute(customerID, initialDeposit, requester, requestId)
+	account, _, err := createAccount.Execute(customerID, initialDeposit, requester, requestId)
 
 	// Assert
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrDatabase)
-	assert.Equal(t, "Failed to create account", message)
 	assert.Nil(t, account)
 
 	mockCustomerRepo.AssertExpectations(t)

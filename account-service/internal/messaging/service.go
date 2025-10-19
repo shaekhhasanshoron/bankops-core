@@ -18,12 +18,10 @@ const (
 	MessageConnectionTypeNoOp         = "noop"
 	MessageConnectionTypeDisconnected = "disconnected"
 
-	MessageTypeCreateAccount     = "CreateAccount"
-	MessageTypeDeleteAccount     = "DeleteAccount"
-	MessageTypeCreateCustomer    = "CreateCustomer"
-	MessageTypeDeleteCustomer    = "DeleteCustomer"
-	MessageTypeTransactionInit   = "TransactionInit"
-	MessageTypeTransactionCommit = "TransactionCommit"
+	MessageTypeCreateAccount  = "CreateAccount"
+	MessageTypeDeleteAccount  = "DeleteAccount"
+	MessageTypeCreateCustomer = "CreateCustomer"
+	MessageTypeDeleteCustomer = "DeleteCustomer"
 )
 
 type Service struct {

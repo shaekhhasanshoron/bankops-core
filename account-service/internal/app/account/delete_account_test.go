@@ -241,11 +241,10 @@ func TestDeleteAccount_Execute_DatabaseError_CheckAccounts_AllScope(t *testing.T
 	mockCustomerRepo.On("Exists", id).Return(true, nil)
 	mockAccountRepo.On("GetCustomerAccountsInTransactionOrHasBalance", id).Return(nil, errors.New("database error"))
 
-	message, err := deleteAccount.Execute(scope, id, requester, requestId)
+	_, err := deleteAccount.Execute(scope, id, requester, requestId)
 
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrDatabase)
-	assert.Equal(t, "Failed to verify accounts", message)
 
 	mockCustomerRepo.AssertExpectations(t)
 	mockAccountRepo.AssertExpectations(t)

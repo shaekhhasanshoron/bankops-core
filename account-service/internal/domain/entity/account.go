@@ -2,7 +2,9 @@ package entity
 
 import (
 	custom_err "account-service/internal/domain/error"
+	"encoding/json"
 	"github.com/google/uuid"
+	"strings"
 	"time"
 )
 
@@ -62,7 +64,7 @@ func (a *Account) CanTransact() bool {
 	return a.Status == AccountStatusValid &&
 		a.ActiveStatus == AccountActiveStatusActive &&
 		!a.LockedForTx &&
-		a.ActiveTransactionID == nil
+		(a.ActiveTransactionID == nil || strings.TrimSpace(*a.ActiveTransactionID) == "")
 }
 
 func (a *Account) LockForTransaction(transactionID string) {
@@ -92,4 +94,9 @@ func (a *Account) Validate() error {
 		return custom_err.ErrMissingCustomerID
 	}
 	return nil
+}
+
+func (e *Account) ToString() string {
+	jsonData, _ := json.Marshal(&e)
+	return string(jsonData)
 }

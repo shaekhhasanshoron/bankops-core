@@ -55,6 +55,7 @@ func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
 	// Initialize handlers with clients
 	authHandler := handlers.NewAuthHandler(*gRPCClients.AuthClient)
 	accountHandler := handlers.NewAccountHandler(*gRPCClients.AccountClient)
+	txHandler := handlers.NewTransactionHandler(*gRPCClients.TransactionClient)
 
 	authGroup := router.Group("/api/v1/auth")
 	{
@@ -80,7 +81,7 @@ func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
 		protectedGroup.GET("/account", accountHandler.ListAccounts)
 		protectedGroup.DELETE("/account", accountHandler.DeleteAccount)
 		//Transaction API
-		protectedGroup.POST("/transaction/init", accountHandler.InitTransaction)
-		protectedGroup.GET("/transaction", accountHandler.ListTransactions)
+		protectedGroup.POST("/transaction/init", txHandler.InitTransaction)
+		protectedGroup.GET("/transaction", txHandler.ListTransactions)
 	}
 }

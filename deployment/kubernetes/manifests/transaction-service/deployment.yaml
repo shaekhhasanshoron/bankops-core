@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: transaction-service
+    role: bankops-core
+  name: transaction-service
+  namespace: bankops-core
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: transaction-service
+      role: bankops-core
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+      labels:
+        app: transaction-service
+        role: bankops-core
+    spec:
+      containers:
+        - name: transaction
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 50051
+              protocol: TCP
+          env:
+          - name: TRANSACTION_ENV
+            value: "prod"
+          - name: TRANSACTION_GRPC__ADDR
+            value: ":50051"
+          - name: TRANSACTION_HTTP__ADDR
+            value: ":8080"
+          - name: TRANSACTION_LOGGING__LEVEL
+            value: "info"
+          - name: TRANSACTION_LOGGING__ENCODING
+            value: "console"
+          - name: TRANSACTION_GRPC__ACCOUNT_SVC_ADDR
+            value: "account-service:50051"
+          - name: TRANSACTION_OBSERVABILITY__METRICS__ENABLED
+            value: "true"
+          - name: TRANSACTION_OBSERVABILITY__TRACING__ENABLED
+            value: "false"
+          - name: TRANSACTION_DB__TYPE
+            value: "sqlite"
+          - name: TRANSACTION_DB__DSN
+            value: "/data/transaction-service.db"
+          image: shaekhhasan/bankapp-core:transaction-service-v1.0.0
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: data-volume
+              mountPath: /data
+          livenessProbe:
+            failureThreshold: 15
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 15
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: 20m
+              memory: 32Mi
+            requests:
+              cpu: 10m
+              memory: 32Mi
+      restartPolicy: Always
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: transaction-service-db-data

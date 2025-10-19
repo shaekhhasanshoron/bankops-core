@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"errors"
-	protoacc "gateway-service/api/protogen/accountservice/proto"
+	prototx "gateway-service/api/protogen/txservice/proto"
 	"gateway-service/internal/logging"
+	"gateway-service/internal/ports"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/http"
@@ -11,6 +12,10 @@ import (
 	"strings"
 	"time"
 )
+
+type TransactionHandler struct {
+	TransactionClient ports.TransactionClient
+}
 
 type InitTransactionRequest struct {
 	SourceAccountID      string  `json:"source_account_id" binding:"required"`
@@ -35,6 +40,12 @@ type ListTransactionResponse struct {
 	Message      string      `json:"message" binding:"message"`
 }
 
+func NewTransactionHandler(txClient ports.TransactionClient) *TransactionHandler {
+	return &TransactionHandler{
+		TransactionClient: txClient,
+	}
+}
+
 // InitTransaction for initiating new transaction
 // @Tags Transaction
 // @Summary Create new transaction
@@ -47,7 +58,7 @@ type ListTransactionResponse struct {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /api/v1/transaction/init [post]
-func (h *AccountHandler) InitTransaction(c *gin.Context) {
+func (h *TransactionHandler) InitTransaction(c *gin.Context) {
 	var req InitTransactionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logging.Logger.Warn().Err(err).Msg("invalid request param")
@@ -61,19 +72,19 @@ func (h *AccountHandler) InitTransaction(c *gin.Context) {
 		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
 	}
 
-	grpcReq := &protoacc.InitTransactionRequest{
+	grpcReq := &prototx.InitTransactionRequest{
 		SourceAccountId:      req.SourceAccountID,
 		DestinationAccountId: req.DestinationAccountID,
 		Amount:               req.Amount,
 		Type:                 req.TransactionType,
 		Reference:            req.Reference,
-		Metadata: &protoacc.Metadata{
+		Metadata: &prototx.Metadata{
 			RequestId: c.GetHeader("X-Request-ID"),
 			Requester: requester,
 		},
 	}
 
-	resp, err := h.AccountClient.InitTransaction(c.Request.Context(), grpcReq)
+	resp, err := h.TransactionClient.InitTransaction(c.Request.Context(), grpcReq)
 	if err != nil || resp == nil {
 		logging.Logger.Error().Err(err).Msg("failed to init transaction")
 		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid request"})
@@ -114,7 +125,7 @@ func (h *AccountHandler) InitTransaction(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /api/v1/transaction [get]
-func (h *AccountHandler) ListTransactions(c *gin.Context) {
+func (h *TransactionHandler) ListTransactions(c *gin.Context) {
 	pageStr := c.Query("page")
 	pageSizeStr := c.Query("pagesize")
 	order := c.Query("order")
@@ -168,24 +179,24 @@ func (h *AccountHandler) ListTransactions(c *gin.Context) {
 		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + requester)
 	}
 
-	grpcReq := &protoacc.GetTransactionHistoryRequest{
+	grpcReq := &prototx.GetTransactionHistoryRequest{
 		AccountId: accountId,
 		CompanyId: customerId,
 		StartDate: startDate,
 		EndDate:   endDate,
 		SortOrder: order,
 		Types:     strings.TrimSpace(types),
-		Pagination: &protoacc.PaginationRequest{
+		Pagination: &prototx.PaginationRequest{
 			Page:     int32(pageNo),
 			PageSize: int32(pageSize),
 		},
-		Metadata: &protoacc.Metadata{
+		Metadata: &prototx.Metadata{
 			RequestId: c.GetHeader("X-Request-ID"),
 			Requester: requester,
 		},
 	}
 
-	resp, err := h.AccountClient.GetTransactionHistory(c.Request.Context(), grpcReq)
+	resp, err := h.TransactionClient.GetTransactionHistory(c.Request.Context(), grpcReq)
 	if err != nil {
 		logging.Logger.Error().Err(err).Msg("failed to get accounts")
 		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})

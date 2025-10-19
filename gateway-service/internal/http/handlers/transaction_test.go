@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	protoacc "gateway-service/api/protogen/accountservice/proto"
+	prototx "gateway-service/api/protogen/txservice/proto"
 	mock_client "gateway-service/internal/ports/mocks/grpc_client"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ import (
 	"testing"
 )
 
-func setupTransactionRoutes(handler *AccountHandler) *gin.Engine {
+func setupTransactionRoutes(handler *TransactionHandler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
@@ -31,8 +31,8 @@ func setupTransactionRoutes(handler *AccountHandler) *gin.Engine {
 
 // TestInitTransaction_SuccessTransfer tests successful transaction
 func TestInitTransaction_SuccessTransfer(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
 	request := InitTransactionRequest{
@@ -43,16 +43,16 @@ func TestInitTransaction_SuccessTransfer(t *testing.T) {
 		Reference:            "test-transfer",
 	}
 
-	expectedResponse := &protoacc.InitTransactionResponse{
+	expectedResponse := &prototx.InitTransactionResponse{
 		TransactionId:     "txn-12345",
 		TransactionStatus: "pending",
-		Response: &protoacc.Response{
+		Response: &prototx.Response{
 			Success: true,
 			Message: "Transaction initiated successfully",
 		},
 	}
 
-	mockClient.On("InitTransaction", mock.Anything, mock.MatchedBy(func(req *protoacc.InitTransactionRequest) bool {
+	mockClient.On("InitTransaction", mock.Anything, mock.MatchedBy(func(req *prototx.InitTransactionRequest) bool {
 		return req.SourceAccountId == "acc-12345" &&
 			req.DestinationAccountId == "acc-67890" &&
 			req.Amount == 1000.0 &&
@@ -86,8 +86,8 @@ func TestInitTransaction_SuccessTransfer(t *testing.T) {
 
 // TestInitTransaction_SuccessWithdrawFull tests for successful withdraw of full amount
 func TestInitTransaction_SuccessWithdrawFull(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
 	request := InitTransactionRequest{
@@ -97,16 +97,16 @@ func TestInitTransaction_SuccessWithdrawFull(t *testing.T) {
 		Reference:       "close-account",
 	}
 
-	expectedResponse := &protoacc.InitTransactionResponse{
+	expectedResponse := &prototx.InitTransactionResponse{
 		TransactionId:     "txn-67890",
 		TransactionStatus: "completed",
-		Response: &protoacc.Response{
+		Response: &prototx.Response{
 			Success: true,
 			Message: "Full withdrawal completed",
 		},
 	}
 
-	mockClient.On("InitTransaction", mock.Anything, mock.MatchedBy(func(req *protoacc.InitTransactionRequest) bool {
+	mockClient.On("InitTransaction", mock.Anything, mock.MatchedBy(func(req *prototx.InitTransactionRequest) bool {
 		return req.SourceAccountId == "acc-12345" &&
 			req.DestinationAccountId == "" && // Should be empty for withdraw_full
 			req.Amount == 0.0 &&
@@ -137,8 +137,8 @@ func TestInitTransaction_SuccessWithdrawFull(t *testing.T) {
 
 // TestInitTransaction_InvalidJSON tests if invalid json in provided
 func TestInitTransaction_InvalidJSON(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
 	body := bytes.NewBufferString("{invalid json")
@@ -159,8 +159,8 @@ func TestInitTransaction_InvalidJSON(t *testing.T) {
 
 // TestInitTransaction_MissingRequiredFields tests if there is any missing value
 func TestInitTransaction_MissingRequiredFields(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
 	request := map[string]interface{}{
@@ -186,8 +186,8 @@ func TestInitTransaction_MissingRequiredFields(t *testing.T) {
 
 // TestInitTransaction_GrpcConnectionError tests grpc error
 func TestInitTransaction_GrpcConnectionError(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
 	request := InitTransactionRequest{
@@ -198,9 +198,9 @@ func TestInitTransaction_GrpcConnectionError(t *testing.T) {
 		Reference:            "test-transfer",
 	}
 
-	mockClient.On("InitTransaction", mock.Anything, mock.MatchedBy(func(req *protoacc.InitTransactionRequest) bool {
+	mockClient.On("InitTransaction", mock.Anything, mock.MatchedBy(func(req *prototx.InitTransactionRequest) bool {
 		return req.Type == "transfer" && req.SourceAccountId == "acc-12345"
-	})).Return((*protoacc.InitTransactionResponse)(nil), errors.New("gRPC service unavailable"))
+	})).Return((*prototx.InitTransactionResponse)(nil), errors.New("gRPC service unavailable"))
 
 	body, _ := json.Marshal(request)
 	req, _ := http.NewRequest("POST", "/api/v1/transaction/init", bytes.NewBuffer(body))
@@ -223,8 +223,8 @@ func TestInitTransaction_GrpcConnectionError(t *testing.T) {
 
 // TestInitTransaction_InvalidTransactionType if invalid type provided
 func TestInitTransaction_InvalidTransactionType(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
 	request := InitTransactionRequest{
@@ -234,14 +234,14 @@ func TestInitTransaction_InvalidTransactionType(t *testing.T) {
 		Reference:       "test-invalid",
 	}
 
-	expectedResponse := &protoacc.InitTransactionResponse{
-		Response: &protoacc.Response{
+	expectedResponse := &prototx.InitTransactionResponse{
+		Response: &prototx.Response{
 			Success: false,
 			Message: "Invalid transaction type",
 		},
 	}
 
-	mockClient.On("InitTransaction", mock.Anything, mock.MatchedBy(func(req *protoacc.InitTransactionRequest) bool {
+	mockClient.On("InitTransaction", mock.Anything, mock.MatchedBy(func(req *prototx.InitTransactionRequest) bool {
 		return req.Type == "invalid_type"
 	})).Return(expectedResponse, nil)
 
@@ -266,12 +266,12 @@ func TestInitTransaction_InvalidTransactionType(t *testing.T) {
 
 // TestListTransactions_SuccessDefaultPagination tests transaction history list for default pagination
 func TestListTransactions_SuccessDefaultPagination(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
-	expectedResponse := &protoacc.GetTransactionHistoryResponse{
-		Transactions: []*protoacc.Transaction{
+	expectedResponse := &prototx.GetTransactionHistoryResponse{
+		Transactions: []*prototx.Transaction{
 			{
 				Id:                   "txn-1",
 				SourceAccountId:      "acc-123",
@@ -291,19 +291,19 @@ func TestListTransactions_SuccessDefaultPagination(t *testing.T) {
 				Reference:            "test-ref-1",
 			},
 		},
-		Pagination: &protoacc.PaginationResponse{
+		Pagination: &prototx.PaginationResponse{
 			Page:       1,
 			PageSize:   50,
 			TotalCount: 2,
 			TotalPages: 1,
 		},
-		Response: &protoacc.Response{
+		Response: &prototx.Response{
 			Success: true,
 			Message: "Transactions retrieved successfully",
 		},
 	}
 
-	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *protoacc.GetTransactionHistoryRequest) bool {
+	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *prototx.GetTransactionHistoryRequest) bool {
 		return req.AccountId == "" &&
 			req.CompanyId == "" &&
 			req.Types == "" &&
@@ -341,12 +341,12 @@ func TestListTransactions_SuccessDefaultPagination(t *testing.T) {
 
 // TestListTransactions_SuccessWithPagination tests success with valid pagination
 func TestListTransactions_SuccessWithPagination(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
-	expectedResponse := &protoacc.GetTransactionHistoryResponse{
-		Transactions: []*protoacc.Transaction{
+	expectedResponse := &prototx.GetTransactionHistoryResponse{
+		Transactions: []*prototx.Transaction{
 			{
 				Id:                   "txn-2",
 				SourceAccountId:      "acc-123",
@@ -357,19 +357,19 @@ func TestListTransactions_SuccessWithPagination(t *testing.T) {
 				Reference:            "test-ref-1",
 			},
 		},
-		Pagination: &protoacc.PaginationResponse{
+		Pagination: &prototx.PaginationResponse{
 			Page:       2,
 			PageSize:   10,
 			TotalCount: 25,
 			TotalPages: 3,
 		},
-		Response: &protoacc.Response{
+		Response: &prototx.Response{
 			Success: true,
 			Message: "Transactions retrieved successfully",
 		},
 	}
 
-	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *protoacc.GetTransactionHistoryRequest) bool {
+	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *prototx.GetTransactionHistoryRequest) bool {
 		return req.Pagination.Page == 2 &&
 			req.Pagination.PageSize == 10 &&
 			req.SortOrder == "desc" &&
@@ -398,12 +398,12 @@ func TestListTransactions_SuccessWithPagination(t *testing.T) {
 
 // TestListTransactions_SuccessWithCustomerFilter tests if customer id is provided for filtering
 func TestListTransactions_SuccessWithCustomerFilter(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
-	expectedResponse := &protoacc.GetTransactionHistoryResponse{
-		Transactions: []*protoacc.Transaction{
+	expectedResponse := &prototx.GetTransactionHistoryResponse{
+		Transactions: []*prototx.Transaction{
 			{
 				Id:                   "txn-1",
 				SourceAccountId:      "acc-123",
@@ -423,19 +423,19 @@ func TestListTransactions_SuccessWithCustomerFilter(t *testing.T) {
 				Reference:            "test-ref-1",
 			},
 		},
-		Pagination: &protoacc.PaginationResponse{
+		Pagination: &prototx.PaginationResponse{
 			Page:       1,
 			PageSize:   50,
 			TotalCount: 2,
 			TotalPages: 1,
 		},
-		Response: &protoacc.Response{
+		Response: &prototx.Response{
 			Success: true,
 			Message: "Customer transactions retrieved",
 		},
 	}
 
-	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *protoacc.GetTransactionHistoryRequest) bool {
+	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *prototx.GetTransactionHistoryRequest) bool {
 		return req.CompanyId == "cust-123" &&
 			req.Metadata != nil
 	})).Return(expectedResponse, nil)
@@ -460,12 +460,12 @@ func TestListTransactions_SuccessWithCustomerFilter(t *testing.T) {
 
 // TestListTransactions_SuccessWithAllFilters tests success with all filters
 func TestListTransactions_SuccessWithAllFilters(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
-	expectedResponse := &protoacc.GetTransactionHistoryResponse{
-		Transactions: []*protoacc.Transaction{
+	expectedResponse := &prototx.GetTransactionHistoryResponse{
+		Transactions: []*prototx.Transaction{
 			{
 				Id:                   "txn-2",
 				SourceAccountId:      "acc-123",
@@ -476,19 +476,19 @@ func TestListTransactions_SuccessWithAllFilters(t *testing.T) {
 				Reference:            "test-ref-1",
 			},
 		},
-		Pagination: &protoacc.PaginationResponse{
+		Pagination: &prototx.PaginationResponse{
 			Page:       1,
 			PageSize:   20,
 			TotalCount: 1,
 			TotalPages: 1,
 		},
-		Response: &protoacc.Response{
+		Response: &prototx.Response{
 			Success: true,
 			Message: "Filtered transactions retrieved",
 		},
 	}
 
-	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *protoacc.GetTransactionHistoryRequest) bool {
+	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *prototx.GetTransactionHistoryRequest) bool {
 		return req.AccountId == "acc-123" &&
 			req.CompanyId == "cust-123" &&
 			req.Types == "transfer" &&
@@ -519,13 +519,13 @@ func TestListTransactions_SuccessWithAllFilters(t *testing.T) {
 
 // TestListTransactions_GrpcConnectionError tests if grpc throws error
 func TestListTransactions_GrpcConnectionError(t *testing.T) {
-	mockClient := new(mock_client.MockAccountClient)
-	accountHandler := &AccountHandler{AccountClient: mockClient}
+	mockClient := new(mock_client.MockTransactionClient)
+	accountHandler := &TransactionHandler{TransactionClient: mockClient}
 	router := setupTransactionRoutes(accountHandler)
 
-	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *protoacc.GetTransactionHistoryRequest) bool {
+	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *prototx.GetTransactionHistoryRequest) bool {
 		return req.Metadata != nil
-	})).Return((*protoacc.GetTransactionHistoryResponse)(nil), errors.New("gRPC service unavailable"))
+	})).Return((*prototx.GetTransactionHistoryResponse)(nil), errors.New("gRPC service unavailable"))
 
 	req, _ := http.NewRequest("GET", "/api/v1/transaction", nil)
 	req.Header.Set("Authorization", "Bearer token")

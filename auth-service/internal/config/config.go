@@ -31,13 +31,17 @@ import (
 )
 
 const (
-	ServiceName = "auth-service"
-	EnvDev      = "dev"
-	EnvStaging  = "staging"
-	EnvProd     = "prod"
+	ServiceName     = "auth-service"
+	EnvDev          = "dev"
+	EnvStaging      = "staging"
+	EnvProd         = "prod"
+	BrokerTypeKafka = "kafka"
 
 	DefaultHttpAddr = ":8080"
 	DefaultGRPCAddr = ":50051"
+
+	DefaultMessageBrokerMessagePublishTopic = "bank-core-events"
+	DefaultMessageBrokerMessageEnabled      = false
 
 	// EnvPrefix keeps unique environment prefix
 	EnvPrefix = "AUTH_"
@@ -47,20 +51,28 @@ const (
 )
 
 type Config struct {
-	Env           string           `koanf:"env" validate:"required,oneof=dev staging prod"`
-	Auth          AuthConfig       `koanf:"auth" validate:"required"`
-	User          UserConfig       `koanf:"user" validate:"required"`
-	GRPC          GrpcConfig       `koanf:"grpc" validate:"required"`
-	HTTP          HTTPConfig       `koanf:"http" validate:"required"`
-	Logging       LoggingCfg       `koanf:"logging" validate:"required"`
-	Observability ObservabilityCfg `koanf:"observability" validate:"required"`
-	DB            DBConfig         `koanf:"db" validate:"required"`
+	Env              string                 `koanf:"env" validate:"required,oneof=dev staging prod"`
+	Auth             AuthConfig             `koanf:"auth" validate:"required"`
+	User             UserConfig             `koanf:"user" validate:"required"`
+	GRPC             GrpcConfig             `koanf:"grpc" validate:"required"`
+	HTTP             HTTPConfig             `koanf:"http" validate:"required"`
+	Logging          LoggingCfg             `koanf:"logging" validate:"required"`
+	Observability    ObservabilityCfg       `koanf:"observability" validate:"required"`
+	DB               DBConfig               `koanf:"db" validate:"required"`
+	MessagePublisher MessagePublisherConfig `koanf:"message_publisher" validate:"required"`
 }
 
 type AuthConfig struct {
 	HashKey           string        `koanf:"hash_key"`
 	JWTSecret         string        `koanf:"jwt_secret"`
 	JWTTokentDuration time.Duration `koanf:"jwt_token_duration"`
+}
+
+type MessagePublisherConfig struct {
+	Enabled      bool   `koanf:"enabled"`
+	BrokerAddr   string `koanf:"broker_addr"`
+	PublishTopic string `koanf:"publish_topic"`
+	BrokerType   string `koanf:"broker_type"`
 }
 
 type UserConfig struct {
@@ -131,8 +143,7 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	// Setting default env
 	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("AUTH_ENV")))
 	if appEnv == "" {
-		// TODO : prod
-		appEnv = EnvDev
+		appEnv = EnvProd
 	}
 
 	if appEnv != EnvProd {
@@ -281,6 +292,12 @@ func defaults() map[string]any {
 			"hash_key":           "fc5c6816998c7173ba5bc7a3c53bfabf",
 			"jwt_secret":         "fc5c6816998c7173ba5bc7a3c53bfabf",
 			"jwt_token_duration": 10 * time.Minute,
+		},
+		"message_publisher": map[string]any{
+			"enabled":       DefaultMessageBrokerMessageEnabled,
+			"broker_addr":   "",
+			"publish_topic": DefaultMessageBrokerMessagePublishTopic,
+			"broker_type":   "",
 		},
 	}
 }

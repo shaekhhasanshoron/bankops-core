@@ -78,9 +78,9 @@ func (c *CreateCustomer) Execute(name, requester, requestId string) (*entity.Cus
 		if createErr := c.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("customer_id", customer.ID).Msg("Failed to create customer create event")
 		}
-		_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: event.ToString(), Status: true, Type: messaging.MessageTypeCreateCustomer})
-
 	}
+
 	logging.Logger.Debug().Str("customer_id", customer.ID).Msg("Customer created successfully")
+	_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: customer.ToString(), Status: true, Type: messaging.MessageTypeCreateCustomer})
 	return customer, "Customer created successfully", nil
 }

@@ -4,7 +4,7 @@ import (
 	protoacc "account-service/api/protogen/accountservice/proto"
 	appaccount "account-service/internal/app/account"
 	appcustomer "account-service/internal/app/customer"
-	apptx "account-service/internal/app/transaction"
+	apptxsaga "account-service/internal/app/transaction_saga"
 	"account-service/internal/config"
 	handlers "account-service/internal/grpc/account_handler"
 	"account-service/internal/grpc/interceptors"
@@ -18,10 +18,9 @@ import (
 )
 
 type ServiceRepos struct {
-	CustomerRepo    ports.CustomerRepo
-	AccountRepo     ports.AccountRepo
-	TransactionRepo ports.TransactionRepo
-	EventRepo       ports.EventRepo
+	CustomerRepo ports.CustomerRepo
+	AccountRepo  ports.AccountRepo
+	EventRepo    ports.EventRepo
 }
 
 func StartGRPCServer(repos ServiceRepos) {
@@ -74,8 +73,9 @@ func generateAggregatedHandlers(repos ServiceRepos) *handlers.AccountHandlerServ
 	accountAggregatedHandler.DeleteAccountService = appaccount.NewDeleteAccount(repos.AccountRepo, repos.CustomerRepo, repos.EventRepo)
 	accountAggregatedHandler.GetAccountBalanceService = appaccount.NewGetAccountBalance(repos.AccountRepo)
 	accountAggregatedHandler.ListAccountService = appaccount.NewListAccount(repos.AccountRepo)
-	accountAggregatedHandler.InitTransactionService = apptx.NewInitTransaction(repos.TransactionRepo, repos.AccountRepo, repos.EventRepo)
-	accountAggregatedHandler.CommitTransactionService = apptx.NewCommitTransaction(repos.TransactionRepo, repos.AccountRepo, repos.EventRepo)
-	accountAggregatedHandler.GetTransactionHistoryService = apptx.NewGetTransactionHistory(repos.TransactionRepo)
+	accountAggregatedHandler.ValidateAccountForTransactionService = apptxsaga.NewValidateAccountForTransaction(repos.AccountRepo)
+	accountAggregatedHandler.LockAccountForTransaction = apptxsaga.NewLockAccountForTransaction(repos.AccountRepo)
+	accountAggregatedHandler.UnlockAccountsForTransaction = apptxsaga.NewUnlockAccountsForTransaction(repos.AccountRepo)
+	accountAggregatedHandler.UpdateAccountBalanceForTransaction = apptxsaga.NewUpdateAccountBalanceForTransaction(repos.AccountRepo)
 	return accountAggregatedHandler
 }

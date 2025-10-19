@@ -5,6 +5,7 @@ import (
 	"auth-service/internal/domain/entity"
 	custom_err "auth-service/internal/domain/error"
 	"auth-service/internal/logging"
+	"auth-service/internal/messaging"
 	"auth-service/internal/observability/metrics"
 	"auth-service/internal/ports"
 	"regexp"
@@ -91,5 +92,6 @@ func (a *CreateEmployee) Execute(username, password, role, requester string) (st
 		return "Failed to create employee", err
 	}
 
+	_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: employee.ToString(), Status: true, Type: messaging.MessageTypeEmployeeCreated})
 	return "Employee created successfully", nil
 }

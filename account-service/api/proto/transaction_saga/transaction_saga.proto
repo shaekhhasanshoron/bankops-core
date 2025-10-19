@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package transaction_saga;
+
+option go_package = "protogen/accountservice/proto";
+
+import "common/common.proto";
+import "account/account.proto";
+
+message ValidateAccountsRequest {
+  repeated string account_ids = 1;
+  string transaction_id = 2;
+  common.Metadata metadata = 3;
+}
+
+message ValidateAccountsResponse {
+  bool valid = 1;
+  repeated account.Account accounts = 2;
+  string message = 3;
+  common.Response response = 4;
+}
+
+message LockAccountsRequest {
+  repeated string account_ids = 1;
+  string transaction_id = 2;
+  common.Metadata metadata = 3;
+}
+
+message LockAccountsResponse {
+  bool locked = 1;
+  string message = 2;
+  common.Response response = 3;
+}
+message UnlockAccountsRequest {
+  repeated string account_ids = 1;
+  string transaction_id = 2;
+  common.Metadata metadata = 3;
+}
+
+message UnlockAccountsResponse {
+  bool unlocked = 1;
+  string message = 2;
+  common.Response response = 3;
+}
+
+message UpdateAccountsBalanceRequest {
+  repeated AccountBalanceUpdate updates = 1;
+  common.Metadata metadata = 4;
+}
+
+message AccountBalanceUpdate {
+  string account_id = 1;
+  double new_balance = 2;
+  int32 version = 3;
+}
+
+message UpdateAccountsBalanceResponse {
+  bool success = 1;
+  string message = 2;
+  common.Response response = 3;
+  repeated AccountVersion new_versions = 4;
+}
+
+message AccountVersion {
+  string account_id = 1;
+  int32 version = 2;
+}

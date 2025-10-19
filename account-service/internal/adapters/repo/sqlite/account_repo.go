@@ -3,11 +3,16 @@ package sqlite
 import (
 	"account-service/internal/domain/entity"
 	custom_err "account-service/internal/domain/error"
+	"account-service/internal/grpc/types"
 	"account-service/internal/ports"
 	"errors"
 	"gorm.io/gorm"
 	"sync"
 	"time"
+)
+
+var (
+	ErrAccountLockedForTransaction = errors.New("account locked for transaction")
 )
 
 // AccountRepo struct to interact with the database.
@@ -336,4 +341,124 @@ func (r *AccountRepo) IncrementVersion(id string, currentVersion int) error {
 	}
 
 	return nil
+}
+
+func (r *AccountRepo) LockAccountsForTransaction(transactionID string, accountIDs []string) error {
+	tx := r.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Lock all accounts involved in the transaction
+	for _, accountID := range accountIDs {
+		var account entity.Account
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").
+			Where("id = ?", accountID).
+			First(&account).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		if account.LockedForTx {
+			tx.Rollback()
+			return ErrAccountLockedForTransaction
+		}
+
+		// Apply transaction lock
+		if err := tx.Model(&entity.Account{}).
+			Where("id = ?", accountID).
+			Updates(map[string]interface{}{
+				"locked_for_tx":         true,
+				"active_transaction_id": transactionID,
+			}).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit().Error
+}
+
+func (r *AccountRepo) UnlockAccountsForTransaction(transactionID string) error {
+	tx := r.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Model(&entity.Account{}).
+		Where("active_transaction_id = ?", transactionID).
+		Updates(map[string]interface{}{
+			"locked_for_tx":         false,
+			"active_transaction_id": nil,
+		}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
+}
+
+func (r *AccountRepo) UpdateAccountBalanceLifecycle(balanceUpdates []types.AccountBalance, requester string) ([]types.AccountBalanceResponse, error) {
+	tx := r.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	var lastErr error
+	var accountBalanceResponseList []types.AccountBalanceResponse
+	for _, update := range balanceUpdates {
+		var account entity.Account
+		err := tx.Set("gorm:query_option", "FOR UPDATE").
+			Where("id = ? AND status = ?", update.AccountID, entity.AccountStatusValid).
+			First(&account).Error
+
+		if err != nil {
+			return nil, err
+		}
+
+		// Check optimistic lock
+		if account.Version != update.Version {
+			return nil, errors.New("version does not match")
+		}
+
+		err = tx.Model(&entity.Account{}).
+			Where("id = ? AND version = ? AND status = ?", update.AccountID, update.Version, entity.AccountStatusValid).
+			Updates(map[string]interface{}{
+				"balance":    update.Balance,
+				"version":    update.Version + 1,
+				"updated_by": requester,
+				"updated_at": time.Now(),
+			}).Error
+
+		if err != nil {
+			lastErr = err
+			break
+		}
+
+		accountBalanceResponseList = append(accountBalanceResponseList, types.AccountBalanceResponse{
+			AccountID: account.ID,
+			Version:   update.Version + 1,
+		})
+	}
+
+	if lastErr != nil {
+		return nil, lastErr
+	}
+
+	err := tx.Commit().Error
+
+	if err != nil {
+		return nil, err
+	}
+	return accountBalanceResponseList, nil
 }

@@ -32,12 +32,19 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthServiceClient interface {
+	// HealthCheck sends the health status of the auth service
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
+	// Authenticate validates user credentials and returns an JWT auth token
 	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
+	// CreateEmployee registers a new employee account in the system
 	CreateEmployee(ctx context.Context, in *CreateEmployeeRequest, opts ...grpc.CallOption) (*CreateEmployeeResponse, error)
+	// UpdateRole modifies the access permissions and role assignments for an employee
 	UpdateRole(ctx context.Context, in *UpdateRoleRequest, opts ...grpc.CallOption) (*UpdateRoleResponse, error)
+	// GetEmployee retrieves detailed information for a specific employee by identifier
 	GetEmployee(ctx context.Context, in *GetEmployeeRequest, opts ...grpc.CallOption) (*GetEmployeeResponse, error)
+	// ListEmployee returns a paginated list of all registered employees with filtering options
 	ListEmployee(ctx context.Context, in *ListEmployeeRequest, opts ...grpc.CallOption) (*ListEmployeeResponse, error)
+	// DeleteEmployee deletes an employee account from the system (soft delete)
 	DeleteEmployee(ctx context.Context, in *DeleteEmployeeRequest, opts ...grpc.CallOption) (*DeleteEmployeeResponse, error)
 }
 
@@ -123,12 +130,19 @@ func (c *authServiceClient) DeleteEmployee(ctx context.Context, in *DeleteEmploy
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
 type AuthServiceServer interface {
+	// HealthCheck sends the health status of the auth service
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
+	// Authenticate validates user credentials and returns an JWT auth token
 	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
+	// CreateEmployee registers a new employee account in the system
 	CreateEmployee(context.Context, *CreateEmployeeRequest) (*CreateEmployeeResponse, error)
+	// UpdateRole modifies the access permissions and role assignments for an employee
 	UpdateRole(context.Context, *UpdateRoleRequest) (*UpdateRoleResponse, error)
+	// GetEmployee retrieves detailed information for a specific employee by identifier
 	GetEmployee(context.Context, *GetEmployeeRequest) (*GetEmployeeResponse, error)
+	// ListEmployee returns a paginated list of all registered employees with filtering options
 	ListEmployee(context.Context, *ListEmployeeRequest) (*ListEmployeeResponse, error)
+	// DeleteEmployee deletes an employee account from the system (soft delete)
 	DeleteEmployee(context.Context, *DeleteEmployeeRequest) (*DeleteEmployeeResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }

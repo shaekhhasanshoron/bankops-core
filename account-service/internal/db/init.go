@@ -55,7 +55,6 @@ func runMigrations(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&entity.Customer{},
 		&entity.Account{},
-		&entity.Transaction{},
 		&entity.Event{},
 	)
 }

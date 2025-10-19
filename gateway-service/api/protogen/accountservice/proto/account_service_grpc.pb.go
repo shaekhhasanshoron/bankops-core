@@ -30,27 +30,42 @@ const (
 	AccountService_ListAccount_FullMethodName           = "/AccountService/ListAccount"
 	AccountService_GetBalance_FullMethodName            = "/AccountService/GetBalance"
 	AccountService_DeleteAccount_FullMethodName         = "/AccountService/DeleteAccount"
-	AccountService_InitTransaction_FullMethodName       = "/AccountService/InitTransaction"
-	AccountService_GetTransactionHistory_FullMethodName = "/AccountService/GetTransactionHistory"
+	AccountService_ValidateAccounts_FullMethodName      = "/AccountService/ValidateAccounts"
+	AccountService_LockAccounts_FullMethodName          = "/AccountService/LockAccounts"
+	AccountService_UnlockAccounts_FullMethodName        = "/AccountService/UnlockAccounts"
+	AccountService_UpdateAccountsBalance_FullMethodName = "/AccountService/UpdateAccountsBalance"
 )
 
 // AccountServiceClient is the client API for AccountService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountServiceClient interface {
+	// HealthCheck sends the health status of the account service
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
+	// CreateCustomer registers a new customer
 	CreateCustomer(ctx context.Context, in *CreateCustomerRequest, opts ...grpc.CallOption) (*CreateCustomerResponse, error)
+	// GetCustomer retrieves detailed customer information
 	GetCustomer(ctx context.Context, in *GetCustomerRequest, opts ...grpc.CallOption) (*GetCustomerResponse, error)
+	// ListCustomers returns a paginated list of all customers with optional filtering
 	ListCustomers(ctx context.Context, in *ListCustomersRequest, opts ...grpc.CallOption) (*ListCustomersResponse, error)
+	// UpdateCustomer modifies existing customer
 	UpdateCustomer(ctx context.Context, in *UpdateCustomerRequest, opts ...grpc.CallOption) (*UpdateCustomerResponse, error)
+	// DeleteCustomer deletes a customer from the system (soft delete)
 	DeleteCustomer(ctx context.Context, in *DeleteCustomerRequest, opts ...grpc.CallOption) (*DeleteCustomerResponse, error)
+	// CreateAccount opens a new bank account for an existing customer
 	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
+	// GetAccount retrieves detailed account information
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
+	// ListAccount returns a paginated list of accounts with filtering options
 	ListAccount(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
+	// GetBalance queries the current available balance for a specific account
 	GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error)
+	// DeleteAccount deletes an account from the system (soft delete)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
-	InitTransaction(ctx context.Context, in *InitTransactionRequest, opts ...grpc.CallOption) (*InitTransactionResponse, error)
-	GetTransactionHistory(ctx context.Context, in *GetTransactionHistoryRequest, opts ...grpc.CallOption) (*GetTransactionHistoryResponse, error)
+	ValidateAccounts(ctx context.Context, in *ValidateAccountsRequest, opts ...grpc.CallOption) (*ValidateAccountsResponse, error)
+	LockAccounts(ctx context.Context, in *LockAccountsRequest, opts ...grpc.CallOption) (*LockAccountsResponse, error)
+	UnlockAccounts(ctx context.Context, in *UnlockAccountsRequest, opts ...grpc.CallOption) (*UnlockAccountsResponse, error)
+	UpdateAccountsBalance(ctx context.Context, in *UpdateAccountsBalanceRequest, opts ...grpc.CallOption) (*UpdateAccountsBalanceResponse, error)
 }
 
 type accountServiceClient struct {
@@ -171,20 +186,40 @@ func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteAcco
 	return out, nil
 }
 
-func (c *accountServiceClient) InitTransaction(ctx context.Context, in *InitTransactionRequest, opts ...grpc.CallOption) (*InitTransactionResponse, error) {
+func (c *accountServiceClient) ValidateAccounts(ctx context.Context, in *ValidateAccountsRequest, opts ...grpc.CallOption) (*ValidateAccountsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InitTransactionResponse)
-	err := c.cc.Invoke(ctx, AccountService_InitTransaction_FullMethodName, in, out, cOpts...)
+	out := new(ValidateAccountsResponse)
+	err := c.cc.Invoke(ctx, AccountService_ValidateAccounts_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountServiceClient) GetTransactionHistory(ctx context.Context, in *GetTransactionHistoryRequest, opts ...grpc.CallOption) (*GetTransactionHistoryResponse, error) {
+func (c *accountServiceClient) LockAccounts(ctx context.Context, in *LockAccountsRequest, opts ...grpc.CallOption) (*LockAccountsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTransactionHistoryResponse)
-	err := c.cc.Invoke(ctx, AccountService_GetTransactionHistory_FullMethodName, in, out, cOpts...)
+	out := new(LockAccountsResponse)
+	err := c.cc.Invoke(ctx, AccountService_LockAccounts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) UnlockAccounts(ctx context.Context, in *UnlockAccountsRequest, opts ...grpc.CallOption) (*UnlockAccountsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnlockAccountsResponse)
+	err := c.cc.Invoke(ctx, AccountService_UnlockAccounts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) UpdateAccountsBalance(ctx context.Context, in *UpdateAccountsBalanceRequest, opts ...grpc.CallOption) (*UpdateAccountsBalanceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateAccountsBalanceResponse)
+	err := c.cc.Invoke(ctx, AccountService_UpdateAccountsBalance_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -195,19 +230,32 @@ func (c *accountServiceClient) GetTransactionHistory(ctx context.Context, in *Ge
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility.
 type AccountServiceServer interface {
+	// HealthCheck sends the health status of the account service
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
+	// CreateCustomer registers a new customer
 	CreateCustomer(context.Context, *CreateCustomerRequest) (*CreateCustomerResponse, error)
+	// GetCustomer retrieves detailed customer information
 	GetCustomer(context.Context, *GetCustomerRequest) (*GetCustomerResponse, error)
+	// ListCustomers returns a paginated list of all customers with optional filtering
 	ListCustomers(context.Context, *ListCustomersRequest) (*ListCustomersResponse, error)
+	// UpdateCustomer modifies existing customer
 	UpdateCustomer(context.Context, *UpdateCustomerRequest) (*UpdateCustomerResponse, error)
+	// DeleteCustomer deletes a customer from the system (soft delete)
 	DeleteCustomer(context.Context, *DeleteCustomerRequest) (*DeleteCustomerResponse, error)
+	// CreateAccount opens a new bank account for an existing customer
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
+	// GetAccount retrieves detailed account information
 	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
+	// ListAccount returns a paginated list of accounts with filtering options
 	ListAccount(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
+	// GetBalance queries the current available balance for a specific account
 	GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error)
+	// DeleteAccount deletes an account from the system (soft delete)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
-	InitTransaction(context.Context, *InitTransactionRequest) (*InitTransactionResponse, error)
-	GetTransactionHistory(context.Context, *GetTransactionHistoryRequest) (*GetTransactionHistoryResponse, error)
+	ValidateAccounts(context.Context, *ValidateAccountsRequest) (*ValidateAccountsResponse, error)
+	LockAccounts(context.Context, *LockAccountsRequest) (*LockAccountsResponse, error)
+	UnlockAccounts(context.Context, *UnlockAccountsRequest) (*UnlockAccountsResponse, error)
+	UpdateAccountsBalance(context.Context, *UpdateAccountsBalanceRequest) (*UpdateAccountsBalanceResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
 
@@ -251,11 +299,17 @@ func (UnimplementedAccountServiceServer) GetBalance(context.Context, *GetBalance
 func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
 }
-func (UnimplementedAccountServiceServer) InitTransaction(context.Context, *InitTransactionRequest) (*InitTransactionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InitTransaction not implemented")
+func (UnimplementedAccountServiceServer) ValidateAccounts(context.Context, *ValidateAccountsRequest) (*ValidateAccountsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateAccounts not implemented")
 }
-func (UnimplementedAccountServiceServer) GetTransactionHistory(context.Context, *GetTransactionHistoryRequest) (*GetTransactionHistoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTransactionHistory not implemented")
+func (UnimplementedAccountServiceServer) LockAccounts(context.Context, *LockAccountsRequest) (*LockAccountsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LockAccounts not implemented")
+}
+func (UnimplementedAccountServiceServer) UnlockAccounts(context.Context, *UnlockAccountsRequest) (*UnlockAccountsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnlockAccounts not implemented")
+}
+func (UnimplementedAccountServiceServer) UpdateAccountsBalance(context.Context, *UpdateAccountsBalanceRequest) (*UpdateAccountsBalanceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccountsBalance not implemented")
 }
 func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 func (UnimplementedAccountServiceServer) testEmbeddedByValue()                        {}
@@ -476,38 +530,74 @@ func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_InitTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InitTransactionRequest)
+func _AccountService_ValidateAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateAccountsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).InitTransaction(ctx, in)
+		return srv.(AccountServiceServer).ValidateAccounts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AccountService_InitTransaction_FullMethodName,
+		FullMethod: AccountService_ValidateAccounts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).InitTransaction(ctx, req.(*InitTransactionRequest))
+		return srv.(AccountServiceServer).ValidateAccounts(ctx, req.(*ValidateAccountsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_GetTransactionHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTransactionHistoryRequest)
+func _AccountService_LockAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LockAccountsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).GetTransactionHistory(ctx, in)
+		return srv.(AccountServiceServer).LockAccounts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AccountService_GetTransactionHistory_FullMethodName,
+		FullMethod: AccountService_LockAccounts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).GetTransactionHistory(ctx, req.(*GetTransactionHistoryRequest))
+		return srv.(AccountServiceServer).LockAccounts(ctx, req.(*LockAccountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountService_UnlockAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnlockAccountsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).UnlockAccounts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_UnlockAccounts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).UnlockAccounts(ctx, req.(*UnlockAccountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountService_UpdateAccountsBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAccountsBalanceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).UpdateAccountsBalance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_UpdateAccountsBalance_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).UpdateAccountsBalance(ctx, req.(*UpdateAccountsBalanceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -564,12 +654,20 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AccountService_DeleteAccount_Handler,
 		},
 		{
-			MethodName: "InitTransaction",
-			Handler:    _AccountService_InitTransaction_Handler,
+			MethodName: "ValidateAccounts",
+			Handler:    _AccountService_ValidateAccounts_Handler,
 		},
 		{
-			MethodName: "GetTransactionHistory",
-			Handler:    _AccountService_GetTransactionHistory_Handler,
+			MethodName: "LockAccounts",
+			Handler:    _AccountService_LockAccounts_Handler,
+		},
+		{
+			MethodName: "UnlockAccounts",
+			Handler:    _AccountService_UnlockAccounts_Handler,
+		},
+		{
+			MethodName: "UpdateAccountsBalance",
+			Handler:    _AccountService_UpdateAccountsBalance_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

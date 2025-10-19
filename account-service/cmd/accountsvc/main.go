@@ -6,7 +6,6 @@ import (
 	"account-service/internal/db"
 	"account-service/internal/grpc"
 	httpserver "account-service/internal/http"
-	"account-service/internal/jobs"
 	"account-service/internal/logging"
 	"account-service/internal/messaging"
 	"account-service/internal/observability/metrics"
@@ -63,26 +62,10 @@ func main() {
 		}
 	}()
 
-	// Initialize and start recovery service
-	recoveryService := jobs.NewTransactionReconciliationJob(
-		sqlite.NewCustomerRepo(dbInstance),
-		sqlite.NewAccountRepo(dbInstance),
-		sqlite.NewTransactionRepo(dbInstance),
-		sqlite.NewEventRepo(dbInstance),
-	)
-
-	// Create context for graceful shutdown
-	recoveryCtx, recoveryCancel := context.WithCancel(context.Background())
-	defer recoveryCancel()
-
-	// Start background recovery service
-	go recoveryService.Start(recoveryCtx)
-
 	go grpc.StartGRPCServer(grpc.ServiceRepos{
-		CustomerRepo:    sqlite.NewCustomerRepo(dbInstance),
-		AccountRepo:     sqlite.NewAccountRepo(dbInstance),
-		TransactionRepo: sqlite.NewTransactionRepo(dbInstance),
-		EventRepo:       sqlite.NewEventRepo(dbInstance),
+		CustomerRepo: sqlite.NewCustomerRepo(dbInstance),
+		AccountRepo:  sqlite.NewAccountRepo(dbInstance),
+		EventRepo:    sqlite.NewEventRepo(dbInstance),
 	})
 
 	// Creating new http server for liveness and readiness checking

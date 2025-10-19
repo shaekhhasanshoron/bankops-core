@@ -156,8 +156,7 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	// Setting default env
 	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("ACCOUNT_ENV")))
 	if appEnv == "" {
-		// TODO update to prod
-		appEnv = EnvDev
+		appEnv = EnvProd
 	}
 
 	if appEnv != EnvProd {
@@ -315,7 +314,7 @@ func defaults() map[string]any {
 		"message_publisher": map[string]any{
 			"enabled":       DefaultMessageBrokerMessageEnabled,
 			"broker_addr":   "",
-			"publish_topic": "",
+			"publish_topic": DefaultMessageBrokerMessagePublishTopic,
 			"broker_type":   "",
 		},
 	}

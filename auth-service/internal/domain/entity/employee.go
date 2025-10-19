@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
 	"time"
@@ -75,4 +76,9 @@ func NewEmployee(username, password, role, authMethod, requester string) (*Emplo
 
 func (e *Employee) IsValid() bool {
 	return e.ID != "" && e.Username != ""
+}
+
+func (e *Employee) ToString() string {
+	jsonData, _ := json.Marshal(&e)
+	return string(jsonData)
 }

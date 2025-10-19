@@ -5,7 +5,7 @@ option go_package = "protogen/accountservice/proto";
 import "common/health_check.proto";
 import "customer/customer.proto";
 import "account/account.proto";
-import "transaction/transaction.proto";
+import "transaction_saga/transaction_saga.proto";
 
 service AccountService {
   // HealthCheck sends the health status of the account service
@@ -47,16 +47,8 @@ service AccountService {
   // DeleteAccount deletes an account from the system (soft delete)
   rpc DeleteAccount(account.DeleteAccountRequest) returns (account.DeleteAccountResponse);
 
-  /*
-    Transaction Management
-   */
-  // InitTransaction processes transactions between accounts:
-  // type=transfer -> transfer between accounts;
-  // type=withdraw_full -> removes all amount from the source account
-  // type=withdraw_amount -> withdraws specific amount from the source account
-  // type=add_amount -> adds specific amount from the source account
-  rpc InitTransaction(transaction.InitTransactionRequest) returns (transaction.InitTransactionResponse);
-
-  // GetTransactionHistory returns a paginated list of transaction records
-  rpc GetTransactionHistory(transaction.GetTransactionHistoryRequest) returns (transaction.GetTransactionHistoryResponse);
+  rpc ValidateAccounts(transaction_saga.ValidateAccountsRequest) returns (transaction_saga.ValidateAccountsResponse);
+  rpc LockAccounts(transaction_saga.LockAccountsRequest) returns (transaction_saga.LockAccountsResponse);
+  rpc UnlockAccounts(transaction_saga.UnlockAccountsRequest) returns (transaction_saga.UnlockAccountsResponse);
+  rpc UpdateAccountsBalance(transaction_saga.UpdateAccountsBalanceRequest) returns (transaction_saga.UpdateAccountsBalanceResponse);
 }

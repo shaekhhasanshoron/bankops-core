@@ -1,6 +1,9 @@
 package ports
 
-import "account-service/internal/domain/entity"
+import (
+	"account-service/internal/domain/entity"
+	"account-service/internal/grpc/types"
+)
 
 type AccountRepo interface {
 	CreateAccount(account *entity.Account) error
@@ -20,4 +23,7 @@ type AccountRepo interface {
 	DeleteAccount(id, requester string) error
 	GetAccountsByFiltersWithPagination(filters map[string]interface{}, page, pageSize int, setOrder string) ([]*entity.Account, int64, error)
 	DeleteAllAccountsByCustomerID(customerID, requester string) error
+	LockAccountsForTransaction(transactionID string, accountIDs []string) error
+	UnlockAccountsForTransaction(transactionID string) error
+	UpdateAccountBalanceLifecycle(balanceUpdates []types.AccountBalance, requester string) ([]types.AccountBalanceResponse, error)
 }

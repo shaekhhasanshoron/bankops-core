@@ -150,7 +150,8 @@ func (a *DeleteAccount) Execute(scope, id, requester, requestId string) (string,
 		if createErr := a.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("account_ids", accountIdsStr).Str("customer_id", customerId).Msg("Failed to create account delete event")
 		}
-		_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: event.ToString(), Status: true, Type: messaging.MessageTypeDeleteAccount})
 	}
+
+	_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: accountIdsStr, Status: true, Type: messaging.MessageTypeDeleteAccount})
 	return "Accounts deleted successfully", nil
 }

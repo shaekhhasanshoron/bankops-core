@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package tx_common;
+
+option go_package = "protogen/txservice/proto";
+
+message HealthCheckRequest {
+  string message = 1;
+}
+
+message HealthCheckResponse {
+  string message = 1;
+  int64 timestamp = 2;
+}

@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// TestListAccount_Execute_SuccessWithDefaultPagination test success if input are feault
+// TestListAccount_Execute_SuccessWithDefaultPagination test success if input are default
 func TestListAccount_Execute_SuccessWithDefaultPagination(t *testing.T) {
 	mockAccountRepo := new(mock_repo.MockAccountRepo)
 	listAccount := NewListAccount(mockAccountRepo)
@@ -28,12 +28,13 @@ func TestListAccount_Execute_SuccessWithDefaultPagination(t *testing.T) {
 	}
 	expectedTotalCount := int64(2)
 
+	// Fix: Add the setOrder parameter (4th argument)
 	mockAccountRepo.On("GetAccountsByFiltersWithPagination",
 		map[string]interface{}{
 			"status":      "valid",
 			"customer_id": customerID,
 		},
-		1, 100,
+		1, 100, setOrder,
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
@@ -72,7 +73,7 @@ func TestListAccount_Execute_SuccessWithCustomPagination(t *testing.T) {
 			"status":      "valid",
 			"customer_id": customerID,
 		},
-		page, pageSize,
+		page, pageSize, "desc",
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
@@ -112,7 +113,7 @@ func TestListAccount_Execute_SuccessWithMinBalanceFilter(t *testing.T) {
 			"customer_id": customerID,
 			"min_balance": 500.5,
 		},
-		page, pageSize,
+		page, pageSize, "desc",
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
@@ -153,7 +154,7 @@ func TestListAccount_Execute_SuccessWithInTransactionTrue(t *testing.T) {
 			"customer_id":   customerID,
 			"locked_for_tx": true,
 		},
-		page, pageSize,
+		page, pageSize, "desc",
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
@@ -193,7 +194,7 @@ func TestListAccount_Execute_SuccessWithInTransactionFalse(t *testing.T) {
 			"customer_id":   customerID,
 			"locked_for_tx": false,
 		},
-		page, pageSize,
+		page, pageSize, "desc",
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
@@ -234,7 +235,7 @@ func TestListAccount_Execute_SuccessWithAllFilters(t *testing.T) {
 			"min_balance":   1000.0,
 			"locked_for_tx": true,
 		},
-		page, pageSize,
+		page, pageSize, "desc",
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(
@@ -273,7 +274,7 @@ func TestListAccount_Execute_SuccessWithDefaultFilter(t *testing.T) {
 		map[string]interface{}{
 			"status": "valid",
 		},
-		page, pageSize,
+		page, pageSize, "desc",
 	).Return(expectedAccounts, expectedTotalCount, nil)
 
 	accounts, totalCount, totalPages, message, err := listAccount.Execute(

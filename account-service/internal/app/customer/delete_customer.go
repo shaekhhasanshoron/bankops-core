@@ -94,9 +94,9 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 		if createErr := c.EventRepo.CreateEvent(event); createErr != nil {
 			logging.Logger.Error().Err(createErr).Str("customer_id", customer.ID).Msg("Failed to create customer deletion event")
 		}
-		_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: event.ToString(), Status: true, Type: messaging.MessageTypeDeleteCustomer})
 	}
 
 	logging.Logger.Debug().Str("customer_id", customer.ID).Str("requester", requester).Msg("Customer deleted successfully")
+	_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: id, Status: true, Type: messaging.MessageTypeDeleteCustomer})
 	return "Customer deleted successfully", nil
 }

@@ -59,8 +59,9 @@ type AuthConfig struct {
 }
 
 type GrpcConfig struct {
-	AuthServiceAddr    string `koanf:"auth_svc_addr"                  validate:"required"`
-	AccountServiceAddr string `koanf:"account_svc_addr"                  validate:"required"`
+	AuthServiceAddr        string `koanf:"auth_svc_addr"                  validate:"required"`
+	AccountServiceAddr     string `koanf:"account_svc_addr"                  validate:"required"`
+	TransactionServiceAddr string `koanf:"transaction_svc_addr"                  validate:"required"`
 }
 
 type HTTPConfig struct {
@@ -117,8 +118,7 @@ func LoadConfig(envFiles ...string) (*Config, error) {
 	// Setting default env
 	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("GATEWAY_ENV")))
 	if appEnv == "" {
-		// TODO : prod
-		appEnv = EnvDev
+		appEnv = EnvProd
 	}
 
 	if appEnv != EnvProd {
@@ -229,8 +229,9 @@ func defaults() map[string]any {
 	return map[string]any{
 		"env": EnvProd,
 		"grpc": map[string]any{
-			"auth_svc_addr":    ":50051",
-			"account_svc_addr": ":50052",
+			"auth_svc_addr":        ":50051",
+			"account_svc_addr":     ":50052",
+			"transaction_svc_addr": ":50053",
 		},
 		"http": map[string]any{
 			"addr":                  DefaultHttpAddr,

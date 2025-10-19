@@ -2,6 +2,7 @@ package entity
 
 import (
 	custom_err "account-service/internal/domain/error"
+	"encoding/json"
 	"github.com/google/uuid"
 	"strings"
 	"time"
@@ -82,4 +83,9 @@ func (c *Customer) UnlockFromOperation() {
 func (c *Customer) IncrementVersion() {
 	c.Version++
 	c.UpdatedAt = time.Now()
+}
+
+func (e *Customer) ToString() string {
+	jsonData, _ := json.Marshal(&e)
+	return string(jsonData)
 }

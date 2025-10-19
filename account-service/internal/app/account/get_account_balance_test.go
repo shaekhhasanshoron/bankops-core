@@ -26,7 +26,7 @@ func TestGetAccountBalance_Execute_Success(t *testing.T) {
 
 	mockAccountRepo.On("GetAccountByID", id).Return(account, nil)
 
-	balance, message, err := getAccountBalance.Execute(id, requester, requestId)
+	balance, _, message, err := getAccountBalance.Execute(id, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Account balance", message)
@@ -52,7 +52,7 @@ func TestGetAccountBalance_Execute_Success_ZeroBalance(t *testing.T) {
 
 	mockAccountRepo.On("GetAccountByID", id).Return(account, nil)
 
-	balance, message, err := getAccountBalance.Execute(id, requester, requestId)
+	balance, _, message, err := getAccountBalance.Execute(id, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Account balance", message)
@@ -78,7 +78,7 @@ func TestGetAccountBalance_Execute_Success_NegativeBalance(t *testing.T) {
 
 	mockAccountRepo.On("GetAccountByID", id).Return(account, nil)
 
-	balance, message, err := getAccountBalance.Execute(id, requester, requestId)
+	balance, _, message, err := getAccountBalance.Execute(id, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Account balance", message)
@@ -92,7 +92,7 @@ func TestGetAccountBalance_Execute_EmptyAccountID(t *testing.T) {
 	mockAccountRepo := new(mock_repo.MockAccountRepo)
 	getAccountBalance := NewGetAccountBalance(mockAccountRepo)
 
-	balance, message, err := getAccountBalance.Execute("", "user123", "req-456")
+	balance, _, message, err := getAccountBalance.Execute("", "user123", "req-456")
 
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
@@ -113,7 +113,7 @@ func TestGetAccountBalance_Execute_AccountNotFound(t *testing.T) {
 
 	mockAccountRepo.On("GetAccountByID", id).Return(nil, nil)
 
-	balance, message, err := getAccountBalance.Execute(id, requester, requestId)
+	balance, _, message, err := getAccountBalance.Execute(id, requester, requestId)
 
 	assert.Error(t, err)
 	assert.Equal(t, "Account not found", message)
@@ -133,7 +133,7 @@ func TestGetAccountBalance_Execute_DatabaseError(t *testing.T) {
 
 	mockAccountRepo.On("GetAccountByID", id).Return(nil, errors.New("database connection failed"))
 
-	balance, message, err := getAccountBalance.Execute(id, requester, requestId)
+	balance, _, message, err := getAccountBalance.Execute(id, requester, requestId)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to verify account")
@@ -160,7 +160,7 @@ func TestGetAccountBalance_Execute_EmptyRequester(t *testing.T) {
 
 	mockAccountRepo.On("GetAccountByID", id).Return(account, nil)
 
-	balance, message, err := getAccountBalance.Execute(id, requester, requestId)
+	balance, _, message, err := getAccountBalance.Execute(id, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Account balance", message)
@@ -174,7 +174,7 @@ func TestGetAccountBalance_Execute_WhitespaceAccountID(t *testing.T) {
 	mockAccountRepo := new(mock_repo.MockAccountRepo)
 	getAccountBalance := NewGetAccountBalance(mockAccountRepo)
 
-	balance, message, err := getAccountBalance.Execute("   ", "user123", "req-456")
+	balance, _, message, err := getAccountBalance.Execute("   ", "user123", "req-456")
 
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrValidationFailed)
@@ -206,7 +206,7 @@ func TestGetAccountBalance_Execute_AccountWithFullDetails(t *testing.T) {
 
 	mockAccountRepo.On("GetAccountByID", id).Return(account, nil)
 
-	balance, message, err := getAccountBalance.Execute(id, requester, requestId)
+	balance, _, message, err := getAccountBalance.Execute(id, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Account balance", message)
@@ -241,7 +241,7 @@ func TestGetAccountBalance_Execute_ConcurrentAccess(t *testing.T) {
 	// Concurrent calls executed
 	for i := 0; i < 10; i++ {
 		go func() {
-			balance, message, err := getAccountBalance.Execute(id, requester, requestId)
+			balance, _, message, err := getAccountBalance.Execute(id, requester, requestId)
 			results <- struct {
 				balance float64
 				message string
@@ -285,7 +285,7 @@ func TestGetAccountBalance_Execute_AccountWithDifferentIDs(t *testing.T) {
 
 			mockAccountRepo.On("GetAccountByID", tc.accountID).Return(account, nil).Once()
 
-			balance, message, err := getAccountBalance.Execute(tc.accountID, "user123", "req-456")
+			balance, _, message, err := getAccountBalance.Execute(tc.accountID, "user123", "req-456")
 
 			assert.NoError(t, err)
 			assert.Equal(t, "Account balance", message)

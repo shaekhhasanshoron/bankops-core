@@ -1,0 +1,250 @@
+package clients
+
+import (
+	"context"
+	"fmt"
+	protoacc "gateway-service/api/protogen/accountservice/proto"
+	"gateway-service/internal/logging"
+	"gateway-service/internal/ports"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/credentials/insecure"
+	"sync"
+	"time"
+)
+
+type GRPCAccountClient struct {
+	conn     *grpc.ClientConn
+	client   protoacc.AccountServiceClient
+	mutex    sync.RWMutex
+	timeout  time.Duration
+	gRPCAddr string
+}
+
+// NewAccountClient creating new grpc client
+func NewAccountClient(timeout time.Duration, gRPCAddr string) ports.AccountClient {
+	return &GRPCAccountClient{
+		timeout:  timeout,
+		gRPCAddr: gRPCAddr,
+	}
+}
+
+func (c *GRPCAccountClient) Connect() error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if c.conn != nil {
+		_ = c.conn.Close()
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	conn, err := grpc.NewClient(
+		c.gRPCAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			MinConnectTimeout: c.timeout,
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to connect to account service: %w", err)
+	}
+
+	// Testing connection
+	c.conn = conn
+	c.client = protoacc.NewAccountServiceClient(conn)
+	resp, err := c.client.HealthCheck(ctx, &protoacc.HealthCheckRequest{
+		Message: "ping",
+	})
+	if err != nil || resp.Message != "pong" {
+		_ = c.conn.Close()
+		logging.Logger.Warn().Err(err).Str("service", c.gRPCAddr).
+			Msg("failed to connect to account service. Retrying to connect...")
+	} else {
+		logging.Logger.Info().Str("service", c.gRPCAddr).Msg("connected to account service")
+	}
+	return nil
+}
+
+func (c *GRPCAccountClient) EnsureConnection() error {
+	c.mutex.RLock()
+	if c.conn != nil && c.conn.GetState() == connectivity.Ready {
+		c.mutex.RUnlock()
+		return nil
+	}
+	c.mutex.RUnlock()
+
+	return c.Connect()
+}
+
+func (c *GRPCAccountClient) Close() {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if c.conn != nil {
+		_ = c.conn.Close()
+		c.conn = nil
+		c.client = nil
+	}
+}
+
+func (c *GRPCAccountClient) StartConnectionMonitor(ctx context.Context) {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := c.EnsureConnection(); err != nil {
+				logging.Logger.Error().Err(err).Msg("Failed to maintain connection to account service")
+			}
+		}
+	}
+}
+
+func (c *GRPCAccountClient) IsHealthy() bool {
+	c.mutex.RLock()
+	if c.conn != nil && c.conn.GetState() == connectivity.Ready {
+		c.mutex.RUnlock()
+		return true
+	}
+	return false
+}
+
+func (c *GRPCAccountClient) CreateCustomer(ctx context.Context, req *protoacc.CreateCustomerRequest) (*protoacc.CreateCustomerResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.CreateCustomer(ctx, req)
+}
+
+func (c *GRPCAccountClient) UpdateCustomer(ctx context.Context, req *protoacc.UpdateCustomerRequest) (*protoacc.UpdateCustomerResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.UpdateCustomer(ctx, req)
+}
+
+func (c *GRPCAccountClient) DeleteCustomer(ctx context.Context, req *protoacc.DeleteCustomerRequest) (*protoacc.DeleteCustomerResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.DeleteCustomer(ctx, req)
+}
+
+func (c *GRPCAccountClient) GetCustomer(ctx context.Context, req *protoacc.GetCustomerRequest) (*protoacc.GetCustomerResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.GetCustomer(ctx, req)
+}
+
+func (c *GRPCAccountClient) ListCustomer(ctx context.Context, req *protoacc.ListCustomersRequest) (*protoacc.ListCustomersResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.ListCustomers(ctx, req)
+}
+
+func (c *GRPCAccountClient) CreateAccount(ctx context.Context, req *protoacc.CreateAccountRequest) (*protoacc.CreateAccountResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.CreateAccount(ctx, req)
+}
+
+func (c *GRPCAccountClient) DeleteAccount(ctx context.Context, req *protoacc.DeleteAccountRequest) (*protoacc.DeleteAccountResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.DeleteAccount(ctx, req)
+}
+
+func (c *GRPCAccountClient) ListAccount(ctx context.Context, req *protoacc.ListAccountsRequest) (*protoacc.ListAccountsResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.ListAccount(ctx, req)
+}
+
+func (c *GRPCAccountClient) GetBalance(ctx context.Context, req *protoacc.GetBalanceRequest) (*protoacc.GetBalanceResponse, error) {
+	if err := c.EnsureConnection(); err != nil {
+		return nil, err
+	}
+
+	c.mutex.RLock()
+	client := c.client
+	c.mutex.RUnlock()
+
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	return client.GetBalance(ctx, req)
+}

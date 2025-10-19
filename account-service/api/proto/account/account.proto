@@ -64,7 +64,8 @@ message GetBalanceRequest {
 
 message GetBalanceResponse {
   double balance = 1;
-  common.Response response = 2;
+  int32 version = 2;
+  common.Response response = 3;
 }
 
 message ListAccountsByCustomerRequest {

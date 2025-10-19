@@ -12,6 +12,7 @@ services:
       - GATEWAY_ENV=prod
       - GATEWAY_GRPC__AUTH_SVC_ADDR=auth-service:50051
       - GATEWAY_GRPC__ACCOUNT_SVC_ADDR=account-service:50051
+      - GATEWAY_GRPC__TRANSACTION_SVC_ADDR=transaction-service:50051
       - GATEWAY_HTTP__ADDR=:8080
       - GATEWAY_LOGGING__LEVEL=info
       - GATEWAY_LOGGING__ENCODING=console
@@ -30,13 +31,15 @@ services:
         condition: service_healthy
       account-service:
         condition: service_healthy
+      transaction-service:
+        condition: service_healthy
   auth-service:
     image: shaekhhasan/bankapp-core:auth-service-v1.0.0
     container_name: auth-service
     hostname: auth-service
     restart: unless-stopped
-    ports:
-      - "8081:8080"
+#    ports:
+#      - "8081:8080"
     expose:
       - "50051"
       - "8080"
@@ -66,8 +69,8 @@ services:
     container_name: account-service
     hostname: account-service
     restart: unless-stopped
-    ports:
-      - "8082:8080"
+#    ports:
+#      - "8082:8080"
     expose:
       - "50051"
       - "8080"
@@ -91,7 +94,37 @@ services:
       start_period: 30s
     networks:
       - app-network
-
+  transaction-service:
+    image: shaekhhasan/bankapp-core:transaction-service-v1.0.0
+    container_name: transaction-service
+    hostname: transaction-service
+    restart: unless-stopped
+#    ports:
+#      - "8083:8080"
+    expose:
+      - "50051"
+      - "8080"
+    environment:
+      - TRANSACTION_ENV=prod
+      - TRANSACTION_GRPC__ADDR=:50051
+      - TRANSACTION_HTTP__ADDR=:8080
+      - TRANSACTION_GRPC__ACCOUNT_SVC_ADDR=account-service:50051
+      - TRANSACTION_LOGGING__LEVEL=info
+      - TRANSACTION_LOGGING__ENCODING=console
+      - TRANSACTION_OBSERVABILITY__METRICS__ENABLED=true
+      - TRANSACTION_OBSERVABILITY__TRACING__ENABLED=false
+      - TRANSACTION_DB__TYPE=sqlite
+      - TRANSACTION_DB__DSN=/data/transaction-service.db
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://transaction-service:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
 networks:
   app-network:
     driver: bridge

@@ -4,6 +4,7 @@ import (
 	"auth-service/internal/domain/entity"
 	custom_err "auth-service/internal/domain/error"
 	"auth-service/internal/logging"
+	"auth-service/internal/messaging"
 	"auth-service/internal/observability/metrics"
 	"auth-service/internal/ports"
 	"errors"
@@ -60,5 +61,6 @@ func (a *UpdateEmployee) Execute(username, role, requester string) (string, erro
 		return "Failed to update employee role", err
 	}
 
+	_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: employee.ToString(), Status: true, Type: messaging.MessageTypeEmployeeUpdated})
 	return "Employee role updated successfully", nil
 }

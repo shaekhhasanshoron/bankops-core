@@ -25,6 +25,11 @@ func (m *MockAccountClient) Close() {
 	m.Called()
 }
 
+func (m *MockAccountClient) IsHealthy() bool {
+	args := m.Called()
+	return args.Bool(0)
+}
+
 func (m *MockAccountClient) StartConnectionMonitor(ctx context.Context) {
 	m.Called(ctx)
 }
@@ -99,20 +104,4 @@ func (m *MockAccountClient) GetBalance(ctx context.Context, req *protoacc.GetBal
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*protoacc.GetBalanceResponse), args.Error(1)
-}
-
-func (m *MockAccountClient) InitTransaction(ctx context.Context, req *protoacc.InitTransactionRequest) (*protoacc.InitTransactionResponse, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*protoacc.InitTransactionResponse), args.Error(1)
-}
-
-func (m *MockAccountClient) GetTransactionHistory(ctx context.Context, req *protoacc.GetTransactionHistoryRequest) (*protoacc.GetTransactionHistoryResponse, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*protoacc.GetTransactionHistoryResponse), args.Error(1)
 }

@@ -12,8 +12,9 @@ import (
 )
 
 type GrpcClients struct {
-	AuthClient    *ports.AuthClient
-	AccountClient *ports.AccountClient
+	AuthClient        *ports.AuthClient
+	AccountClient     *ports.AccountClient
+	TransactionClient *ports.TransactionClient
 }
 
 func StartServer(gRPCClients GrpcClients) {

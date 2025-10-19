@@ -42,6 +42,8 @@ spec:
             value: "auth-service:50051"
           - name: GATEWAY_GRPC__ACCOUNT_SVC_ADDR
             value: "account-service:50051"
+          - name: GATEWAY_GRPC__TRANSACTION_SVC_ADDR
+            value: "transaction-service:50051"
           - name: GATEWAY_LOGGING__LEVEL
             value: "info"
           - name: GATEWAY_LOGGING__ENCODING

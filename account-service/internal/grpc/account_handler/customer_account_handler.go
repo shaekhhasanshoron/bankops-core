@@ -50,7 +50,7 @@ func (s *AccountHandlerService) DeleteAccount(ctx context.Context, req *protoacc
 }
 
 func (s *AccountHandlerService) GetBalance(ctx context.Context, req *protoacc.GetBalanceRequest) (*protoacc.GetBalanceResponse, error) {
-	amount, message, err := s.GetAccountBalanceService.Execute(req.AccountId, req.GetMetadata().GetRequester(), req.GetMetadata().GetRequestId())
+	amount, version, message, err := s.GetAccountBalanceService.Execute(req.AccountId, req.GetMetadata().GetRequester(), req.GetMetadata().GetRequestId())
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("account_id", req.AccountId).Msg("get account failed")
 		return &protoacc.GetBalanceResponse{
@@ -64,6 +64,7 @@ func (s *AccountHandlerService) GetBalance(ctx context.Context, req *protoacc.Ge
 
 	return &protoacc.GetBalanceResponse{
 		Balance: amount,
+		Version: int32(version),
 		Response: &protoacc.Response{
 			Message: message,
 			Success: true,

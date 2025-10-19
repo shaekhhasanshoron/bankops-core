@@ -19,7 +19,6 @@ type LoginRequest struct {
 
 type LoginResponse struct {
 	AccessToken string `json:"access_token"`
-	//RefreshToken string `json:"refresh_token"`
 }
 
 func NewAuthHandler(authClient ports.AuthClient) *AuthHandler {

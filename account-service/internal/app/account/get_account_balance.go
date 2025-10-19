@@ -21,7 +21,7 @@ func NewGetAccountBalance(accountRepo ports.AccountRepo) *GetAccountBalance {
 	}
 }
 
-func (a *GetAccountBalance) Execute(id, requester, requestId string) (float64, string, error) {
+func (a *GetAccountBalance) Execute(id, requester, requestId string) (float64, int, string, error) {
 	metrics.IncRequestActive()
 	defer metrics.DecRequestActive()
 
@@ -33,19 +33,19 @@ func (a *GetAccountBalance) Execute(id, requester, requestId string) (float64, s
 	if strings.TrimSpace(id) == "" {
 		err = fmt.Errorf("%w: 'id' - account id required in param", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Invalid request - 'id' account id missing")
-		return 0, "Invalid request - 'id' account id missing", err
+		return 0, 0, "Invalid request - 'id' account id missing", err
 	}
 
 	account, err := a.AccountRepo.GetAccountByID(id)
 	if err != nil {
 		logging.Logger.Error().Err(err).Str("account_id", id).Msg("Failed to verify account")
-		return 0, "Failed to verify account", fmt.Errorf("%v: failed to verify account", custom_err.ErrDatabase)
+		return 0, 0, "Failed to verify account", fmt.Errorf("%v: failed to verify account", custom_err.ErrDatabase)
 	}
 
 	if account == nil {
 		err = fmt.Errorf("%v", custom_err.ErrAccountNotFound)
 		logging.Logger.Error().Err(err).Str("account_id", id).Msg("Account not found")
-		return 0, "Account not found", err
+		return 0, 0, "Account not found", err
 	}
-	return account.Balance, "Account balance", nil
+	return account.Balance, account.Version, "Account balance", nil
 }

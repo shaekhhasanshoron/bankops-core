@@ -3,6 +3,7 @@ package app
 import (
 	custom_err "auth-service/internal/domain/error"
 	"auth-service/internal/logging"
+	"auth-service/internal/messaging"
 	"auth-service/internal/observability/metrics"
 	"auth-service/internal/ports"
 	"errors"
@@ -69,5 +70,6 @@ func (a *DeleteEmployee) Execute(username, requester string) (string, error) {
 		return "Failed to delete employee", err
 	}
 
+	_ = messaging.GetService().PublishToDefaultTopic(messaging.Message{Content: username, Status: true, Type: messaging.MessageTypeEmployeeDeleted})
 	return "Employee deleted successfully", nil
 }

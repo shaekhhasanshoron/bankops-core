@@ -8,6 +8,7 @@ import (
 	"auth-service/internal/grpc"
 	httpserver "auth-service/internal/http"
 	"auth-service/internal/logging"
+	"auth-service/internal/messaging"
 	"auth-service/internal/observability/metrics"
 	"auth-service/internal/observability/tracing"
 	"auth-service/internal/runtime"
@@ -51,6 +52,14 @@ func main() {
 	defer func() {
 		if config.Current().Observability.TracingConfig.Enabled {
 			_ = traceShutdown(context.Background())
+		}
+	}()
+
+	// Initiating message queues
+	messaging.SetupMessaging()
+	defer func() {
+		if config.Current().MessagePublisher.Enabled {
+			_ = messaging.GetService().Close()
 		}
 	}()
 
