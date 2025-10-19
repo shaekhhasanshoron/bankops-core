@@ -45,7 +45,8 @@ func (a *ListAccount) Execute(customerID, minBalance, inTransaction string, page
 		if err != nil {
 			err = fmt.Errorf("%w: customer ID is required for customer scope", custom_err.ErrValidationFailed)
 			logging.Logger.Error().Err(err).Str("min_balance", minBalance).Msg("Invalid request - invalid balance id")
-			return nil, 0, 0, "Invalid request - customer id missing", custom_err.ErrValidationFailed
+			err = custom_err.ErrValidationFailed
+			return nil, 0, 0, "Invalid request - customer id missing", err
 		}
 
 		if amount < 0 {

@@ -85,7 +85,8 @@ func (a *InitTransaction) Execute(
 			Str("transaction_id", transaction.ID).
 			Str("transaction_type", transaction.Type).
 			Msg("Failed to create transaction")
-		return nil, "Failed to create transaction", custom_err.ErrDatabase
+		err = custom_err.ErrDatabase
+		return nil, "Failed to create transaction", err
 	}
 
 	err = a.sagaOrchestrator.ExecuteTransactionSync(ctx, transaction, requester, requestId)
@@ -116,7 +117,8 @@ func (a *InitTransaction) Execute(
 
 	updatedTransaction, err := a.transactionRepo.GetTransactionByID(transaction.ID)
 	if err != nil {
-		return nil, "Failed to get transaction status", fmt.Errorf("failed to get transaction status: %w", err)
+		err = fmt.Errorf("failed to get transaction status: %w", err)
+		return nil, "Failed to get transaction status", err
 	}
 
 	eventData := map[string]interface{}{

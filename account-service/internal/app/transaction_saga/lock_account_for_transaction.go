@@ -31,18 +31,21 @@ func (t *LockAccountForTransaction) Execute(transactionId string, accountsIds []
 
 	if len(accountsIds) == 0 {
 		logging.Logger.Error().Err(custom_err.ErrMinimumOneAccountIdRequired).Msg("At least one account ID is required")
-		return "at least one account ID is required", custom_err.ErrMinimumOneAccountIdRequired
+		err = custom_err.ErrMinimumOneAccountIdRequired
+		return "at least one account ID is required", err
 	}
 
 	if strings.TrimSpace(transactionId) == "" {
 		logging.Logger.Error().Err(custom_err.ErrTransactionIdRequired).Msg("Transaction id is required")
-		return "transaction id is required", custom_err.ErrTransactionIdRequired
+		err = custom_err.ErrTransactionIdRequired
+		return "transaction id is required", err
 	}
 
 	err = t.AccountRepo.LockAccountsForTransaction(transactionId, accountsIds)
 	if err != nil {
 		logging.Logger.Error().Err(err).Str("transaction_id", transactionId).Msg("Failed to lock accounts for transaction")
-		return "failed to lock accounts for transaction", custom_err.ErrDatabase
+		err = custom_err.ErrDatabase
+		return "failed to lock accounts for transaction", err
 	}
 
 	return "Accounts locked successfully", nil

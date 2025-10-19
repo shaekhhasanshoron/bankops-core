@@ -20,6 +20,8 @@ var (
 	ErrCustomerNotFound                   = errors.New("customer not found")
 	ErrCustomerLocked                     = errors.New("customer is locked for operation")
 	ErrFailedToMarkTransactionAsFailed    = errors.New("failed to mark transaction as failed")
+	ErrFailedCompensationFundRollback     = errors.New("failed to compensate fund rollback")
+	ErrFailedCompensationUnlockAccounts   = errors.New("failed to compensate unlock accounts")
 	ErrCustomerHasActiveTx                = errors.New("customer has accounts with active transactions")
 	ErrConcurrentModification             = errors.New("concurrent modification detected")
 	ErrAccountLocked                      = errors.New("account is locked for transaction")

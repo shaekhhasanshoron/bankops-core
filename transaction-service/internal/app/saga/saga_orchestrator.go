@@ -18,6 +18,7 @@ type TransactionSagaOrchestrator struct {
 	eventRepo              ports.EventRepo
 	sourceAccountInfo      ports.AccountInfo
 	destinationAccountInfo *ports.AccountInfo
+	successfulStepMap      map[string]bool // step type == boolean
 }
 
 func NewTransactionSagaOrchestrator(
@@ -28,10 +29,11 @@ func NewTransactionSagaOrchestrator(
 ) *TransactionSagaOrchestrator {
 
 	return &TransactionSagaOrchestrator{
-		sagaRepo:        sagaRepo,
-		accountClient:   accountClient,
-		transactionRepo: transactionRepo,
-		eventRepo:       eventRepo,
+		sagaRepo:          sagaRepo,
+		accountClient:     accountClient,
+		transactionRepo:   transactionRepo,
+		eventRepo:         eventRepo,
+		successfulStepMap: make(map[string]bool),
 	}
 }
 
@@ -40,6 +42,10 @@ func (o *TransactionSagaOrchestrator) ExecuteTransactionSync(
 	transaction *entity.Transaction,
 	requester, requestId string,
 ) error {
+
+	o.successfulStepMap = make(map[string]bool)
+	o.sourceAccountInfo = ports.AccountInfo{}
+	o.destinationAccountInfo = nil
 
 	saga := entity.NewTransactionSaga(
 		transaction.ID,
@@ -62,23 +68,40 @@ func (o *TransactionSagaOrchestrator) ExecuteTransactionSync(
 		return custom_err.ErrDatabase
 	}
 
-	var err error
+	o.successfulStepMap[entity.TransactionSagaStepInitiate] = true
+
+	var transactionErr error
 	maxRetries := 3
 	for i := 0; i < maxRetries; i++ {
-		err = o.executeSagaSteps(ctx, saga, requester, requestId)
-		if err == nil {
+		transactionErr = o.executeSagaSteps(ctx, saga, requester, requestId)
+		if transactionErr == nil {
 			return nil
 		}
 
-		if o.shouldRetry(err) && i < maxRetries-1 {
+		if o.shouldRetry(transactionErr) && i < maxRetries-1 {
 			time.Sleep(time.Duration(i+1) * time.Second)
 			continue
 		}
-
-		return o.compensateSaga(ctx, saga, err, requester, requestId)
 	}
 
-	return err
+	if transactionErr != nil {
+		maxRetries = 3
+		for i := 0; i < maxRetries; i++ {
+			logging.Logger.Info().
+				Err(transactionErr).
+				Str("transaction_id", saga.TransactionID).
+				Str("transaction_saga_id", saga.ID).
+				Str("transaction_type", saga.TransactionType).
+				Msg("Compensate: Transaction Failed initiating compensation")
+
+			compensateErr := o.compensateSaga(ctx, saga, transactionErr, requester, requestId)
+			if compensateErr == nil {
+				return transactionErr
+			}
+		}
+	}
+
+	return transactionErr
 }
 
 func (o *TransactionSagaOrchestrator) executeSagaSteps(
@@ -122,9 +145,8 @@ func (o *TransactionSagaOrchestrator) sagaValidationStep(
 	requestId string) error {
 
 	// If accounts are already locked
-	if saga.IsStepsCompletedSuccessfully(
-		entity.TransactionSagaStepValidateAccounts,
-		entity.TransactionSagaStepLockAccounts) {
+	if o.IsStepCompletedSuccessfully(entity.TransactionSagaStepValidateAccounts) &&
+		o.IsStepCompletedSuccessfully(entity.TransactionSagaStepLockAccounts) {
 		logging.Logger.Debug().
 			Str("transaction_id", saga.TransactionID).
 			Str("transaction_saga_id", saga.ID).
@@ -137,12 +159,11 @@ func (o *TransactionSagaOrchestrator) sagaValidationStep(
 	var err error
 	defer func() {
 		if err == nil {
-			_ = saga.AppendSuccessfulStep(entity.TransactionSagaStepValidateAccounts)
+			o.successfulStepMap[entity.TransactionSagaStepValidateAccounts] = true
 			saga.CurrentState = entity.TransactionSagaStateValidated
 		} else {
 			saga.CurrentState = entity.TransactionSagaStateValidationFailed
 		}
-
 		_ = o.updateSaga(saga)
 	}()
 
@@ -160,7 +181,8 @@ func (o *TransactionSagaOrchestrator) sagaValidationStep(
 			Str("accountIds", fmt.Sprintf("%v", accountIDs)).
 			Str("message", message).
 			Msg("Unable to validate accounts saga")
-		return custom_err.ErrAccountValidationFailed
+		err = custom_err.ErrAccountValidationFailed
+		return err
 	}
 
 	if accountsInfo == nil || len(accountsInfo) == 0 || len(accountsInfo) != len(accountIDs) {
@@ -170,7 +192,8 @@ func (o *TransactionSagaOrchestrator) sagaValidationStep(
 			Str("transaction_type", saga.TransactionType).
 			Str("accountIds", fmt.Sprintf("%v", accountIDs)).
 			Msg("Accounts details not found")
-		return custom_err.ErrAccountDetailsMissing
+		err = custom_err.ErrAccountDetailsMissing
+		return err
 	}
 
 	var sourceAccount ports.AccountInfo
@@ -189,7 +212,8 @@ func (o *TransactionSagaOrchestrator) sagaValidationStep(
 
 	o.sourceAccountInfo = sourceAccount
 	o.destinationAccountInfo = destinationAccount
-	return nil
+	err = nil
+	return err
 }
 
 func (o *TransactionSagaOrchestrator) sagaLockingStep(
@@ -200,7 +224,7 @@ func (o *TransactionSagaOrchestrator) sagaLockingStep(
 	requestId string) error {
 
 	// If accounts are already locked
-	if saga.IsStepsCompletedSuccessfully(entity.TransactionSagaStepLockAccounts) {
+	if o.IsStepCompletedSuccessfully(entity.TransactionSagaStepLockAccounts) {
 		logging.Logger.Debug().
 			Str("transaction_id", saga.TransactionID).
 			Str("transaction_saga_id", saga.ID).
@@ -213,9 +237,11 @@ func (o *TransactionSagaOrchestrator) sagaLockingStep(
 	var err error
 	defer func() {
 		if err == nil {
-			_ = saga.AppendSuccessfulStep(entity.TransactionSagaStepLockAccounts)
+			o.successfulStepMap[entity.TransactionSagaStepLockAccounts] = true
+			saga.CurrentStep = entity.TransactionSagaStepLockAccounts
 			saga.CurrentState = entity.TransactionSagaStateLocked
 		} else {
+			saga.CurrentStep = entity.TransactionSagaStepLockAccounts
 			saga.CurrentState = entity.TransactionSagaStateLockFailed
 		}
 
@@ -236,9 +262,11 @@ func (o *TransactionSagaOrchestrator) sagaLockingStep(
 			Str("accountIds", fmt.Sprintf("%v", accountIDs)).
 			Str("message", message).
 			Msg("Failed to lock accounts")
-		return custom_err.ErrAccountLockingFailed
+		err = custom_err.ErrAccountLockingFailed
+		return err
 	}
-	return nil
+	err = nil
+	return err
 }
 
 func (o *TransactionSagaOrchestrator) sagaProcessStep(
@@ -248,7 +276,7 @@ func (o *TransactionSagaOrchestrator) sagaProcessStep(
 	requestId string) error {
 
 	// If accounts are already locked
-	if saga.IsStepsCompletedSuccessfully(entity.TransactionSagaStepProcessTransfer) {
+	if o.IsStepCompletedSuccessfully(entity.TransactionSagaStepProcessTransfer) {
 		logging.Logger.Debug().
 			Str("transaction_id", saga.TransactionID).
 			Str("transaction_saga_id", saga.ID).
@@ -261,12 +289,13 @@ func (o *TransactionSagaOrchestrator) sagaProcessStep(
 	var err error
 	defer func() {
 		if err == nil {
-			_ = saga.AppendSuccessfulStep(entity.TransactionSagaStepProcessTransfer)
+			o.successfulStepMap[entity.TransactionSagaStepProcessTransfer] = true
+			saga.CurrentStep = entity.TransactionSagaStepProcessTransfer
 			saga.CurrentState = entity.TransactionSagaStateCompleted
 		} else {
+			saga.CurrentStep = entity.TransactionSagaStepProcessTransfer
 			saga.CurrentState = entity.TransactionSagaStateFailed
 		}
-
 		_ = o.updateSaga(saga)
 	}()
 
@@ -282,7 +311,8 @@ func (o *TransactionSagaOrchestrator) sagaProcessStep(
 			Str("transaction_saga_id", saga.ID).
 			Str("transaction_type", saga.TransactionType).
 			Msg("failed to calculate and validate amounts")
-		return custom_err.ErrAccountEmpty
+		err = custom_err.ErrAccountEmpty
+		return err
 	}
 
 	_, message, err := o.accountClient.UpdateAccountsBalance(ctx, updates, requester, requestId)
@@ -294,10 +324,11 @@ func (o *TransactionSagaOrchestrator) sagaProcessStep(
 			Str("transaction_type", saga.TransactionType).
 			Str("message", message).
 			Msg("failed to update account balance; job will unlock the accounts")
-		return custom_err.ErrTransactionFailed
+		err = custom_err.ErrTransactionFailed
+		return err
 	}
-
-	return nil
+	err = nil
+	return err
 }
 
 func (o *TransactionSagaOrchestrator) sagaCompleteStep(
@@ -306,10 +337,20 @@ func (o *TransactionSagaOrchestrator) sagaCompleteStep(
 	requester string,
 	requestId string) error {
 
+	if o.IsStepCompletedSuccessfully(entity.TransactionSagaStepComplete) {
+		logging.Logger.Debug().
+			Str("transaction_id", saga.TransactionID).
+			Str("transaction_saga_id", saga.ID).
+			Str("saga_step_type", entity.TransactionSagaStepComplete).
+			Str("transaction_type", saga.TransactionType).
+			Msg("Transaction already completed successfully")
+		return nil
+	}
+
 	var err error
 	defer func() {
 		if err == nil {
-			_ = saga.AppendSuccessfulStep(entity.TransactionSagaStepComplete)
+			o.successfulStepMap[entity.TransactionSagaStepComplete] = true
 			saga.CurrentState = entity.TransactionSagaStateCompleted
 		} else {
 			saga.CurrentState = entity.TransactionSagaStateFailed
@@ -331,7 +372,8 @@ func (o *TransactionSagaOrchestrator) sagaCompleteStep(
 			Str("transaction_type", saga.TransactionType).
 			Str("transaction_status", entity.TransactionStatusSuccessful).
 			Msg("Failed to update transaction status")
-		return custom_err.ErrTransactionStatusUpdateFailed
+		err = custom_err.ErrTransactionStatusUpdateFailed
+		return err
 	}
 
 	message, err := o.accountClient.UnlockAccounts(ctx, saga.TransactionID, requester, requestId)
@@ -343,7 +385,8 @@ func (o *TransactionSagaOrchestrator) sagaCompleteStep(
 			Str("transaction_type", saga.TransactionType).
 			Str("message", message).
 			Msg("failed to unlock accounts; Retry for a while otherwise, it will recover by job")
-		return custom_err.ErrAccountUnlockingFailed
+		err = custom_err.ErrAccountUnlockingFailed
+		return err
 	}
 
 	// This ensures that accounts are unlocked successfully
@@ -356,9 +399,11 @@ func (o *TransactionSagaOrchestrator) sagaCompleteStep(
 			Str("transaction_type", saga.TransactionType).
 			Str("transaction_status", entity.TransactionStatusCompleted).
 			Msg("Failed to update transaction status")
-		return custom_err.ErrTransactionStatusUpdateFailed
+		err = custom_err.ErrTransactionStatusUpdateFailed
+		return err
 	}
-	return nil
+	err = nil
+	return err
 }
 
 func (o *TransactionSagaOrchestrator) calculateAndValidateBalanceUpdates(
@@ -438,10 +483,31 @@ func (o *TransactionSagaOrchestrator) compensateSaga(
 	requester, requestId string,
 ) error {
 
+	if o.IsStepCompletedSuccessfully(entity.TransactionSagaStepComplete) {
+		logging.Logger.Debug().
+			Str("transaction_id", saga.TransactionID).
+			Str("transaction_saga_id", saga.ID).
+			Str("saga_step_type", entity.TransactionSagaStepComplete).
+			Str("transaction_type", saga.TransactionType).
+			Msg("Transaction already completed successfully")
+		return nil
+
+	} else if o.IsStepCompletedSuccessfully(entity.TransactionSagaStepCompensateComplete) {
+		logging.Logger.Debug().
+			Str("transaction_id", saga.TransactionID).
+			Str("transaction_saga_id", saga.ID).
+			Str("saga_step_type", entity.TransactionSagaStepCompensateComplete).
+			Str("transaction_type", saga.TransactionType).
+			Msg("Compensate: Transaction already compensated")
+		return nil
+	}
+
 	var err error
 	defer func() {
 		if err == nil {
+			o.successfulStepMap[entity.TransactionSagaStepCompensateComplete] = true
 			saga.CurrentState = entity.TransactionSagaStateCompensated
+			saga.CurrentStep = entity.TransactionSagaStepCompensateComplete
 		} else {
 			saga.CurrentState = entity.TransactionSagaStateFailed
 		}
@@ -453,16 +519,22 @@ func (o *TransactionSagaOrchestrator) compensateSaga(
 	saga.CurrentState = entity.TransactionSagaStateCompensating
 	_ = o.updateSaga(saga)
 
-	message, err := o.accountClient.UnlockAccounts(ctx, saga.TransactionID, requester, requestId)
-	if err != nil {
-		logging.Logger.Warn().
-			Err(err).
-			Str("transaction_id", saga.TransactionID).
-			Str("transaction_saga_id", saga.ID).
-			Str("transaction_type", saga.TransactionType).
-			Str("message", message).
-			Msg("Failed to unlock accounts during compensation; recovery job will handle it")
-		return custom_err.ErrAccountUnlockingFailed
+	// Amount Rollback (If previously amount was transferred)
+	if o.IsStepCompletedSuccessfully(entity.TransactionSagaStepProcessTransfer) == true &&
+		o.IsStepCompletedSuccessfully(entity.TransactionSagaStepCompensateFundRollback) == false {
+		err = o.compensateStepFundRollback(ctx, saga, requester, requestId)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Unlock Account Rollback (If previously accounts were locked)
+	if o.IsStepCompletedSuccessfully(entity.TransactionSagaStepLockAccounts) == true &&
+		o.IsStepCompletedSuccessfully(entity.TransactionSagaStepCompensateUnlockAccount) == false {
+		err = o.compensateStepAccountUnlock(ctx, saga, requester, requestId)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := o.transactionRepo.UpdateTransactionStatus(
@@ -475,12 +547,189 @@ func (o *TransactionSagaOrchestrator) compensateSaga(
 			Str("transaction_id", saga.TransactionID).
 			Str("transaction_saga_id", saga.ID).
 			Str("transaction_type", saga.TransactionType).
-			Str("message", message).
-			Msg("Failed to mark transaction as failed after compensation")
+			Msg("Compensate: Failed to mark transaction as failed after compensation")
 		return custom_err.ErrFailedToMarkTransactionAsFailed
 	}
 
-	return originalErr
+	return nil
+}
+
+// compensateStepFundRollback handles the rollback of initial transferred funds
+func (o *TransactionSagaOrchestrator) compensateStepFundRollback(
+	ctx context.Context,
+	saga *entity.TransactionSaga,
+	requester, requestId string,
+) error {
+
+	var err error
+	defer func() {
+		if err == nil {
+			o.successfulStepMap[entity.TransactionSagaStepCompensateFundRollback] = true
+			saga.CurrentStep = entity.TransactionSagaStepCompensateFundRollback
+			saga.CurrentState = entity.TransactionSagaStateCompensated
+
+		} else {
+			saga.CurrentStep = entity.TransactionSagaStepCompensateFundRollback
+			saga.CurrentState = entity.TransactionSagaStateCompensateFailed
+		}
+		_ = o.updateSaga(saga)
+	}()
+
+	saga.CurrentStep = entity.TransactionSagaStepCompensateFundRollback
+	saga.CurrentState = entity.TransactionSagaStateCompensating
+	_ = o.updateSaga(saga)
+
+	// Get Balance
+	sourceBalance, sourceVersion, err := o.accountClient.GetBalance(ctx, saga.SourceAccountID)
+	if err != nil {
+		logging.Logger.Error().
+			Err(err).
+			Str("transaction_id", saga.TransactionID).
+			Str("transaction_saga_id", saga.ID).
+			Str("saga_step", saga.CurrentStep).
+			Str("source_account_id", saga.SourceAccountID).
+			Str("transaction_type", saga.TransactionType).
+			Msg("Compensate:  Failed to get current balance and version for source account")
+		err = custom_err.ErrFailedCompensationFundRollback
+		return err
+	}
+
+	var destBalance float64
+	var destVersion int
+	if saga.DestinationAccountID != nil {
+		destBalance, destVersion, err = o.accountClient.GetBalance(ctx, *saga.DestinationAccountID)
+		if err != nil {
+			logging.Logger.Error().
+				Err(err).
+				Str("transaction_id", saga.TransactionID).
+				Str("transaction_saga_id", saga.ID).
+				Str("saga_step", saga.CurrentStep).
+				Str("destination_account_id", saga.SourceAccountID).
+				Str("transaction_type", saga.TransactionType).
+				Msg("Compensation: Failed to get current balance and version for destination account")
+			err = custom_err.ErrFailedCompensationFundRollback
+			return err
+		}
+	}
+
+	// calculate rollback amount
+	updates, err := o.calculateRollbackUpdates(saga, sourceBalance, sourceVersion, destBalance, destVersion)
+	if err != nil {
+		logging.Logger.Error().
+			Err(err).
+			Str("transaction_id", saga.TransactionID).
+			Str("transaction_saga_id", saga.ID).
+			Str("saga_step", saga.CurrentStep).
+			Str("destination_account_id", saga.SourceAccountID).
+			Str("transaction_type", saga.TransactionType).
+			Msg("Compensate:  Failed to get calculate rollback balance")
+		err = custom_err.ErrFailedCompensationFundRollback
+		return err
+	}
+
+	_, message, err := o.accountClient.UpdateAccountsBalance(ctx, updates, requester, requestId)
+	if err != nil {
+		logging.Logger.Warn().
+			Err(err).
+			Str("transaction_id", saga.TransactionID).
+			Str("transaction_saga_id", saga.ID).
+			Str("transaction_type", saga.TransactionType).
+			Str("message", message).
+			Msg("Compensate: Failed to rollback update account balance; job will unlock the accounts")
+		err = custom_err.ErrFailedCompensationFundRollback
+		return err
+	}
+	err = nil
+	return err
+}
+
+// compensateStepFundRollback handles the rollback of initial transferred funds
+func (o *TransactionSagaOrchestrator) compensateStepAccountUnlock(
+	ctx context.Context,
+	saga *entity.TransactionSaga,
+	requester, requestId string,
+) error {
+
+	var err error
+	defer func() {
+		if err == nil {
+			o.successfulStepMap[entity.TransactionSagaStepCompensateUnlockAccount] = true
+			saga.CurrentStep = entity.TransactionSagaStepCompensateUnlockAccount
+			saga.CurrentState = entity.TransactionSagaStateCompensated
+
+		} else {
+			saga.CurrentStep = entity.TransactionSagaStepCompensateUnlockAccount
+			saga.CurrentState = entity.TransactionSagaStateCompensateFailed
+		}
+		_ = o.updateSaga(saga)
+	}()
+
+	saga.CurrentStep = entity.TransactionSagaStepCompensateUnlockAccount
+	saga.CurrentState = entity.TransactionSagaStateCompensating
+	_ = o.updateSaga(saga)
+
+	message, err := o.accountClient.UnlockAccounts(ctx, saga.TransactionID, requester, requestId)
+	if err != nil {
+		logging.Logger.Warn().
+			Err(err).
+			Str("transaction_id", saga.TransactionID).
+			Str("transaction_saga_id", saga.ID).
+			Str("transaction_type", saga.TransactionType).
+			Str("message", message).
+			Msg("Compensate: Failed to unlock accounts during compensation")
+		err = custom_err.ErrFailedCompensationUnlockAccounts
+		return err
+	}
+	err = nil
+	return err
+}
+
+// Enhanced calculateRollbackUpdates method
+func (o *TransactionSagaOrchestrator) calculateRollbackUpdates(
+	saga *entity.TransactionSaga,
+	currentSourceBalance float64, currentSourceAccountVersion int, currentDestBalance float64, currentDestAccountVersion int,
+) ([]ports.AccountBalanceUpdate, error) {
+
+	var updates []ports.AccountBalanceUpdate
+
+	switch saga.TransactionType {
+	case entity.TransactionTypeTransfer:
+		updates = append(updates, ports.AccountBalanceUpdate{
+			AccountID:  saga.SourceAccountID,
+			NewBalance: currentSourceBalance + saga.Amount,
+			Version:    currentSourceAccountVersion,
+		})
+		updates = append(updates, ports.AccountBalanceUpdate{
+			AccountID:  *saga.DestinationAccountID,
+			NewBalance: currentDestBalance - saga.Amount,
+			Version:    currentDestAccountVersion,
+		})
+
+	case entity.TransactionTypeWithdrawFull:
+		updates = append(updates, ports.AccountBalanceUpdate{
+			AccountID:  saga.SourceAccountID,
+			NewBalance: o.sourceAccountInfo.Balance,
+			Version:    currentSourceAccountVersion,
+		})
+
+	case entity.TransactionTypeWithdrawAmount:
+		updates = append(updates, ports.AccountBalanceUpdate{
+			AccountID:  saga.SourceAccountID,
+			NewBalance: currentSourceBalance + saga.Amount,
+			Version:    currentSourceAccountVersion,
+		})
+
+	case entity.TransactionTypeAddAmount:
+		updates = append(updates, ports.AccountBalanceUpdate{
+			AccountID:  saga.SourceAccountID,
+			NewBalance: currentSourceBalance - saga.Amount,
+			Version:    currentSourceAccountVersion,
+		})
+	default:
+		return nil, fmt.Errorf("unknown transaction type for rollback: %s", saga.TransactionType)
+	}
+
+	return updates, nil
 }
 
 func (o *TransactionSagaOrchestrator) shouldRetry(err error) bool {
@@ -515,4 +764,8 @@ func (o *TransactionSagaOrchestrator) updateSaga(saga *entity.TransactionSaga) e
 			Msg("Unable to update transaction saga")
 	}
 	return nil
+}
+
+func (o *TransactionSagaOrchestrator) IsStepCompletedSuccessfully(currentSteps string) bool {
+	return o.successfulStepMap[currentSteps]
 }

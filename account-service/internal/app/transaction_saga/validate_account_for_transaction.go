@@ -32,7 +32,8 @@ func (t *ValidateAccountForTransaction) Execute(transactionId string, accountsId
 
 	if len(accountsIds) == 0 {
 		logging.Logger.Error().Err(custom_err.ErrMinimumOneAccountIdRequired).Msg("At least one account ID is required")
-		return nil, "at least one account ID is required", custom_err.ErrMinimumOneAccountIdRequired
+		err = custom_err.ErrMinimumOneAccountIdRequired
+		return nil, "at least one account ID is required", err
 	}
 
 	var accounts []*entity.Account
@@ -40,17 +41,20 @@ func (t *ValidateAccountForTransaction) Execute(transactionId string, accountsId
 		account, err := t.AccountRepo.GetAccountByID(accountID)
 		if err != nil {
 			logging.Logger.Error().Err(custom_err.ErrDatabase).Str("account_id", accountID).Msg("Failed to validate account")
-			return nil, fmt.Sprintf("Failed to validate account'%s'", accountID), custom_err.ErrDatabase
+			err = custom_err.ErrDatabase
+			return nil, fmt.Sprintf("Failed to validate account'%s'", accountID), err
 		}
 
 		if account == nil {
 			logging.Logger.Error().Err(custom_err.ErrAccountNotFound).Str("account_id", accountID).Msg("Account not found")
-			return nil, fmt.Sprintf("Account '%s' not found", accountID), custom_err.ErrAccountNotFound
+			err = custom_err.ErrAccountNotFound
+			return nil, fmt.Sprintf("Account '%s' not found", accountID), err
 		}
 
 		if !account.CanTransact() {
 			logging.Logger.Error().Err(custom_err.ErrAccountLocked).Str("account_id", accountID).Msg("Account cannot transact")
-			return nil, fmt.Sprintf("Account '%s' cannot transact", accountID), custom_err.ErrAccountLocked
+			err = custom_err.ErrAccountLocked
+			return nil, fmt.Sprintf("Account '%s' cannot transact", accountID), err
 		}
 		accounts = append(accounts, account)
 	}

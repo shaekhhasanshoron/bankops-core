@@ -55,7 +55,8 @@ func (t *GetTransactionHistory) Execute(accountID string, companyID string, type
 			Int("page", page).
 			Int("page_size", pageSize).
 			Msg("Failed to get transaction history")
-		return nil, 0, fmt.Errorf("%w: failed to get transaction history", custom_err.ErrDatabase)
+		err = fmt.Errorf("%w: failed to get transaction history", custom_err.ErrDatabase)
+		return nil, 0, err
 	}
 
 	return transactions, total, nil

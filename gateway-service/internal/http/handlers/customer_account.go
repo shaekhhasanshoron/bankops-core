@@ -41,7 +41,7 @@ type GetBalanceResponse struct {
 // CreateAccount for creating new customer
 // @Tags Account
 // @Summary Create Account
-// @Description Create account - Bearer token required
+// @Description Create account - Amount must minimum greater than zero | Bearer token required
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"

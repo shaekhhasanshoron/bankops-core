@@ -38,18 +38,21 @@ func (a *UpdateEmployee) Execute(username, role, requester string) (string, erro
 
 	if username == "" || role == "" {
 		logging.Logger.Warn().Msg("Invalid request")
-		return "Missing required data username and role", custom_err.ErrMissingRequiredData
+		err = custom_err.ErrMissingRequiredData
+		return "Missing required data username and role", err
 	}
 
 	if role != entity.EmployeeRoleAdmin && role != entity.EmployeeRoleViewer && role != entity.EmployeeRoleEditor {
 		logging.Logger.Warn().Err(custom_err.ErrInvalidRole).Str("role", role).Msg("Invalid request")
-		return "Invalid role", custom_err.ErrInvalidRole
+		err = custom_err.ErrInvalidRole
+		return "Invalid role", err
 	}
 
 	employee, err := a.EmployeeRepo.GetEmployeeByUsername(username)
 	if err != nil {
 		logging.Logger.Warn().Err(err).Str("username", username).Msg("employee not found")
-		return "Employee not found", errors.New("employee not found")
+		err = errors.New("employee not found")
+		return "Employee not found", err
 	}
 
 	employee.Role = role

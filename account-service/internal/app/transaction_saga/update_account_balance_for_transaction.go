@@ -31,26 +31,30 @@ func (t *UpdateAccountBalanceForTransaction) Execute(accountBalanceUpdates []typ
 
 	if accountBalanceUpdates == nil || len(accountBalanceUpdates) == 0 {
 		logging.Logger.Error().Err(custom_err.ErrInvalidRequest).Msg("At least one account balance update is required")
-		return nil, "at least one account balance update is required", custom_err.ErrInvalidRequest
+		err = custom_err.ErrInvalidRequest
+		return nil, "at least one account balance update is required", err
 	}
 
 	for _, update := range accountBalanceUpdates {
 		account, err := t.AccountRepo.GetAccountByID(update.AccountID)
 		if err != nil {
 			logging.Logger.Error().Err(err).Str("account_id", update.AccountID).Msg("Failed to lock accounts for transaction")
-			return nil, "failed to lock accounts for transaction", custom_err.ErrDatabase
+			err = custom_err.ErrDatabase
+			return nil, "failed to lock accounts for transaction", err
 		}
 
 		if account == nil {
 			logging.Logger.Error().Err(err).Str("account_id", update.AccountID).Msg("Account not found")
-			return nil, "Account not found", custom_err.ErrAccountNotFound
+			err = custom_err.ErrAccountNotFound
+			return nil, "Account not found", err
 		}
 	}
 
 	resp, err := t.AccountRepo.UpdateAccountBalanceLifecycle(accountBalanceUpdates, requester)
 	if err != nil {
 		logging.Logger.Error().Err(err).Msg("Could not update account balance")
-		return nil, "failed to update account balance", custom_err.ErrDatabase
+		err = custom_err.ErrDatabase
+		return nil, "failed to update account balance", err
 	}
 
 	return resp, "account balances updated successfully", nil

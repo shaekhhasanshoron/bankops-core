@@ -42,29 +42,34 @@ func (a *CreateEmployee) Execute(username, password, role, requester string) (st
 
 	if username == "" || password == "" || role == "" {
 		logging.Logger.Warn().Msg("Invalid request")
-		return "Missing required data (username, password, role)", custom_err.ErrMissingRequiredData
+		err = custom_err.ErrMissingRequiredData
+		return "Missing required data (username, password, role)", err
 	}
 
 	if username == common.SystemUserUsername {
 		logging.Logger.Warn().Err(custom_err.ErrInvalidUsername).Str("username", username).Msg("Invalid request")
-		return "Username cannot be 'system'", custom_err.ErrInvalidUsername
+		err = custom_err.ErrInvalidUsername
+		return "Username cannot be 'system'", err
 	}
 
 	re := regexp.MustCompile(`^[a-z]+(_[a-z]+)*$`)
 	if !re.MatchString(username) {
 		logging.Logger.Warn().Err(custom_err.ErrInvalidUsername).Str("username", username).Msg("Invalid username")
-		return "Username supports only lowercase and '_' (in middle only)", custom_err.ErrInvalidUsername
+		err = custom_err.ErrInvalidUsername
+		return "Username supports only lowercase and '_' (in middle only)", err
 	}
 
 	existingEmployee, _ := a.EmployeeRepo.GetEmployeeByUsername(username)
 	if existingEmployee != nil && existingEmployee.Status == entity.EmployeeStatusValid {
 		logging.Logger.Warn().Err(custom_err.ErrEmployeeAlreadyExists).Str("username", username).Msg("Invalid request")
-		return "Employee already exists", custom_err.ErrEmployeeAlreadyExists
+		err = custom_err.ErrEmployeeAlreadyExists
+		return "Employee already exists", err
 	}
 
 	if role != entity.EmployeeRoleAdmin && role != entity.EmployeeRoleViewer && role != entity.EmployeeRoleEditor {
 		logging.Logger.Warn().Err(custom_err.ErrInvalidRole).Str("role", role).Msg("Invalid request")
-		return "Invalid role", custom_err.ErrInvalidRole
+		err = custom_err.ErrInvalidRole
+		return "Invalid role", err
 	}
 
 	hashedPassword, err := a.Hashing.HashData(password)

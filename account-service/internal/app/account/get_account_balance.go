@@ -39,7 +39,8 @@ func (a *GetAccountBalance) Execute(id, requester, requestId string) (float64, i
 	account, err := a.AccountRepo.GetAccountByID(id)
 	if err != nil {
 		logging.Logger.Error().Err(err).Str("account_id", id).Msg("Failed to verify account")
-		return 0, 0, "Failed to verify account", fmt.Errorf("%v: failed to verify account", custom_err.ErrDatabase)
+		err = fmt.Errorf("%v: failed to verify account", custom_err.ErrDatabase)
+		return 0, 0, "Failed to verify account", err
 	}
 
 	if account == nil {

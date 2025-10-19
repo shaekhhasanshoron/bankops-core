@@ -38,12 +38,14 @@ func (a *DeleteEmployee) Execute(username, requester string) (string, error) {
 
 	if username == "" {
 		logging.Logger.Err(custom_err.ErrMissingRequiredData).Msg("Invalid request")
-		return "Missing required data (username)", custom_err.ErrMissingRequiredData
+		err = custom_err.ErrMissingRequiredData
+		return "Missing required data (username)", err
 	}
 
 	if username == requester {
 		logging.Logger.Err(custom_err.ErrInvalidRequest).Msg("Invalid request: Cannot delete own-self")
-		return "Cannot delete yourself", custom_err.ErrInvalidRequest
+		err = custom_err.ErrInvalidRequest
+		return "Cannot delete yourself", err
 	}
 
 	employee, err := a.EmployeeRepo.GetEmployeeByUsername(username)
@@ -55,7 +57,8 @@ func (a *DeleteEmployee) Execute(username, requester string) (string, error) {
 		}
 
 		logging.Logger.Error().Err(err).Str("username", username).Msg("Failed to get employee")
-		return "Failed to get employee", custom_err.ErrDatabase
+		err = custom_err.ErrDatabase
+		return "Failed to get employee", err
 	}
 
 	if employee == nil {

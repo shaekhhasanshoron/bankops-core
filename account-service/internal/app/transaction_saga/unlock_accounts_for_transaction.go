@@ -31,13 +31,15 @@ func (t *UnlockAccountsForTransaction) Execute(transactionId string, requester, 
 
 	if strings.TrimSpace(transactionId) == "" {
 		logging.Logger.Error().Err(custom_err.ErrTransactionIdRequired).Msg("Transaction id is required")
-		return "transaction id is required", custom_err.ErrTransactionIdRequired
+		err = custom_err.ErrTransactionIdRequired
+		return "transaction id is required", err
 	}
 
 	err = t.AccountRepo.UnlockAccountsForTransaction(transactionId)
 	if err != nil {
 		logging.Logger.Error().Err(err).Str("transaction_id", transactionId).Msg("Failed to unlock accounts")
-		return "failed to unlock accounts for transaction", custom_err.ErrDatabase
+		err = custom_err.ErrDatabase
+		return "failed to unlock accounts for transaction", err
 	}
 
 	return "Accounts unlocked successfully", nil

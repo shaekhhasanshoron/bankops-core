@@ -130,7 +130,8 @@ func (a *DeleteAccount) Execute(scope, id, requester, requestId string) (string,
 
 		if err = a.AccountRepo.DeleteAccount(id, requester); err != nil {
 			logging.Logger.Error().Err(err).Str("account_id", id).Msg("Failed to delete account")
-			return "Failed to delete account", fmt.Errorf("%w: failed to delete account", custom_err.ErrDatabase)
+			err = fmt.Errorf("%w: failed to delete account", custom_err.ErrDatabase)
+			return "Failed to delete account", err
 		}
 
 		accountIDs = append(accountIDs, id)
