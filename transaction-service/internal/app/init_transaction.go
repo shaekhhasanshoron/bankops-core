@@ -16,24 +16,24 @@ import (
 )
 
 type InitTransaction struct {
-	transactionRepo  ports.TransactionRepo
-	accountClient    ports.AccountClient
-	sagaOrchestrator *saga.TransactionSagaOrchestrator
-	eventRepo        ports.EventRepo
+	transactionRepo ports.TransactionRepo
+	accountClient   ports.AccountClient
+	sagaRepo        ports.SagaRepo
+	eventRepo       ports.EventRepo
 }
 
 func NewInitTransaction(
 	transactionRepo ports.TransactionRepo,
 	accountClient ports.AccountClient,
-	sagaOrchestrator *saga.TransactionSagaOrchestrator,
+	sagaRepo ports.SagaRepo,
 	eventRepo ports.EventRepo,
 ) *InitTransaction {
 
 	return &InitTransaction{
-		transactionRepo:  transactionRepo,
-		accountClient:    accountClient,
-		sagaOrchestrator: sagaOrchestrator,
-		eventRepo:        eventRepo,
+		transactionRepo: transactionRepo,
+		accountClient:   accountClient,
+		sagaRepo:        sagaRepo,
+		eventRepo:       eventRepo,
 	}
 }
 
@@ -72,7 +72,7 @@ func (a *InitTransaction) Execute(
 		transaction.TimeoutAt = time.Now().Add(config.Current().Recovery.TransactionTimeout)
 	}
 
-	msg, err = a.validateTransactionConfig(transaction, requester, requestId)
+	msg, err = a.validateTransactionConfig(ctx, transaction, requester, requestId)
 	if err != nil {
 		return nil, msg, err
 	}
@@ -88,8 +88,14 @@ func (a *InitTransaction) Execute(
 		err = custom_err.ErrDatabase
 		return nil, "Failed to create transaction", err
 	}
+	// Initiating Saga Orchestrator
+	err = saga.NewTransactionSagaOrchestrator(
+		a.sagaRepo,
+		a.accountClient,
+		a.transactionRepo,
+		a.eventRepo,
+	).ExecuteTransactionSync(ctx, transaction, requester, requestId)
 
-	err = a.sagaOrchestrator.ExecuteTransactionSync(ctx, transaction, requester, requestId)
 	if err != nil {
 		_ = a.transactionRepo.UpdateTransactionStatus(transaction.ID, entity.TransactionStatusFailed, err.Error())
 		logging.Logger.Error().
@@ -183,7 +189,7 @@ func (a *InitTransaction) validateInput(sourceAccountID string, destinationAccou
 	return "", nil
 }
 
-func (a *InitTransaction) validateTransactionConfig(transaction *entity.Transaction, requester, requestId string) (string, error) {
+func (a *InitTransaction) validateTransactionConfig(ctx context.Context, transaction *entity.Transaction, requester, requestId string) (string, error) {
 	if transaction.Type != entity.TransactionTypeWithdrawFull && transaction.Amount <= 0 {
 		logging.Logger.Error().Err(custom_err.ErrInvalidAmount).
 			Str("transaction_type", transaction.Type).
@@ -200,7 +206,7 @@ func (a *InitTransaction) validateTransactionConfig(transaction *entity.Transact
 		accountIds = append(accountIds, *transaction.DestinationAccountID)
 	}
 
-	accountsInfo, message, err := a.accountClient.ValidateAndGetAccounts(context.Background(), accountIds, requester, requestId)
+	accountsInfo, message, err := a.accountClient.ValidateAndGetAccounts(ctx, accountIds, requester, requestId)
 	if err != nil {
 		logging.Logger.Error().
 			Err(err).

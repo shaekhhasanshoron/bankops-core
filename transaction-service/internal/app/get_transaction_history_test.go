@@ -15,7 +15,7 @@ func TestGetTransactionHistory_Execute_SuccessWithAccountID(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	var startDate, endDate *time.Time = nil, nil
 	sortOrder := "desc"
@@ -30,9 +30,9 @@ func TestGetTransactionHistory_Execute_SuccessWithAccountID(t *testing.T) {
 	}
 	expectedTotal := int64(2)
 
-	mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
+	mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTransactions, transactions)
@@ -40,13 +40,13 @@ func TestGetTransactionHistory_Execute_SuccessWithAccountID(t *testing.T) {
 	mockTransactionRepo.AssertExpectations(t)
 }
 
-// TestGetTransactionHistory_Execute_SuccessWithCompanyID tests getting all transaction history by company id
-func TestGetTransactionHistory_Execute_SuccessWithCompanyID(t *testing.T) {
+// TestGetTransactionHistory_Execute_SuccessWithCustomerID tests getting all transaction history by customer id
+func TestGetTransactionHistory_Execute_SuccessWithCustomerID(t *testing.T) {
 	mockTransactionRepo := new(mock_repo.MockTransactionRepo)
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := ""
-	companyID := "comp-123"
+	customerID := "comp-123"
 	types := []string{"transfer", "withdraw"}
 	var startDate, endDate *time.Time = nil, nil
 	sortOrder := "desc"
@@ -61,9 +61,9 @@ func TestGetTransactionHistory_Execute_SuccessWithCompanyID(t *testing.T) {
 	}
 	expectedTotal := int64(2)
 
-	mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
+	mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTransactions, transactions)
@@ -77,7 +77,7 @@ func TestGetTransactionHistory_Execute_SuccessWithDateRange(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	startDate := time.Now().AddDate(0, -1, 0) // 1 month ago
 	endDate := time.Now()
@@ -92,9 +92,9 @@ func TestGetTransactionHistory_Execute_SuccessWithDateRange(t *testing.T) {
 	}
 	expectedTotal := int64(1)
 
-	mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, &startDate, &endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
+	mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, &startDate, &endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, &startDate, &endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, &startDate, &endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTransactions, transactions)
@@ -108,7 +108,7 @@ func TestGetTransactionHistory_Execute_SuccessWithTransactionTypes(t *testing.T)
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{"transfer", "withdraw_amount", "add_amount"}
 	var startDate, endDate *time.Time = nil, nil
 	sortOrder := "desc"
@@ -123,9 +123,9 @@ func TestGetTransactionHistory_Execute_SuccessWithTransactionTypes(t *testing.T)
 	}
 	expectedTotal := int64(2)
 
-	mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
+	mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTransactions, transactions)
@@ -139,7 +139,7 @@ func TestGetTransactionHistory_Execute_SuccessWithPagination(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	var startDate, endDate *time.Time = nil, nil
 	sortOrder := "desc"
@@ -154,9 +154,9 @@ func TestGetTransactionHistory_Execute_SuccessWithPagination(t *testing.T) {
 	}
 	expectedTotal := int64(15)
 
-	mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
+	mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTransactions, transactions)
@@ -170,7 +170,7 @@ func TestGetTransactionHistory_Execute_SuccessEmptyResult(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	var startDate, endDate *time.Time = nil, nil
 	sortOrder := "desc"
@@ -182,9 +182,9 @@ func TestGetTransactionHistory_Execute_SuccessEmptyResult(t *testing.T) {
 	expectedTransactions := []*entity.Transaction{}
 	expectedTotal := int64(0)
 
-	mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
+	mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTransactions, transactions)
@@ -198,7 +198,7 @@ func TestGetTransactionHistory_Execute_DefaultPaginationValues(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	var startDate, endDate *time.Time = nil, nil
 	sortOrder := "desc"
@@ -211,9 +211,9 @@ func TestGetTransactionHistory_Execute_DefaultPaginationValues(t *testing.T) {
 	expectedTotal := int64(0)
 
 	// Should be called with default values: page=1, pageSize=50
-	mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, sortOrder, 1, 50, types).Return(expectedTransactions, expectedTotal, nil)
+	mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, sortOrder, 1, 50, types).Return(expectedTransactions, expectedTotal, nil)
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTransactions, transactions)
@@ -227,7 +227,7 @@ func TestGetTransactionHistory_Execute_PageSizeBoundaryValues(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	var startDate, endDate *time.Time = nil, nil
 	sortOrder := "desc"
@@ -254,9 +254,9 @@ func TestGetTransactionHistory_Execute_PageSizeBoundaryValues(t *testing.T) {
 			expectedTransactions := []*entity.Transaction{}
 			expectedTotal := int64(0)
 
-			mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, sortOrder, 1, tc.expectedSize, types).Return(expectedTransactions, expectedTotal, nil)
+			mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, sortOrder, 1, tc.expectedSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-			transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, sortOrder, 1, tc.pageSize, requester, requestId)
+			transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, sortOrder, 1, tc.pageSize, requester, requestId)
 
 			assert.NoError(t, err)
 			assert.Equal(t, expectedTransactions, transactions)
@@ -272,7 +272,7 @@ func TestGetTransactionHistory_Execute_PageBoundaryValues(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	var startDate, endDate *time.Time = nil, nil
 	sortOrder := "desc"
@@ -296,9 +296,9 @@ func TestGetTransactionHistory_Execute_PageBoundaryValues(t *testing.T) {
 			expectedTransactions := []*entity.Transaction{}
 			expectedTotal := int64(0)
 
-			mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, sortOrder, tc.expectedPage, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
+			mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, sortOrder, tc.expectedPage, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-			transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, sortOrder, tc.page, pageSize, requester, requestId)
+			transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, sortOrder, tc.page, pageSize, requester, requestId)
 
 			assert.NoError(t, err)
 			assert.Equal(t, expectedTransactions, transactions)
@@ -314,7 +314,7 @@ func TestGetTransactionHistory_Execute_SortOrderValidation(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	var startDate, endDate *time.Time = nil, nil
 	page := 1
@@ -340,9 +340,9 @@ func TestGetTransactionHistory_Execute_SortOrderValidation(t *testing.T) {
 			expectedTransactions := []*entity.Transaction{}
 			expectedTotal := int64(0)
 
-			mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, tc.expectedOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
+			mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, tc.expectedOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-			transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, tc.sortOrder, page, pageSize, requester, requestId)
+			transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, tc.sortOrder, page, pageSize, requester, requestId)
 
 			assert.NoError(t, err)
 			assert.Equal(t, expectedTransactions, transactions)
@@ -358,7 +358,7 @@ func TestGetTransactionHistory_Execute_ErrorDateRangeValidation(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	startDate := time.Now().AddDate(0, 0, 1)
 	endDate := time.Now().AddDate(0, 0, -1)
@@ -368,7 +368,7 @@ func TestGetTransactionHistory_Execute_ErrorDateRangeValidation(t *testing.T) {
 	requester := "user123"
 	requestId := "req-456"
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, &startDate, &endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, &startDate, &endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.Error(t, err)
 	assert.Nil(t, transactions)
@@ -382,7 +382,7 @@ func TestGetTransactionHistory_Execute_ErrorDatabaseFailure(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := ""
+	customerID := ""
 	types := []string{}
 	var startDate, endDate *time.Time = nil, nil
 	sortOrder := "desc"
@@ -391,9 +391,9 @@ func TestGetTransactionHistory_Execute_ErrorDatabaseFailure(t *testing.T) {
 	requester := "user123"
 	requestId := "req-456"
 
-	mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, startDate, endDate, sortOrder, page, pageSize, types).Return([]*entity.Transaction{}, int64(0), fmt.Errorf("database error"))
+	mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, startDate, endDate, sortOrder, page, pageSize, types).Return([]*entity.Transaction{}, int64(0), fmt.Errorf("database error"))
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, startDate, endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to get transaction history")
@@ -408,7 +408,7 @@ func TestGetTransactionHistory_Execute_SuccessWithAllFilters(t *testing.T) {
 	getTransactionHistory := NewGetTransactionHistory(mockTransactionRepo)
 
 	accountID := "acc-123"
-	companyID := "comp-456"
+	customerID := "comp-456"
 	types := []string{"transfer", "withdraw_amount"}
 	startDate := time.Now().AddDate(0, -1, 0)
 	endDate := time.Now()
@@ -424,9 +424,9 @@ func TestGetTransactionHistory_Execute_SuccessWithAllFilters(t *testing.T) {
 	}
 	expectedTotal := int64(2)
 
-	mockTransactionRepo.On("GetTransactionHistory", accountID, companyID, &startDate, &endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
+	mockTransactionRepo.On("GetTransactionHistory", accountID, customerID, &startDate, &endDate, sortOrder, page, pageSize, types).Return(expectedTransactions, expectedTotal, nil)
 
-	transactions, total, err := getTransactionHistory.Execute(accountID, companyID, types, &startDate, &endDate, sortOrder, page, pageSize, requester, requestId)
+	transactions, total, err := getTransactionHistory.Execute(accountID, customerID, types, &startDate, &endDate, sortOrder, page, pageSize, requester, requestId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTransactions, transactions)

@@ -23,7 +23,7 @@ func NewGetTransactionHistory(transactionRepo ports.TransactionRepo) *GetTransac
 	}
 }
 
-func (t *GetTransactionHistory) Execute(accountID string, companyID string, types []string, startDate, endDate *time.Time, sortOrder string, page, pageSize int, requester, requestId string) ([]*entity.Transaction, int64, error) {
+func (t *GetTransactionHistory) Execute(accountID string, customerID string, types []string, startDate, endDate *time.Time, sortOrder string, page, pageSize int, requester, requestId string) ([]*entity.Transaction, int64, error) {
 	metrics.IncRequestActive()
 	defer metrics.DecRequestActive()
 
@@ -48,7 +48,7 @@ func (t *GetTransactionHistory) Execute(accountID string, companyID string, type
 		return nil, 0, err
 	}
 
-	transactions, total, err := t.TransactionRepo.GetTransactionHistory(accountID, companyID, startDate, endDate, sortOrder, page, pageSize, types)
+	transactions, total, err := t.TransactionRepo.GetTransactionHistory(accountID, customerID, startDate, endDate, sortOrder, page, pageSize, types)
 	if err != nil {
 		logging.Logger.Error().Err(err).
 			Str("account_id", accountID).

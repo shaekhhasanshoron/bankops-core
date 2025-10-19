@@ -11,9 +11,9 @@ import (
 )
 
 type CreateEmployeeRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	Role     string `json:"role" binding:"required"`
+	Username string `json:"username" binding:"required,max=50"`
+	Password string `json:"password" binding:"required,max=50"`
+	Role     string `json:"role" binding:"required,oneof=admin viewer editor"`
 }
 
 type CreateEmployeeResponse struct {
@@ -50,17 +50,38 @@ type ListEmployeeResponse struct {
 	Message    string      `json:"message" binding:"message"`
 }
 
-// CreateEmployee for creating new employee
+// CreateEmployee creates a new employee
 // @Tags Employee
 // @Summary Create Employee
-// @Description Create employee - Username: lowercase + underscores only (in middle) | Role: viewer/admin/editor | Bearer token required
+// @Description
+// @Description **Request Body:**
+// @Description
+// @Description Username:
+// @Description - Required
+// @Description - Max 50 characters
+// @Description - Lowercase letters only
+// @Description - Underscores allowed only in middle
+// @Description
+// @Description Password:
+// @Description - Required
+// @Description - Max 50 characters
+// @Description
+// @Description Role:
+// @Description - Required
+// @Description - Options: **admin**, **viewer**, **editor**
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
-// @Param employee body CreateEmployeeRequest true "Employee details"
-// @Success 201 {object} CreateEmployeeResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
+// @Param Authorization header string true "Bearer token" default(Bearer )
+// @Param employee body CreateEmployeeRequest true "Employee creation data"
+// @Success 201 {object} CreateEmployeeResponse "Employee created successfully"
+// @Failure 400 {object} ErrorResponse "Invalid input data"
+// @Failure 401 {object} ErrorResponse "Unauthorized - Missing or invalid token"
 // @Router /api/v1/employee [post]
 func (h *AuthHandler) CreateEmployee(c *gin.Context) {
 	var req CreateEmployeeRequest
@@ -104,72 +125,28 @@ func (h *AuthHandler) CreateEmployee(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
-// UpdateEmployee for update an employee
-// @Tags Employee
-// @Summary Update Employee
-// @Description Update an employee by username
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
-// @Param username path string true "Username of the employee"
-// @Param employee body UpdateEmployeeRequest true "Employee details"
-// @Success 200 {string} {object} UpdateEmployeeResponse
-// @Failure 400 {string} {object} ErrorResponse
-// @Failure 401 {string} {object} ErrorResponse
-// @Router /api/v1/employee/{username} [put]
-func (h *AuthHandler) UpdateEmployee(c *gin.Context) {
-	username := c.Param("username")
-
-	var req UpdateEmployeeRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		logging.Logger.Warn().Err(err).Msg("invalid request param")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-		return
-	}
-
-	un, _ := c.Get("username") // middleware
-	requester, ok := un.(string)
-	if !ok {
-		logging.Logger.Warn().Err(errors.New("unable to get requester username")).Msg("requester: " + username)
-	}
-
-	grpcReq := &protoauth.UpdateRoleRequest{
-		Username:  username,
-		Role:      req.Role,
-		Requester: requester,
-	}
-
-	resp, err := h.AuthClient.UpdateEmployee(c.Request.Context(), grpcReq)
-	if err != nil {
-		logging.Logger.Error().Err(err).Msg("failed to update employee")
-		c.JSON(http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
-		return
-	}
-
-	if !resp.Success {
-		logging.Logger.Error().Err(errors.New(resp.Message)).Msg("unable to update employee")
-		c.JSON(http.StatusBadRequest, ErrorResponse{Error: resp.Message})
-		return
-	}
-
-	res := UpdateCustomerResponse{
-		Message: resp.Message,
-	}
-
-	c.JSON(http.StatusOK, res)
-}
-
-// DeleteEmployee for delete an employee by username
+// DeleteEmployee deletes an employee by username
 // @Tags Employee
 // @Summary Delete Employee
-// @Description Delete an employee by username
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
+// @Description
+// @Description **Path Parameter:**
+// @Description
+// @Description username:
+// @Description - Required
+// @Description - Username of the employee to delete
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param username path string true "Username of the employee"
-// @Success 200 {string} {object} DeleteEmployeeResponse
-// @Failure 400 {string} {object} ErrorResponse
-// @Failure 401 {string} {object} ErrorResponse
+// @Success 200 {object} DeleteEmployeeResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
 // @Router /api/v1/employee/{username} [delete]
 func (h *AuthHandler) DeleteEmployee(c *gin.Context) {
 	username := c.Param("username")
@@ -205,16 +182,38 @@ func (h *AuthHandler) DeleteEmployee(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// ListEmployee for fetching employee list
+// ListEmployee fetches the employee list
 // @Tags Employee
 // @Summary Get Employee List
-// @Description Get employee list.
+// @Description
+// @Description **Query Parameters:**
+// @Description
+// @Description page:
+// @Description - Optional
+// @Description - Page number for pagination
+// @Description - Default: 1
+// @Description
+// @Description pagesize:
+// @Description - Optional
+// @Description - Number of employees per page
+// @Description - Default: 50
+// @Description
+// @Description order:
+// @Description - Optional
+// @Description - Sort order (asc/desc)
+// @Description - Default: desc
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param page query int false "Page number for pagination" default(1)
 // @Param pagesize query int false "Number of employee per page" default(50)
 // @Param order query string false "Sort order (asc/desc)" default(desc)
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
 // @Success 200 {object} ListEmployeeResponse "Successfully retrieved employee list"
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse

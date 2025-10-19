@@ -46,13 +46,34 @@ func NewTransactionHandler(txClient ports.TransactionClient) *TransactionHandler
 	}
 }
 
-// InitTransaction for initiating new transaction
+// InitTransaction initiates a new transaction
 // @Tags Transaction
 // @Summary Create new transaction
-// @Description Create Transaction - Bearer token required. Transaction type can be: transfer/withdraw_full/withdraw_amount/add_amount. Amount must be greater than zero for all transaction types except 'withdraw_full'. Destination account ID is only required when 'transaction_type=transfer'. Reference is required for all transactions.
+// @Description
+// @Description **Request Body:**
+// @Description
+// @Description Transaction Type:
+// @Description - Required
+// @Description - Options: **transfer**, **withdraw_full**, **withdraw_amount**, **add_amount**
+// @Description
+// @Description Amount:
+// @Description - Required for all types except **withdraw_full**
+// @Description - Must be greater than zero
+// @Description
+// @Description Destination Account ID:
+// @Description - Required only for **transfer** type
+// @Description
+// @Description Reference:
+// @Description - Required for all transactions
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param transaction body InitTransactionRequest true "Transaction details"
 // @Success 201 {object} InitTransactionResponse
 // @Failure 400 {object} ErrorResponse
@@ -106,12 +127,58 @@ func (h *TransactionHandler) InitTransaction(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
-// ListTransactions for fetching transaction history
+// ListTransactions fetches transaction history with optional filtering
 // @Tags Transaction
 // @Summary Get Transaction History
-// @Description Get transaction history for all accounts with optional filtering
+// @Description
+// @Description **Query Parameters:**
+// @Description
+// @Description account_id:
+// @Description - Optional
+// @Description - Filter by account ID
+// @Description
+// @Description customer_id:
+// @Description - Optional
+// @Description - Filter by customer ID
+// @Description
+// @Description types:
+// @Description - Optional
+// @Description - Filter by transaction types
+// @Description - Comma separated values: **transfer**, **withdraw_full**, **withdraw_amount**, **add_amount**
+// @Description
+// @Description start_date:
+// @Description - Optional
+// @Description - Start date for filtering
+// @Description - Format: DD-MM-YYYY
+// @Description
+// @Description end_date:
+// @Description - Optional
+// @Description - End date for filtering
+// @Description - Format: DD-MM-YYYY
+// @Description
+// @Description page:
+// @Description - Optional
+// @Description - Page number for pagination
+// @Description - Default: 1
+// @Description
+// @Description pagesize:
+// @Description - Optional
+// @Description - Number of transactions per page
+// @Description - Default: 50
+// @Description
+// @Description order:
+// @Description - Optional
+// @Description - Sort order (asc/desc)
+// @Description - Default: desc
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param account_id query string false "Transaction history by account id"
 // @Param customer_id query string false "Transaction history by customer id"
 // @Param types query string false "Comma separated transaction types (transfer/withdraw_full/withdraw_amount/add_amount)"
@@ -120,7 +187,6 @@ func (h *TransactionHandler) InitTransaction(c *gin.Context) {
 // @Param page query int false "Page number for pagination" default(1)
 // @Param pagesize query int false "Number of transactions per page" default(50)
 // @Param order query string false "Sort order (asc/desc)" default(desc)
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
 // @Success 200 {object} ListTransactionResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
@@ -180,12 +246,12 @@ func (h *TransactionHandler) ListTransactions(c *gin.Context) {
 	}
 
 	grpcReq := &prototx.GetTransactionHistoryRequest{
-		AccountId: accountId,
-		CompanyId: customerId,
-		StartDate: startDate,
-		EndDate:   endDate,
-		SortOrder: order,
-		Types:     strings.TrimSpace(types),
+		AccountId:  accountId,
+		CustomerId: customerId,
+		StartDate:  startDate,
+		EndDate:    endDate,
+		SortOrder:  order,
+		Types:      strings.TrimSpace(types),
 		Pagination: &prototx.PaginationRequest{
 			Page:     int32(pageNo),
 			PageSize: int32(pageSize),

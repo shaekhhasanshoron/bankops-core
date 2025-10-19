@@ -19,5 +19,8 @@ func NewEventRepo(db *gorm.DB) ports.EventRepo {
 }
 
 func (r *EventRepo) CreateEvent(event *entity.Event) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.DB.Create(event).Error
 }

@@ -380,8 +380,18 @@ You can find the live url. Go to http://bankops-core.135.235.192.122.nip.io
 
 **To use the system, a default employee with `admin` privileges has been created. Use the `login` api to authenticate and get JWT
 token:** 
+
+Employee with `admin` privileges: 
 * Username: `admin`
 * Password: `admin`
+
+Employee with `editor` privileges:
+* Username: `editor_user`
+* Password: `editor_pass`
+
+Employee with `viewer` privileges:
+* Username: `viewer_user`
+* Password: `viewer_pass`
 
 
 ## 8. API Documentation

@@ -21,6 +21,7 @@ definitions:
   handlers.CreateCustomerRequest:
     properties:
       name:
+        maxLength: 50
         type: string
     required:
     - name
@@ -37,10 +38,16 @@ definitions:
   handlers.CreateEmployeeRequest:
     properties:
       password:
+        maxLength: 50
         type: string
       role:
+        enum:
+        - admin
+        - viewer
+        - editor
         type: string
       username:
+        maxLength: 50
         type: string
     required:
     - password
@@ -55,6 +62,21 @@ definitions:
         type: string
     required:
     - username
+    type: object
+  handlers.DeleteAccountResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.DeleteCustomerResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.DeleteEmployeeResponse:
+    properties:
+      message:
+        type: string
     type: object
   handlers.ErrorResponse:
     properties:
@@ -97,6 +119,20 @@ definitions:
   handlers.ListAccountResponse:
     properties:
       accounts: {}
+      message:
+        type: string
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  handlers.ListCustomerResponse:
+    properties:
+      customers: {}
       message:
         type: string
       page:
@@ -151,13 +187,6 @@ definitions:
       access_token:
         type: string
     type: object
-  handlers.UpdateEmployeeRequest:
-    properties:
-      role:
-        type: string
-    required:
-    - role
-    type: object
 info:
   contact: {}
 paths:
@@ -165,11 +194,28 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete a single account or all accounts under customer for a customer
-        by scope (scope=single -> id = account_id / scope=all -> id = customer_id)
+      description: |-
+        **Query Parameters:**
+
+        scope:
+        - Required
+        - Options: **single**, **all**
+        - Default: single
+        - **single**: Delete one account (id = account_id)
+        - **all**: Delete all accounts for customer (id = customer_id)
+
+        id:
+        - Required
+        - AccountID (if scope=single) or CustomerID (if scope=all)
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
+      - default: Bearer
+        description: Bearer token
         in: header
         name: Authorization
         required: true
@@ -191,25 +237,65 @@ paths:
         "200":
           description: OK
           schema:
-            type: string
+            $ref: '#/definitions/handlers.DeleteAccountResponse'
         "400":
           description: Bad Request
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Delete Account (single/all)
       tags:
       - Account
     get:
       consumes:
       - application/json
-      description: Get account list. default gets all, if requested can be filtered
-        by customer_id, minimum_balance, in_transaction (if true; get accounts that
-        are currently locked for transaction)
+      description: |-
+        **Query Parameters:**
+
+        customer_id:
+        - Optional
+        - Filter by Customer ID
+
+        in_transaction:
+        - Optional
+        - Filter accounts currently in transaction
+        - Values: true/false
+        - Default: no filter applied
+
+        min_balance:
+        - Optional
+        - Filter by minimum balance
+
+        page:
+        - Optional
+        - Page number for pagination
+        - Default: 1
+
+        pagesize:
+        - Optional
+        - Number of accounts per page
+        - Default: 50
+
+        order:
+        - Optional
+        - Sort order (asc/desc)
+        - Default: desc
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
+      - default: Bearer
+        description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Customer ID
         in: query
         name: customer_id
@@ -238,12 +324,6 @@ paths:
         in: query
         name: order
         type: string
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -265,10 +345,24 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create account - Bearer token required
+      description: |-
+        **Request Body:**
+
+        Customer ID:
+        - Required
+
+        Deposit Amount:
+        - Required
+        - Must be greater than zero
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
+      - default: Bearer
+        description: Bearer token
         in: header
         name: Authorization
         required: true
@@ -301,17 +395,28 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get account balance
+      description: |-
+        **Path Parameter:**
+
+        id:
+        - Required
+        - AccountID of a customer account
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
+      - default: Bearer
+        description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: AccountID of a customer account
         in: path
         name: id
-        required: true
-        type: string
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
-        in: header
-        name: Authorization
         required: true
         type: string
       produces:
@@ -336,7 +441,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Login to get access token using username and password
+      description: |-
+        **Request Body:**
+
+        username:
+        - Required
+
+        password:
+        - Required
       parameters:
       - description: Login credentials
         in: body
@@ -366,8 +478,36 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get customer list
+      description: |-
+        **Query Parameters:**
+
+        page:
+        - Optional
+        - Page number for pagination
+        - Default: 1
+
+        pagesize:
+        - Optional
+        - Number of customers per page
+        - Default: 50
+
+        order:
+        - Optional
+        - Sort order (asc/desc)
+        - Default: desc
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
+      - default: Bearer
+        description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - default: 1
         description: Page number for pagination
         in: query
@@ -383,37 +523,42 @@ paths:
         in: query
         name: order
         type: string
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ListCustomerResponse'
         "400":
           description: Bad Request
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Get Customer List
       tags:
       - Customer
     post:
       consumes:
       - application/json
-      description: 'Create employee - Name: required | Bearer token required'
+      description: |-
+        **Request Body:**
+
+        Name:
+        - Required
+        - Max 50 characters
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
+      - default: Bearer
+        description: Bearer token
         in: header
         name: Authorization
         required: true
@@ -446,10 +591,21 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete a customer by customer id
+      description: |-
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
+
+        **Path Parameter:**
+
+        id:
+        - Required
+        - CustomerID of the customer to delete
       parameters:
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
+      - default: Bearer
+        description: Bearer token
         in: header
         name: Authorization
         required: true
@@ -465,15 +621,15 @@ paths:
         "200":
           description: OK
           schema:
-            type: string
+            $ref: '#/definitions/handlers.DeleteCustomerResponse'
         "400":
           description: Bad Request
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Delete Customer
       tags:
       - Customer
@@ -481,8 +637,37 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get account list of customers
+      description: |-
+        **Path Parameter:**
+
+        id:
+        - Required
+        - CustomerID of the customer
+
+        **Query Parameters:**
+
+        page:
+        - Optional
+        - Page number for pagination
+        - Default: 1
+
+        pagesize:
+        - Optional
+        - Number of accounts per page
+        - Default: 50
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
+      - default: Bearer
+        description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: CustomerID of the customer
         in: path
         name: id
@@ -498,12 +683,6 @@ paths:
         in: query
         name: pagesize
         type: integer
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -526,8 +705,36 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get employee list.
+      description: |-
+        **Query Parameters:**
+
+        page:
+        - Optional
+        - Page number for pagination
+        - Default: 1
+
+        pagesize:
+        - Optional
+        - Number of employees per page
+        - Default: 50
+
+        order:
+        - Optional
+        - Sort order (asc/desc)
+        - Default: desc
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
+      - default: Bearer
+        description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - default: 1
         description: Page number for pagination
         in: query
@@ -542,12 +749,6 @@ paths:
         description: Sort order (asc/desc)
         in: query
         name: order
-        type: string
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
-        in: header
-        name: Authorization
-        required: true
         type: string
       produces:
       - application/json
@@ -570,16 +771,36 @@ paths:
     post:
       consumes:
       - application/json
-      description: 'Create employee - Username: lowercase + underscores only (in middle)
-        | Role: viewer/admin/editor | Bearer token required'
+      description: |-
+        **Request Body:**
+
+        Username:
+        - Required
+        - Max 50 characters
+        - Lowercase letters only
+        - Underscores allowed only in middle
+
+        Password:
+        - Required
+        - Max 50 characters
+
+        Role:
+        - Required
+        - Options: **admin**, **viewer**, **editor**
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
+      - default: Bearer
+        description: Bearer token
         in: header
         name: Authorization
         required: true
         type: string
-      - description: Employee details
+      - description: Employee creation data
         in: body
         name: employee
         required: true
@@ -589,15 +810,15 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Employee created successfully
           schema:
             $ref: '#/definitions/handlers.CreateEmployeeResponse'
         "400":
-          description: Bad Request
+          description: Invalid input data
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "401":
-          description: Unauthorized
+          description: Unauthorized - Missing or invalid token
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Create Employee
@@ -607,10 +828,21 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete an employee by username
+      description: |-
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
+
+        **Path Parameter:**
+
+        username:
+        - Required
+        - Username of the employee to delete
       parameters:
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
+      - default: Bearer
+        description: Bearer token
         in: header
         name: Authorization
         required: true
@@ -626,64 +858,75 @@ paths:
         "200":
           description: OK
           schema:
-            type: string
+            $ref: '#/definitions/handlers.DeleteEmployeeResponse'
         "400":
           description: Bad Request
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Delete Employee
-      tags:
-      - Employee
-    put:
-      consumes:
-      - application/json
-      description: Update an employee by username
-      parameters:
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: Username of the employee
-        in: path
-        name: username
-        required: true
-        type: string
-      - description: Employee details
-        in: body
-        name: employee
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.UpdateEmployeeRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-        "401":
-          description: Unauthorized
-          schema:
-            type: string
-      summary: Update Employee
       tags:
       - Employee
   /api/v1/transaction:
     get:
       consumes:
       - application/json
-      description: Get transaction history for all accounts with optional filtering
+      description: |-
+        **Query Parameters:**
+
+        account_id:
+        - Optional
+        - Filter by account ID
+
+        customer_id:
+        - Optional
+        - Filter by customer ID
+
+        types:
+        - Optional
+        - Filter by transaction types
+        - Comma separated values: **transfer**, **withdraw_full**, **withdraw_amount**, **add_amount**
+
+        start_date:
+        - Optional
+        - Start date for filtering
+        - Format: DD-MM-YYYY
+
+        end_date:
+        - Optional
+        - End date for filtering
+        - Format: DD-MM-YYYY
+
+        page:
+        - Optional
+        - Page number for pagination
+        - Default: 1
+
+        pagesize:
+        - Optional
+        - Number of transactions per page
+        - Default: 50
+
+        order:
+        - Optional
+        - Sort order (asc/desc)
+        - Default: desc
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
+      - default: Bearer
+        description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Transaction history by account id
         in: query
         name: account_id
@@ -719,12 +962,6 @@ paths:
         in: query
         name: order
         type: string
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -747,14 +984,31 @@ paths:
     post:
       consumes:
       - application/json
-      description: 'Create Transaction - Bearer token required. Transaction type can
-        be: transfer/withdraw_full/withdraw_amount/add_amount. Amount must be greater
-        than zero for all transaction types except ''withdraw_full''. Destination
-        account ID is only required when ''transaction_type=transfer''. Reference
-        is required for all transactions.'
+      description: |-
+        **Request Body:**
+
+        Transaction Type:
+        - Required
+        - Options: **transfer**, **withdraw_full**, **withdraw_amount**, **add_amount**
+
+        Amount:
+        - Required for all types except **withdraw_full**
+        - Must be greater than zero
+
+        Destination Account ID:
+        - Required only for **transfer** type
+
+        Reference:
+        - Required for all transactions
+
+        **Header:**
+
+        Authorization:
+        - Required
+        - Format: Bearer token
       parameters:
-      - description: Bearer token for authorization, include 'Bearer ' followed by
-          access_token
+      - default: Bearer
+        description: Bearer token
         in: header
         name: Authorization
         required: true

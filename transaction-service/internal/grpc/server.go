@@ -8,7 +8,6 @@ import (
 	"net"
 	prototx "transaction-service/api/protogen/txservice/proto"
 	apptx "transaction-service/internal/app"
-	"transaction-service/internal/app/saga"
 	"transaction-service/internal/config"
 	"transaction-service/internal/grpc/handlers"
 	"transaction-service/internal/grpc/interceptors"
@@ -17,10 +16,10 @@ import (
 )
 
 type ServiceRepos struct {
-	AccountClient               ports.AccountClient
-	TransactionSagaOrchestrator *saga.TransactionSagaOrchestrator
-	TransactionRepo             ports.TransactionRepo
-	EventRepo                   ports.EventRepo
+	AccountClient   ports.AccountClient
+	SagaRepo        ports.SagaRepo
+	TransactionRepo ports.TransactionRepo
+	EventRepo       ports.EventRepo
 }
 
 func StartGRPCServer(repos ServiceRepos) {
@@ -68,7 +67,7 @@ func generateAggregatedHandlers(repos ServiceRepos) *handlers.TransactionHandler
 	accountAggregatedHandler.InitTransactionService = apptx.NewInitTransaction(
 		repos.TransactionRepo,
 		repos.AccountClient,
-		repos.TransactionSagaOrchestrator,
+		repos.SagaRepo,
 		repos.EventRepo,
 	)
 

@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/api/v1/account": {
             "get": {
-                "description": "Get account list. default gets all, if requested can be filtered by customer_id, minimum_balance, in_transaction (if true; get accounts that are currently locked for transaction)",
+                "description": "**Query Parameters:**\n\ncustomer_id:\n- Optional\n- Filter by Customer ID\n\nin_transaction:\n- Optional\n- Filter accounts currently in transaction\n- Values: true/false\n- Default: no filter applied\n\nmin_balance:\n- Optional\n- Filter by minimum balance\n\npage:\n- Optional\n- Page number for pagination\n- Default: 1\n\npagesize:\n- Optional\n- Number of accounts per page\n- Default: 50\n\norder:\n- Optional\n- Sort order (asc/desc)\n- Default: desc\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -29,6 +29,14 @@ const docTemplate = `{
                 ],
                 "summary": "Get Account List",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Customer ID",
@@ -67,13 +75,6 @@ const docTemplate = `{
                         "description": "Sort order (asc/desc)",
                         "name": "order",
                         "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -98,7 +99,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create account - Bearer token required",
+                "description": "**Request Body:**\n\nCustomer ID:\n- Required\n\nDeposit Amount:\n- Required\n- Must be greater than zero\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -112,7 +113,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "default": "Bearer",
+                        "description": "Bearer token",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -149,7 +151,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a single account or all accounts under customer for a customer by scope (scope=single -\u003e id = account_id / scope=all -\u003e id = customer_id)",
+                "description": "**Query Parameters:**\n\nscope:\n- Required\n- Options: **single**, **all**\n- Default: single\n- **single**: Delete one account (id = account_id)\n- **all**: Delete all accounts for customer (id = customer_id)\n\nid:\n- Required\n- AccountID (if scope=single) or CustomerID (if scope=all)\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -163,7 +165,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "default": "Bearer",
+                        "description": "Bearer token",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -188,19 +191,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.DeleteAccountResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -208,7 +211,7 @@ const docTemplate = `{
         },
         "/api/v1/account/{id}/balance": {
             "get": {
-                "description": "Get account balance",
+                "description": "**Path Parameter:**\n\nid:\n- Required\n- AccountID of a customer account\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -222,16 +225,17 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "AccountID of a customer account",
-                        "name": "id",
-                        "in": "path",
+                        "default": "Bearer",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
-                        "name": "Authorization",
-                        "in": "header",
+                        "description": "AccountID of a customer account",
+                        "name": "id",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -259,7 +263,7 @@ const docTemplate = `{
         },
         "/api/v1/auth/login": {
             "post": {
-                "description": "Login to get access token using username and password",
+                "description": "**Request Body:**\n\nusername:\n- Required\n\npassword:\n- Required",
                 "consumes": [
                     "application/json"
                 ],
@@ -305,7 +309,7 @@ const docTemplate = `{
         },
         "/api/v1/customer": {
             "get": {
-                "description": "Get customer list",
+                "description": "**Query Parameters:**\n\npage:\n- Optional\n- Page number for pagination\n- Default: 1\n\npagesize:\n- Optional\n- Number of customers per page\n- Default: 50\n\norder:\n- Optional\n- Sort order (asc/desc)\n- Default: desc\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -317,6 +321,14 @@ const docTemplate = `{
                 ],
                 "summary": "Get Customer List",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "default": 1,
@@ -337,38 +349,31 @@ const docTemplate = `{
                         "description": "Sort order (asc/desc)",
                         "name": "order",
                         "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ListCustomerResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Create employee - Name: required | Bearer token required",
+                "description": "**Request Body:**\n\nName:\n- Required\n- Max 50 characters\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -382,7 +387,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "default": "Bearer",
+                        "description": "Bearer token",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -421,7 +427,7 @@ const docTemplate = `{
         },
         "/api/v1/customer/{id}": {
             "delete": {
-                "description": "Delete a customer by customer id",
+                "description": "**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token\n\n**Path Parameter:**\n\nid:\n- Required\n- CustomerID of the customer to delete",
                 "consumes": [
                     "application/json"
                 ],
@@ -435,7 +441,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "default": "Bearer",
+                        "description": "Bearer token",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -452,19 +459,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.DeleteCustomerResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -472,7 +479,7 @@ const docTemplate = `{
         },
         "/api/v1/customer/{id}/account": {
             "get": {
-                "description": "Get account list of customers",
+                "description": "**Path Parameter:**\n\nid:\n- Required\n- CustomerID of the customer\n\n**Query Parameters:**\n\npage:\n- Optional\n- Page number for pagination\n- Default: 1\n\npagesize:\n- Optional\n- Number of accounts per page\n- Default: 50\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -484,6 +491,14 @@ const docTemplate = `{
                 ],
                 "summary": "Get Account List of customer",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "CustomerID of the customer",
@@ -504,13 +519,6 @@ const docTemplate = `{
                         "description": "Number of accounts per page",
                         "name": "pagesize",
                         "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -537,7 +545,7 @@ const docTemplate = `{
         },
         "/api/v1/employee": {
             "get": {
-                "description": "Get employee list.",
+                "description": "**Query Parameters:**\n\npage:\n- Optional\n- Page number for pagination\n- Default: 1\n\npagesize:\n- Optional\n- Number of employees per page\n- Default: 50\n\norder:\n- Optional\n- Sort order (asc/desc)\n- Default: desc\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -549,6 +557,14 @@ const docTemplate = `{
                 ],
                 "summary": "Get Employee List",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "default": 1,
@@ -569,13 +585,6 @@ const docTemplate = `{
                         "description": "Sort order (asc/desc)",
                         "name": "order",
                         "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -600,7 +609,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create employee - Username: lowercase + underscores only (in middle) | Role: viewer/admin/editor | Bearer token required",
+                "description": "**Request Body:**\n\nUsername:\n- Required\n- Max 50 characters\n- Lowercase letters only\n- Underscores allowed only in middle\n\nPassword:\n- Required\n- Max 50 characters\n\nRole:\n- Required\n- Options: **admin**, **viewer**, **editor**\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -614,13 +623,14 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "default": "Bearer",
+                        "description": "Bearer token",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
                     {
-                        "description": "Employee details",
+                        "description": "Employee creation data",
                         "name": "employee",
                         "in": "body",
                         "required": true,
@@ -631,19 +641,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Employee created successfully",
                         "schema": {
                             "$ref": "#/definitions/handlers.CreateEmployeeResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid input data",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Unauthorized - Missing or invalid token",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -652,66 +662,8 @@ const docTemplate = `{
             }
         },
         "/api/v1/employee/{username}": {
-            "put": {
-                "description": "Update an employee by username",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Employee"
-                ],
-                "summary": "Update Employee",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Username of the employee",
-                        "name": "username",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Employee details",
-                        "name": "employee",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.UpdateEmployeeRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
             "delete": {
-                "description": "Delete an employee by username",
+                "description": "**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token\n\n**Path Parameter:**\n\nusername:\n- Required\n- Username of the employee to delete",
                 "consumes": [
                     "application/json"
                 ],
@@ -725,7 +677,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "default": "Bearer",
+                        "description": "Bearer token",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -742,19 +695,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.DeleteEmployeeResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -762,7 +715,7 @@ const docTemplate = `{
         },
         "/api/v1/transaction": {
             "get": {
-                "description": "Get transaction history for all accounts with optional filtering",
+                "description": "**Query Parameters:**\n\naccount_id:\n- Optional\n- Filter by account ID\n\ncustomer_id:\n- Optional\n- Filter by customer ID\n\ntypes:\n- Optional\n- Filter by transaction types\n- Comma separated values: **transfer**, **withdraw_full**, **withdraw_amount**, **add_amount**\n\nstart_date:\n- Optional\n- Start date for filtering\n- Format: DD-MM-YYYY\n\nend_date:\n- Optional\n- End date for filtering\n- Format: DD-MM-YYYY\n\npage:\n- Optional\n- Page number for pagination\n- Default: 1\n\npagesize:\n- Optional\n- Number of transactions per page\n- Default: 50\n\norder:\n- Optional\n- Sort order (asc/desc)\n- Default: desc\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -774,6 +727,14 @@ const docTemplate = `{
                 ],
                 "summary": "Get Transaction History",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Transaction history by account id",
@@ -824,13 +785,6 @@ const docTemplate = `{
                         "description": "Sort order (asc/desc)",
                         "name": "order",
                         "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -857,7 +811,7 @@ const docTemplate = `{
         },
         "/api/v1/transaction/init": {
             "post": {
-                "description": "Create Transaction - Bearer token required. Transaction type can be: transfer/withdraw_full/withdraw_amount/add_amount. Amount must be greater than zero for all transaction types except 'withdraw_full'. Destination account ID is only required when 'transaction_type=transfer'. Reference is required for all transactions.",
+                "description": "**Request Body:**\n\nTransaction Type:\n- Required\n- Options: **transfer**, **withdraw_full**, **withdraw_amount**, **add_amount**\n\nAmount:\n- Required for all types except **withdraw_full**\n- Must be greater than zero\n\nDestination Account ID:\n- Required only for **transfer** type\n\nReference:\n- Required for all transactions\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
@@ -871,7 +825,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer token for authorization, include 'Bearer ' followed by access_token",
+                        "default": "Bearer",
+                        "description": "Bearer token",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -946,7 +901,8 @@ const docTemplate = `{
             ],
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50
                 }
             }
         },
@@ -973,13 +929,20 @@ const docTemplate = `{
             ],
             "properties": {
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50
                 },
                 "role": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "viewer",
+                        "editor"
+                    ]
                 },
                 "username": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50
                 }
             }
         },
@@ -993,6 +956,30 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.DeleteAccountResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.DeleteCustomerResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.DeleteEmployeeResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
                 }
             }
@@ -1076,6 +1063,27 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.ListCustomerResponse": {
+            "type": "object",
+            "properties": {
+                "customers": {},
+                "message": {
+                    "type": "string"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "totalCount": {
+                    "type": "integer"
+                },
+                "totalPages": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.ListEmployeeResponse": {
             "type": "object",
             "properties": {
@@ -1137,17 +1145,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "access_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.UpdateEmployeeRequest": {
-            "type": "object",
-            "required": [
-                "role"
-            ],
-            "properties": {
-                "role": {
                     "type": "string"
                 }
             }

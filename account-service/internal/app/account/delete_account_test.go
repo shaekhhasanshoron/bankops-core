@@ -43,7 +43,7 @@ func TestDeleteAccount_Execute_Success_SingleAccount(t *testing.T) {
 	mockEventRepo.AssertExpectations(t)
 }
 
-// TestDeleteAccount_Execute_Success_AllAccounts test success on all accounts delete if scope is 'all' and all accounts are deleted using companyID
+// TestDeleteAccount_Execute_Success_AllAccounts test success on all accounts delete if scope is 'all' and all accounts are deleted using customerID
 func TestDeleteAccount_Execute_Success_AllAccounts(t *testing.T) {
 	mockCustomerRepo := new(mock_repo.MockCustomerRepo)
 	mockAccountRepo := new(mock_repo.MockAccountRepo)
@@ -193,7 +193,7 @@ func TestDeleteAccount_Execute_DatabaseError_CheckCustomer_AllScope(t *testing.T
 	mockAccountRepo.AssertNotCalled(t, "GetCustomerAccountsInTransactionOrHasBalance")
 }
 
-// TestDeleteAccount_Execute_AccountsLockedOrHasBalance_AllScope tests if any account under company in transaction
+// TestDeleteAccount_Execute_AccountsLockedOrHasBalance_AllScope tests if any account under customer in transaction
 func TestDeleteAccount_Execute_AccountsLockedOrHasBalance_AllScope(t *testing.T) {
 	mockCustomerRepo := new(mock_repo.MockCustomerRepo)
 	mockAccountRepo := new(mock_repo.MockAccountRepo)
@@ -225,7 +225,7 @@ func TestDeleteAccount_Execute_AccountsLockedOrHasBalance_AllScope(t *testing.T)
 	mockAccountRepo.AssertNotCalled(t, "DeleteAllAccountsByCustomerID")
 }
 
-// TestDeleteAccount_Execute_DatabaseError_CheckAccounts_AllScope tests if no account found under company
+// TestDeleteAccount_Execute_DatabaseError_CheckAccounts_AllScope tests if no account found under customer
 func TestDeleteAccount_Execute_DatabaseError_CheckAccounts_AllScope(t *testing.T) {
 	mockCustomerRepo := new(mock_repo.MockCustomerRepo)
 	mockAccountRepo := new(mock_repo.MockAccountRepo)

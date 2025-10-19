@@ -9,7 +9,6 @@ import (
 	"time"
 	"transaction-service/internal/adapter/grpc/clients"
 	repo "transaction-service/internal/adapter/repo/sqlite"
-	"transaction-service/internal/app/saga"
 	"transaction-service/internal/config"
 	"transaction-service/internal/db"
 	"transaction-service/internal/grpc"
@@ -67,13 +66,6 @@ func main() {
 	sagaRepo := repo.NewSagaRepo(dbInstance)
 	eventRepo := repo.NewEventRepo(dbInstance)
 
-	sagaOrchestrator := saga.NewTransactionSagaOrchestrator(
-		sagaRepo,
-		accountClient,
-		transactionRepo,
-		eventRepo,
-	)
-
 	// Initiating message queues
 	messaging.SetupMessaging()
 	defer func() {
@@ -83,10 +75,10 @@ func main() {
 	}()
 
 	go grpc.StartGRPCServer(grpc.ServiceRepos{
-		AccountClient:               accountClient,
-		TransactionSagaOrchestrator: sagaOrchestrator,
-		TransactionRepo:             transactionRepo,
-		EventRepo:                   eventRepo,
+		AccountClient:   accountClient,
+		SagaRepo:        sagaRepo,
+		TransactionRepo: transactionRepo,
+		EventRepo:       eventRepo,
 	})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -95,7 +87,7 @@ func main() {
 	recoveryJob := jobs.NewTransactionReconciliationJob(
 		transactionRepo,
 		accountClient,
-		sagaOrchestrator,
+		sagaRepo,
 	)
 
 	// Start recovery job

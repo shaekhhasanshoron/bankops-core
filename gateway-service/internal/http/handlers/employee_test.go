@@ -25,7 +25,6 @@ func setupEmployeeRoutes(authHandler *AuthHandler) *gin.Engine {
 	})
 
 	router.POST("/api/v1/employee", authHandler.CreateEmployee)
-	router.PUT("/api/v1/employee/:username", authHandler.UpdateEmployee)
 	router.DELETE("/api/v1/employee/:username", authHandler.DeleteEmployee)
 	router.GET("/api/v1/employee", authHandler.ListEmployee)
 

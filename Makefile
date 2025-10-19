@@ -43,6 +43,7 @@ help:
 	@echo "  make docker-push       - docker push all services"
 	@echo "  make compose-up        - docker-compose up all services"
 	@echo "  make compose-down      - docker-compose down all services"
+	@echo "  make proto             - generate proto files for all services"
 	@echo
 	@echo "Auth service helpers:"
 	@echo "  make run-auth          - run auth service"
@@ -99,6 +100,9 @@ compose-up:
 compose-down:
 	@echo "→ running service on docker"
 	@cd deployment && cd docker && docker-compose down
+
+.PHONY: proto coverage test
+proto: proto-account proto-auth proto-tx
 
 coverage: coverage-gateway coverage-account coverage-auth coverage-tx
 

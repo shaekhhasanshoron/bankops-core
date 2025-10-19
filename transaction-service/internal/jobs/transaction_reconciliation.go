@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"time"
-	"transaction-service/internal/app/saga"
 	"transaction-service/internal/config"
 	"transaction-service/internal/domain/entity"
 	custom_err "transaction-service/internal/domain/error"
@@ -13,21 +12,21 @@ import (
 )
 
 type TransactionReconciliationJob struct {
-	transactionRepo  ports.TransactionRepo
-	accountClient    ports.AccountClient
-	sagaOrchestrator *saga.TransactionSagaOrchestrator
+	transactionRepo ports.TransactionRepo
+	sageRepo        ports.SagaRepo
+	accountClient   ports.AccountClient
 }
 
 func NewTransactionReconciliationJob(
 	transactionRepo ports.TransactionRepo,
 	accountClient ports.AccountClient,
-	sagaOrchestrator *saga.TransactionSagaOrchestrator,
+	sageRepo ports.SagaRepo,
 ) *TransactionReconciliationJob {
 
 	return &TransactionReconciliationJob{
-		transactionRepo:  transactionRepo,
-		accountClient:    accountClient,
-		sagaOrchestrator: sagaOrchestrator,
+		transactionRepo: transactionRepo,
+		accountClient:   accountClient,
+		sageRepo:        sageRepo,
 	}
 }
 
@@ -76,6 +75,13 @@ func (j *TransactionReconciliationJob) RecoverSingleTransaction(ctx context.Cont
 			Str("job_type", "transaction_recovery").
 			Msg("Failed to unlock accounts for transaction")
 		return custom_err.ErrAccountUnlockingFailed
+	}
+
+	saga, err := j.sageRepo.GetSagaByTransactionID(transaction.ID)
+	if err == nil && saga != nil {
+		saga.CurrentState = entity.TransactionSagaStateFailed
+		saga.CurrentStep = entity.TransactionSagaStepComplete
+		_ = j.sageRepo.UpdateSaga(saga)
 	}
 
 	return j.transactionRepo.UpdateTransactionStatus(

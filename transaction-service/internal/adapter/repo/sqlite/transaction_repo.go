@@ -3,6 +3,7 @@ package sqlite
 import (
 	"errors"
 	"gorm.io/gorm"
+	"sync"
 	"time"
 	"transaction-service/internal/domain/entity"
 	"transaction-service/internal/ports"
@@ -10,6 +11,7 @@ import (
 
 type TransactionRepo struct {
 	DB *gorm.DB
+	mu sync.RWMutex
 }
 
 func NewTransactionRepo(db *gorm.DB) ports.TransactionRepo {
@@ -17,6 +19,9 @@ func NewTransactionRepo(db *gorm.DB) ports.TransactionRepo {
 }
 
 func (r *TransactionRepo) CreateTransaction(transaction *entity.Transaction) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.DB.Create(transaction).Error
 }
 
@@ -39,6 +44,9 @@ func (r *TransactionRepo) GetTransactionByReferenceID(referenceID string) (*enti
 }
 
 func (r *TransactionRepo) UpdateTransactionStatus(id string, status string, errorReason string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	updateFields := map[string]interface{}{
 		"transaction_status": status,
 		"updated_at":         time.Now(),
@@ -54,6 +62,9 @@ func (r *TransactionRepo) UpdateTransactionStatus(id string, status string, erro
 }
 
 func (r *TransactionRepo) UpdateTransaction(transaction *entity.Transaction) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	currentVersion := transaction.Version
 	result := r.DB.Model(transaction).
 		Where("id = ? AND version = ?", transaction.ID, currentVersion).

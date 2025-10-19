@@ -29,11 +29,13 @@ func NewTransactionSagaOrchestrator(
 ) *TransactionSagaOrchestrator {
 
 	return &TransactionSagaOrchestrator{
-		sagaRepo:          sagaRepo,
-		accountClient:     accountClient,
-		transactionRepo:   transactionRepo,
-		eventRepo:         eventRepo,
-		successfulStepMap: make(map[string]bool),
+		sagaRepo:               sagaRepo,
+		accountClient:          accountClient,
+		transactionRepo:        transactionRepo,
+		eventRepo:              eventRepo,
+		successfulStepMap:      make(map[string]bool),
+		sourceAccountInfo:      ports.AccountInfo{},
+		destinationAccountInfo: nil,
 	}
 }
 
@@ -42,11 +44,6 @@ func (o *TransactionSagaOrchestrator) ExecuteTransactionSync(
 	transaction *entity.Transaction,
 	requester, requestId string,
 ) error {
-
-	o.successfulStepMap = make(map[string]bool)
-	o.sourceAccountInfo = ports.AccountInfo{}
-	o.destinationAccountInfo = nil
-
 	saga := entity.NewTransactionSaga(
 		transaction.ID,
 		transaction.SourceAccountID,

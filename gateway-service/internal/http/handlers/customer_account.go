@@ -38,13 +38,27 @@ type GetBalanceResponse struct {
 	Message string  `json:"message" binding:"message"`
 }
 
-// CreateAccount for creating new customer
+// CreateAccount creates a new account
 // @Tags Account
 // @Summary Create Account
-// @Description Create account - Amount must minimum greater than zero | Bearer token required
+// @Description
+// @Description **Request Body:**
+// @Description
+// @Description Customer ID:
+// @Description - Required
+// @Description
+// @Description Deposit Amount:
+// @Description - Required
+// @Description - Must be greater than zero
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param account body CreateAccountRequest true "Account details"
 // @Success 201 {object} CreateAccountResponse
 // @Failure 400 {object} ErrorResponse
@@ -94,18 +108,36 @@ func (h *AccountHandler) CreateAccount(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
-// DeleteAccount for delete account by scope (scope=single; id = account_id / scope=all; id = customer_id)
+// DeleteAccount deletes a single account or all accounts under a customer
 // @Tags Account
 // @Summary Delete Account (single/all)
-// @Description Delete a single account or all accounts under customer for a customer by scope (scope=single -> id = account_id / scope=all -> id = customer_id)
+// @Description
+// @Description **Query Parameters:**
+// @Description
+// @Description scope:
+// @Description - Required
+// @Description - Options: **single**, **all**
+// @Description - Default: single
+// @Description - **single**: Delete one account (id = account_id)
+// @Description - **all**: Delete all accounts for customer (id = customer_id)
+// @Description
+// @Description id:
+// @Description - Required
+// @Description - AccountID (if scope=single) or CustomerID (if scope=all)
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param scope query string true "Scope (single/all)" default(single)
 // @Param id query string true "AccountID or CustomerID"
-// @Success 200 {string} {object} DeleteAccountResponse
-// @Failure 400 {string} {object} ErrorResponse
-// @Failure 401 {string} {object} ErrorResponse
+// @Success 200 {object} DeleteAccountResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
 // @Router /api/v1/account [delete]
 func (h *AccountHandler) DeleteAccount(c *gin.Context) {
 	scope := strings.TrimSpace(c.Query("scope"))
@@ -156,14 +188,25 @@ func (h *AccountHandler) DeleteAccount(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// GetAccountBalance for fetching account balance
+// GetAccountBalance fetches the account balance
 // @Tags Account
 // @Summary Get Account balance
-// @Description Get account balance
+// @Description
+// @Description **Path Parameter:**
+// @Description
+// @Description id:
+// @Description - Required
+// @Description - AccountID of a customer account
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param id path string true "AccountID of a customer account"
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
 // @Success 200 {object} GetBalanceResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
@@ -206,19 +249,55 @@ func (h *AccountHandler) GetAccountBalance(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// ListAccounts for fetching account list
+// ListAccounts fetches the account list with optional filters
 // @Tags Account
 // @Summary Get Account List
-// @Description Get account list. default gets all, if requested can be filtered by customer_id, minimum_balance, in_transaction (if true; get accounts that are currently locked for transaction)
+// @Description
+// @Description **Query Parameters:**
+// @Description
+// @Description customer_id:
+// @Description - Optional
+// @Description - Filter by Customer ID
+// @Description
+// @Description in_transaction:
+// @Description - Optional
+// @Description - Filter accounts currently in transaction
+// @Description - Values: true/false
+// @Description - Default: no filter applied
+// @Description
+// @Description min_balance:
+// @Description - Optional
+// @Description - Filter by minimum balance
+// @Description
+// @Description page:
+// @Description - Optional
+// @Description - Page number for pagination
+// @Description - Default: 1
+// @Description
+// @Description pagesize:
+// @Description - Optional
+// @Description - Number of accounts per page
+// @Description - Default: 50
+// @Description
+// @Description order:
+// @Description - Optional
+// @Description - Sort order (asc/desc)
+// @Description - Default: desc
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param customer_id query string false "Customer ID"
 // @Param in_transaction query string false "Account In Transaction (value: true/false; default won't affect the filter)"
 // @Param min_balance query string false "Minimum balance"
 // @Param page query int false "Page number for pagination" default(1)
 // @Param pagesize query int false "Number of accounts per page" default(50)
 // @Param order query string false "Sort order (asc/desc)" default(desc)
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
 // @Success 200 {object} ListAccountResponse "Successfully retrieved account list"
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse

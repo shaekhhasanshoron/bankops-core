@@ -84,7 +84,7 @@ func (h *TransactionHandlerService) GetTransactionHistory(ctx context.Context, r
 	// Call service
 	transactions, total, err := h.GetTransactionHistoryService.Execute(
 		req.AccountId,
-		req.CompanyId,
+		req.CustomerId,
 		transactionTypes,
 		startDate,
 		endDate,

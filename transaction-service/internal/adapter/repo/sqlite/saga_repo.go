@@ -3,6 +3,7 @@ package sqlite
 import (
 	"errors"
 	"gorm.io/gorm"
+	"sync"
 	"time"
 	"transaction-service/internal/domain/entity"
 	"transaction-service/internal/ports"
@@ -10,6 +11,7 @@ import (
 
 type SagaRepo struct {
 	DB *gorm.DB
+	mu sync.RWMutex
 }
 
 func NewSagaRepo(db *gorm.DB) ports.SagaRepo {
@@ -17,6 +19,9 @@ func NewSagaRepo(db *gorm.DB) ports.SagaRepo {
 }
 
 func (r *SagaRepo) CreateSaga(saga *entity.TransactionSaga) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	return r.DB.Create(saga).Error
 }
 
@@ -39,6 +44,9 @@ func (r *SagaRepo) GetSagaByTransactionID(transactionID string) (*entity.Transac
 }
 
 func (r *SagaRepo) UpdateSaga(saga *entity.TransactionSaga) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	currentVersion := saga.Version
 	result := r.DB.Model(saga).
 		Where("id = ? AND version = ?", saga.ID, currentVersion).

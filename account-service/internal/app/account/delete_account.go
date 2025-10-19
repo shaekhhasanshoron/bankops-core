@@ -48,9 +48,9 @@ func (a *DeleteAccount) Execute(scope, id, requester, requestId string) (string,
 
 	if id == "" {
 		if scope == "all" {
-			err = fmt.Errorf("%w: 'id' - company id required in param", custom_err.ErrValidationFailed)
-			logging.Logger.Error().Err(err).Msg("Invalid request - 'id' company id missing")
-			return "Invalid request - 'id' company id missing", err
+			err = fmt.Errorf("%w: 'id' - customer id required in param", custom_err.ErrValidationFailed)
+			logging.Logger.Error().Err(err).Msg("Invalid request - 'id' customer id missing")
+			return "Invalid request - 'id' customer id missing", err
 		} else {
 			err = fmt.Errorf("%w: 'id' - account id required in param", custom_err.ErrValidationFailed)
 			logging.Logger.Error().Err(err).Msg("Invalid request - 'id' account id missing")

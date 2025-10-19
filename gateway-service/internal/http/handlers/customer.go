@@ -16,7 +16,7 @@ type Customer struct {
 }
 
 type CreateCustomerRequest struct {
-	Name string `json:"name" binding:"required"`
+	Name string `json:"name" binding:"required,max=50"`
 }
 
 type CreateCustomerResponse struct {
@@ -50,13 +50,24 @@ type ListCustomerResponse struct {
 	Message    string      `json:"message" binding:"message"`
 }
 
-// CreateCustomer for creating new customer
+// CreateCustomer creates a new customer
 // @Tags Customer
 // @Summary Create Customer
-// @Description Create employee - Name: required | Bearer token required
+// @Description
+// @Description **Request Body:**
+// @Description
+// @Description Name:
+// @Description - Required
+// @Description - Max 50 characters
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param customer body CreateCustomerRequest true "Customer details"
 // @Success 201 {object} CreateCustomerResponse
 // @Failure 400 {object} ErrorResponse
@@ -105,17 +116,28 @@ func (h *AccountHandler) CreateCustomer(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
-// DeleteCustomer for delete a customer by customer id
+// DeleteCustomer deletes a customer by customer id
 // @Tags Customer
 // @Summary Delete Customer
-// @Description Delete a customer by customer id
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
+// @Description
+// @Description **Path Parameter:**
+// @Description
+// @Description id:
+// @Description - Required
+// @Description - CustomerID of the customer to delete
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param id path string true "CustomerID of the customer"
-// @Success 200 {string} {object} DeleteCustomerResponse
-// @Failure 400 {string} {object} ErrorResponse
-// @Failure 401 {string} {object} ErrorResponse
+// @Success 200 {object} DeleteCustomerResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
 // @Router /api/v1/customer/{id} [delete]
 func (h *AccountHandler) DeleteCustomer(c *gin.Context) {
 	customerId := c.Param("id")
@@ -154,19 +176,41 @@ func (h *AccountHandler) DeleteCustomer(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// ListCustomer for fetching a customer list
+// ListCustomer fetches the customer list
 // @Tags Customer
 // @Summary Get Customer List
-// @Description Get customer list
+// @Description
+// @Description **Query Parameters:**
+// @Description
+// @Description page:
+// @Description - Optional
+// @Description - Page number for pagination
+// @Description - Default: 1
+// @Description
+// @Description pagesize:
+// @Description - Optional
+// @Description - Number of customers per page
+// @Description - Default: 50
+// @Description
+// @Description order:
+// @Description - Optional
+// @Description - Sort order (asc/desc)
+// @Description - Default: desc
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param page query int false "Page number for pagination" default(1)
 // @Param pagesize query int false "Number of customers per page" default(50)
 // @Param order query string false "Sort order (asc/desc)" default(desc)
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
-// @Success 200 {string} {object} ListCustomerResponse
-// @Failure 400 {string} {object} ErrorResponse
-// @Failure 401 {string} {object} ErrorResponse
+// @Success 200 {object} ListCustomerResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
 // @Router /api/v1/customer [get]
 func (h *AccountHandler) ListCustomer(c *gin.Context) {
 	pageStr := strings.TrimSpace(c.Query("page"))
@@ -235,16 +279,39 @@ func (h *AccountHandler) ListCustomer(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// ListCustomerAccounts for fetching account list of customer
+// ListCustomerAccounts fetches the account list of a customer
 // @Tags Customer
 // @Summary Get Account List of customer
-// @Description Get account list of customers
+// @Description
+// @Description **Path Parameter:**
+// @Description
+// @Description id:
+// @Description - Required
+// @Description - CustomerID of the customer
+// @Description
+// @Description **Query Parameters:**
+// @Description
+// @Description page:
+// @Description - Optional
+// @Description - Page number for pagination
+// @Description - Default: 1
+// @Description
+// @Description pagesize:
+// @Description - Optional
+// @Description - Number of accounts per page
+// @Description - Default: 50
+// @Description
+// @Description **Header:**
+// @Description
+// @Description Authorization:
+// @Description - Required
+// @Description - Format: Bearer token
 // @Accept json
 // @Produce json
+// @Param Authorization header string true "Bearer token" default(Bearer )
 // @Param id path string true "CustomerID of the customer"
 // @Param page query int false "Page number for pagination" default(1)
 // @Param pagesize query int false "Number of accounts per page" default(50)
-// @Param Authorization header string true "Bearer token for authorization, include 'Bearer ' followed by access_token"
 // @Success 200 {object} ListAccountResponse "Successfully retrieved account list"
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse

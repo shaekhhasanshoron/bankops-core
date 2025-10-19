@@ -1,4 +1,4 @@
-package repo
+package mocks
 
 import (
 	"github.com/stretchr/testify/mock"
@@ -6,6 +6,7 @@ import (
 	"transaction-service/internal/domain/entity"
 )
 
+// MockTransactionRepo implements ports.TransactionRepo for testing
 type MockTransactionRepo struct {
 	mock.Mock
 }
@@ -48,10 +49,16 @@ func (m *MockTransactionRepo) GetTransactionHistory(accountID string, customerID
 
 func (m *MockTransactionRepo) GetPendingTransactions() ([]*entity.Transaction, error) {
 	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).([]*entity.Transaction), args.Error(1)
 }
 
 func (m *MockTransactionRepo) GetStuckTransactions() ([]*entity.Transaction, error) {
 	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).([]*entity.Transaction), args.Error(1)
 }

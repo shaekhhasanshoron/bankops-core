@@ -27,10 +27,17 @@ func NewAuthHandler(authClient ports.AuthClient) *AuthHandler {
 	}
 }
 
-// Login api for employee login
+// Login allows an employee to log in and get an access token
 // @Tags Authentication
 // @Summary Login API
-// @Description Login to get access token using username and password
+// @Description
+// @Description **Request Body:**
+// @Description
+// @Description username:
+// @Description - Required
+// @Description
+// @Description password:
+// @Description - Required
 // @Accept json
 // @Produce json
 // @Param login body LoginRequest true "Login credentials"
@@ -60,7 +67,6 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	loginResp := LoginResponse{
 		AccessToken: resp.Token,
-		//RefreshToken: resp.RefreshToken,
 	}
 
 	c.JSON(http.StatusOK, loginResp)

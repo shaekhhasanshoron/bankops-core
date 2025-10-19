@@ -305,7 +305,7 @@ func TestListTransactions_SuccessDefaultPagination(t *testing.T) {
 
 	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *prototx.GetTransactionHistoryRequest) bool {
 		return req.AccountId == "" &&
-			req.CompanyId == "" &&
+			req.CustomerId == "" &&
 			req.Types == "" &&
 			req.StartDate == nil &&
 			req.EndDate == nil &&
@@ -436,7 +436,7 @@ func TestListTransactions_SuccessWithCustomerFilter(t *testing.T) {
 	}
 
 	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *prototx.GetTransactionHistoryRequest) bool {
-		return req.CompanyId == "cust-123" &&
+		return req.CustomerId == "cust-123" &&
 			req.Metadata != nil
 	})).Return(expectedResponse, nil)
 
@@ -490,7 +490,7 @@ func TestListTransactions_SuccessWithAllFilters(t *testing.T) {
 
 	mockClient.On("GetTransactionHistory", mock.Anything, mock.MatchedBy(func(req *prototx.GetTransactionHistoryRequest) bool {
 		return req.AccountId == "acc-123" &&
-			req.CompanyId == "cust-123" &&
+			req.CustomerId == "cust-123" &&
 			req.Types == "transfer" &&
 			req.StartDate != nil &&
 			req.EndDate != nil &&

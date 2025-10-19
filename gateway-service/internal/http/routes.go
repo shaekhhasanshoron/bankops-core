@@ -68,7 +68,6 @@ func setRoutes(router *gin.Engine, gRPCClients GrpcClients) {
 		// Employee API
 		protectedGroup.POST("/employee", authHandler.CreateEmployee)
 		protectedGroup.DELETE("/employee/:username", authHandler.DeleteEmployee)
-		protectedGroup.PUT("/employee/:username", authHandler.UpdateEmployee)
 		protectedGroup.GET("/employee", authHandler.ListEmployee)
 		// Customer API
 		protectedGroup.POST("/customer", accountHandler.CreateCustomer)
