@@ -291,7 +291,7 @@ func defaults() map[string]any {
 		"auth": map[string]any{
 			"hash_key":           "fc5c6816998c7173ba5bc7a3c53bfabf",
 			"jwt_secret":         "fc5c6816998c7173ba5bc7a3c53bfabf",
-			"jwt_token_duration": 10 * time.Minute,
+			"jwt_token_duration": 15 * time.Minute,
 		},
 		"message_publisher": map[string]any{
 			"enabled":       DefaultMessageBrokerMessageEnabled,

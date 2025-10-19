@@ -25,7 +25,7 @@ func (h *AccountHandlerService) CreateCustomer(ctx context.Context, req *protoac
 		CustomerId: customer.ID,
 		Response: &protoacc.Response{
 			Message: message,
-			Success: false,
+			Success: true,
 		},
 	}, nil
 }

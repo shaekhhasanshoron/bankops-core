@@ -3,6 +3,7 @@
 ## Index
 * [Introduction](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#1-introduction)
 * [Business Architecture & Service Design](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#2-business-architecture--service-design)
+   * [Core Business Domain & User Roles](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#21-service-description)
    * [Service Description](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#21-service-description)
    * [Service Responsibilities](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#22-service-responsibilities)
    * [Why This Separation?](https://github.com/shaekhhasanshoron/bankops-core?tab=readme-ov-file#23-why-this-separation)
@@ -41,11 +42,32 @@ while avoiding vendor lock-in and ensuring that each component remains independe
 The system is divided into four distinct services, each representing a clearly defined domain. 
 This separation allows each team to own their domain logic independently, enabling parallel development and reducing operational complexity.
 
+### 2.1 Core Business Domain & User Roles
+The system is designed for internal bank employees as the primary users, enabling them to manage core banking 
+operations through a secure, role-based interface.
+
+**Authentication & Security:**
+* All API access requires a Bearer token obtained through the login endpoint
+* Tokens have a default lifespan of **15 minutes** for security
+* Role-based access control (RBAC) is enforced across all operations
+
+
+**User Roles & Privileges:**
+* **Admin Employees:** Possess full system privileges. Can manage other employees, customers, bank accounts, and financial transactions.
+* **Editor Employees:** Have all privileges except employee management. Can create, update, and delete customers, accounts, and process transactions.
+* **Viewer Employees:** Have read-only access. Can view customer information, account details, and transaction history but cannot make any modifications.
+
+**Core Banking Operations:**
+* Customer management (create, update, view)
+* Bank account management (create multiple accounts per customer)
+* Financial transactions (transfer between accounts, withdrawals, deposits)
+* Comprehensive audit trails for all operations
+
+### 2.2 Service Description
+
 Here's, the top level overview of the system:
 
 ![](https://github.com/shaekhhasanshoron/bankops-core/blob/master/static/system-overview.jpeg)
-
-### 2.1 Service Description
 
 **Gateway Service**: This service serves as the central access point for all employee requests. 
 It acts as a proxy, routing requests to the respective internal services, ensuring security, role-based access control (RBAC), and observability.
@@ -61,7 +83,7 @@ stored and easily accessible by authorized employees.
 It facilitates deposits, withdrawals, and transfers. 
 Additionally, it tracks transaction history and ensures that all transactions are handled correctly.
 
-### 2.2 Service Responsibilities
+### 2.3 Service Responsibilities
 
 **Gateway Service:**
 * Acts as a single entry point for all employee requests.
@@ -89,7 +111,7 @@ Additionally, it tracks transaction history and ensures that all transactions ar
 * Fetches transaction history based on parameters like customer ID, account number, and date range.
 * Handles transaction recovery and consistency during server failures.
 
-### 2.3 Why This Separation?
+### 2.4 Why This Separation?
 The separation of concerns into distinct services allows for better scalability, maintainability, and flexibility. 
 
 Each service has a clear responsibility:
@@ -100,7 +122,7 @@ Each service has a clear responsibility:
   providing a dedicated space for handling financial transactions, with added flexibility for enhancements 
   such as transaction recovery and concurrency handling.
 
-### 2.4 Inter-Service Communication
+### 2.5 Inter-Service Communication
 * **External (Employee to System)**: All access is through the Gateway via RESTful HTTP APIs. 
 This provides a familiar and well-structured interface for clients.
 * **Internal (Service to Service)**: The Gateway communicates with all backend services using gRPC. 
@@ -375,6 +397,16 @@ make compose-up
 
 All the manifests are inside `deployment/kubernetes/manifests` folder
 
+```
+kubectl apply -f deployment/kubernetes/manifests/auth-service/
+
+kubectl apply -f deployment/kubernetes/manifests/account-service/
+
+kubectl apply -f deployment/kubernetes/manifests/transaction-service/
+
+kubectl apply -f deployment/kubernetes/manifests/gateway-service/
+```
+
 ## 7. Live Demo
 You can find the live url. Go to http://bankops-core.135.235.192.122.nip.io
 
@@ -393,6 +425,9 @@ Employee with `viewer` privileges:
 * Username: `viewer_user`
 * Password: `viewer_pass`
 
+You will get the JWT `access_token` after login. 
+**Default JWT token expiry time is 15 minutes. 
+This can be adjusted by updating the `AUTH_AUTH__JWT_TOKEN_DURATION` environment variable in the Auth Service**
 
 ## 8. API Documentation
 Interactive API documentation, generated using Swagger/OpenAPI, is available once the Gateway service is running. 
@@ -404,7 +439,7 @@ Access it: Just click on the **View API Documentation** button or just  go `http
 The current architecture is built with future evolution in mind. 
 The event-driven design and hexagonal structure make these enhancements natural next steps:
 
-* **Distributed Caching (Redis):** To improve performance and instantly reflect role changes from the Auth service, 
+* **Distributed Caching (Redis):** New api can be added update role of employee. To improve performance and instantly reflect role changes from the Auth service, 
 I plan to introduce a Redis cache. The Auth service would publish RoleUpdated events, which the Gateway would consume to invalidate its local cache.
 
 * **Enhanced Resilience Patterns:** I've laid the groundwork for integrating circuit breakers (to prevent cascade failures) 

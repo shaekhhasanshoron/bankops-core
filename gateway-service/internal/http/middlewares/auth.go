@@ -17,6 +17,7 @@ import (
 func AuthMiddleware(authClient *ports.AuthClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
+		authHeader = strings.TrimSpace(authHeader)
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			c.Abort()
@@ -24,8 +25,8 @@ func AuthMiddleware(authClient *ports.AuthClient) gin.HandlerFunc {
 		}
 
 		// Extract token from "Bearer <token>"
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
+		parts := strings.Fields(authHeader)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format (Format: 'Bearer <access_token>')"})
 			c.Abort()
 			return
