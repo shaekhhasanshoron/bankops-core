@@ -119,7 +119,7 @@ func prePopulateDefaultEmployee(db *gorm.DB) error {
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				hashing := auth.NewHashing(config.Current().Auth.HashKey)
-				hashedPassword, err := hashing.HashData(config.Current().User.AdminPassword)
+				hashedPassword, err := hashing.HashData(e.Password)
 				if err != nil {
 					logging.Logger.Warn().Err(err).Str("employee", e.Username).Msg("unable to hash password")
 					continue
