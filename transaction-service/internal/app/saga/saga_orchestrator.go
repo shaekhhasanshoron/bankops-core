@@ -285,7 +285,7 @@ func (o *TransactionSagaOrchestrator) sagaProcessStep(
 		return custom_err.ErrAccountEmpty
 	}
 
-	accountBalanceUpdatedInfoList, message, err := o.accountClient.UpdateAccountsBalance(ctx, updates, requester, requestId)
+	_, message, err := o.accountClient.UpdateAccountsBalance(ctx, updates, requester, requestId)
 	if err != nil {
 		logging.Logger.Warn().
 			Err(err).
@@ -297,17 +297,6 @@ func (o *TransactionSagaOrchestrator) sagaProcessStep(
 		return custom_err.ErrTransactionFailed
 	}
 
-	// This version update will  not update the account balance even in retry
-	for _, accountBalanceUpdatedInfo := range accountBalanceUpdatedInfoList {
-		if accountBalanceUpdatedInfo.AccountID == o.sourceAccountInfo.AccountID {
-			o.sourceAccountInfo.Version = accountBalanceUpdatedInfo.Version
-		}
-
-		if o.destinationAccountInfo != nil &&
-			o.destinationAccountInfo.AccountID == accountBalanceUpdatedInfo.AccountID {
-			o.destinationAccountInfo.Version = accountBalanceUpdatedInfo.Version
-		}
-	}
 	return nil
 }
 
@@ -320,7 +309,7 @@ func (o *TransactionSagaOrchestrator) sagaCompleteStep(
 	var err error
 	defer func() {
 		if err == nil {
-			saga.AppendSuccessfulStep(entity.TransactionSagaStepComplete)
+			_ = saga.AppendSuccessfulStep(entity.TransactionSagaStepComplete)
 			saga.CurrentState = entity.TransactionSagaStateCompleted
 		} else {
 			saga.CurrentState = entity.TransactionSagaStateFailed

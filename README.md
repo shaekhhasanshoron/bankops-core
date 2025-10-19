@@ -38,7 +38,7 @@ while avoiding vendor lock-in and ensuring that each component remains independe
 
 ## 2. Business Architecture & Service Design
 
-The system is divided into three distinct services, each representing a clearly defined domain. 
+The system is divided into four distinct services, each representing a clearly defined domain. 
 This separation allows each team to own their domain logic independently, enabling parallel development and reducing operational complexity.
 
 Here's, the top level overview of the system:
@@ -53,9 +53,13 @@ It acts as a proxy, routing requests to the respective internal services, ensuri
 **Auth Service**: The authentication service manages employee identities, roles, and permissions. 
 It provides authentication for all employees and ensures that access is granted based on predefined roles.
 
-**Account Service**: This is the core service that manages customer and account data. 
-It processes customer account creation, transactions between accounts, and maintains transaction logs. 
-It is the central point for managing all business logic related to bank accounts.
+**Account Service**: This service is dedicated to managing customers and their bank accounts. 
+It ensures that all account-related data (such as balances and account details) are securely 
+stored and easily accessible by authorized employees.
+
+**Transaction Service**: This is the core service that is responsible for managing transactions between accounts. 
+It facilitates deposits, withdrawals, and transfers. 
+Additionally, it tracks transaction history and ensures that all transactions are handled correctly.
 
 ### 2.2 Service Responsibilities
 
@@ -74,11 +78,16 @@ It is the central point for managing all business logic related to bank accounts
 * Issues JWT tokens upon successful login to authenticate employees for future requests.
 
 **Account Service:**
-* The heart of the banking operations 
 * Manages customer data and account-related operations.
-* Handles account creation, viewing of account details, and transaction management.
-* Tracks all events (customer creation, transactions) for auditing and anomaly detection. 
-* Ensures transaction integrity with multi-level locking and concurrent request handling.
+* Handles account creation, viewing of account details.
+* Tracks all events like customer creation for auditing. 
+
+**Transaction Service:**
+* Manages financial transactions between accounts.
+* Facilitates deposits, withdrawals, and transfers between accounts.
+* Ensures that multiple concurrent transactions for the same account are handled correctly.
+* Fetches transaction history based on parameters like customer ID, account number, and date range.
+* Handles transaction recovery and consistency during server failures.
 
 ### 2.3 Why This Separation?
 The separation of concerns into distinct services allows for better scalability, maintainability, and flexibility. 
@@ -86,17 +95,22 @@ The separation of concerns into distinct services allows for better scalability,
 Each service has a clear responsibility:
 * The **Gateway Service** provides a unified interface to the outside world while keeping internal logic separate.
 * The **Auth Service** encapsulates authentication and authorization, ensuring role-based access without affecting other services.
-* The **Account Service** focuses purely on business logic related to customers and accounts, ensuring modularity and a clean architecture.
+* The **Account Service** is focused solely on account management, making it more modular and decoupled from transaction logic.
+* The **Transaction Service** is independently responsible for transaction management, 
+  providing a dedicated space for handling financial transactions, with added flexibility for enhancements 
+  such as transaction recovery and concurrency handling.
 
 ### 2.4 Inter-Service Communication
 * **External (Employee to System)**: All access is through the Gateway via RESTful HTTP APIs. 
 This provides a familiar and well-structured interface for clients.
-* **Internal (Service to Service)**: The Gateway communicates with the Auth and Account services using gRPC. 
+* **Internal (Service to Service)**: The Gateway communicates with all backend services using gRPC. 
+Crucially, the Transaction Service acts as an orchestrator, making gRPC calls to the Account Service to validate accounts 
+and update balances during a transaction.
 **gRPC** is integrated because of its performance, strong contract-first API definitions via Protocol Buffers, and built-in connection pooling.
 * **Asynchronous Events (Service to Service)**: For decoupled, event-driven workflows, **message queue** (e.g kafka) has been integrated.
-The Account service publishes events (e.g., `TransactionCompleted`, `CustomerCreated`) to topics. 
-This allows future services (like a Notification Service or Analytics Service) to react to these events without the Account service needing to know they exist, 
-solving the problem of tight coupling and enabling system-wide scalability.
+All the service publishes events (e.g., `TransactionCompleted`, `CustomerCreated`, `EmployeeCreated`) to dedicated topics. 
+This allows future services (like a Notification Service or Analytics Service) to react to these events without the event produce services 
+needing to know they exist, solving the problem of tight coupling and enabling system-wide scalability.
 
 ## 3. Technical Overview
 
@@ -126,6 +140,13 @@ Banking has a complex, rule-heavy domain. By modeling entities like Customer, Ac
 with their own business rules and invariants, the code becomes a direct reflection of the business. 
 This makes it easier to maintain and ensures that complex rules, like those governing transactions, are encapsulated correctly.
 
+**Saga Orchestrator Pattern:**
+A fund transfer is a perfect example of a long-running business process (a Saga) that spans multiple services. 
+The Transaction Service acts as the orchestrator, executing the transfer in a series of steps (debit, credit) via gRPC. 
+If any step fails (e.g., insufficient funds), the orchestrator triggers compensating transactions (e.g., a reverse debit) 
+to roll back the operation. This elegantly solves the problem of maintaining data integrity in a distributed system 
+without resorting to complex, tightly-coupled distributed transactions.
+
 **Repository Pattern:** 
 
 This pattern is used to abstract the data access layer. The business logic calls methods on a `CustomerRepo` interface, not a database. 
@@ -153,10 +174,15 @@ monitor its liveness and readiness, ensuring traffic is only sent to healthy ins
 * **Automatic Transaction Recovery:** Background jobs are created that scans for and recovers transactions stuck in an intermediate state 
 due to a service crash. This ensures data consistency and solves the problem of manual intervention after a failure.
 
+* **Resilient Messaging:** Kafka health monitor with exponential backoff reconnection 
+ensures self-healing from network partitions or broker downtime.
+
 * **Exponential Backoff & Retry:** For gRPC calls and kafka health check, retry mechanisms is implemented with exponential backoff. 
 This makes the system resilient to temporary network glitches or brief downtime of a dependent service.
 
-* **Graceful Shutdown:** Upon receiving a shutdown signal, the service stops accepting new requests, finishes processing current ones, and cleanly closes all database and network connections. This prevents data corruption and dropped transactions during deployments.
+* **Graceful Shutdown:** Upon receiving a shutdown signal, the service stops accepting new requests, 
+finishes processing current ones, and cleanly closes all database and network connections. 
+This prevents data corruption and dropped transactions during deployments.
 
 #### 3.2.2 Data Integrity & Security
 
@@ -210,38 +236,39 @@ in tools like Elasticsearch or Loki. Errors are categorized for quick filtering.
 The project structure is a direct physical manifestation of the Hexagonal Architecture, designed for clarity and ease of development.
 
 ````
-account-service/
-├── .air.toml                     # Live reload config for development
-├── go.mod                        # Go modules for dependencies
-├── Dockerfile                    # Dockerfile for containerization
-├── .env                          # Environment variables for development
+transaction-service/
+├── .air.toml                                    # Live reload config for development
+├── go.mod                                       # Go modules for dependencies
+├── Dockerfile                                   # Dockerfile for containerization
+├── .env                                         # Environment variables for development
 ├── cmd/
-│   └── accountsvc/
-│       └── main.go               # Entry point to the service
+│   └── txsvc/
+│       └── main.go                              # Entry point to the service
 ├── api/
-│   └── proto/
-│       └── account_service.proto # gRPC service definitions
+│   ├── proto/                                   # gRPC service definitions
+│   └── protogen/                                # gRPC generated files
 ├── internal/
-│   ├── domain/                   # Core domain logic (Customer, Account, Transaction...)
-│   ├── app/                      # Business logic and use cases and unit tests
-│   ├── ports/                    # Interfaces for external communication (repos, message publishers)
-│   ├── adapters/                 # Infrastructure components (e.g., repositories, message publisher)
-│   │   ├── repo/                 # Database interactions
-│   │   └── message_publisher/    # Event/message publishing logic
-│   ├── grpc/                     # gRPC server and handlers
-│   │   ├── server.go             # gRPC server setup
-│   │   └── interceptors.go       # gRPC interceptors
-│   ├── http/                     # HTTP server, health check, metrics export
-│   ├── observability/            # Metrics and tracing (Prometheus, OpenTelemetry)
-│   │   ├── metrics.go            # Prometheus metrics initialization
-│   │   └── tracing.go            # OpenTelemetry tracing setup
-│   ├── db/                       # Database initialization
-│   ├── config/                   # Configuration management
-│   │   └── config.go             # Config loading and management
-│   ├── message_publisher/        # Event publishing initialization
-│   ├── logging/                  # Logging initialization (e.g., zap or logrus)
-│   ├── jobs/                     # Internal continuously running jobs (e.g., cron jobs)
-└── └── tests/                    # Common Unit and integration tests
+│   ├── domain/                                  # Core domain logic (Transaction...)
+│   ├── app/                                     # Business logic and use cases and unit tests
+│   ├── ports/                                   # Interfaces for external communication (repos, message publishers, grpc clients)
+│   ├── adapters/                                # Infrastructure components (e.g., repositories, message publisher, gRPC client implementation)
+│   │   ├── repo/                                # Database interactions
+│   │   ├── grpc/                                # gRPC client adapater
+│   │   └── message_publisher/                   # Event/message publishing logic
+│   ├── grpc/                                    # gRPC server and handlers
+│   │   ├── server.go                            # gRPC server setup
+│   │   └── interceptors.go                      # gRPC interceptors (metrics, tracing...)
+│   ├── http/                                    # HTTP server, health check, metrics export
+│   ├── observability/                           # Metrics and tracing (Prometheus, OpenTelemetry)
+│   │   ├── metrics.go                           # Prometheus metrics initialization
+│   │   └── tracing.go                           # OpenTelemetry tracing setup
+│   ├── db/                                      # Database initialization
+│   ├── config/                                  # Configuration management
+│   │   └── config.go                            # Config loading and management
+│   ├── messagaging/                             # Event publishing service
+│   ├── logging/                                 # Logging initialization (e.g., zap or logrus)
+│   ├── jobs/                                    # Internal continuously running jobs (e.g., cron jobs)
+└── └── runtime/                                 # Graceful service shudown logic
 ````
 
 ### 4.1 Why This Structure?
@@ -308,17 +335,27 @@ make run-auth
 
 # Runs Account Service on default port (gRPC = 50051; http = 8080)
 # Add .env file and add 
-#  * AUTH_ENV=dev
-#  * AUTH_HTTP__ADDR=:8082
-#  * AUTH_GRPC__ADDR=:50052
+#  * ACCOUNT_ENV=dev
+#  * ACCOUNT_HTTP__ADDR=:8082
+#  * ACCOUNT_GRPC__ADDR=:50052
 
 make run-account
+
+# Runs Transaction Service on default port (gRPC = 50051; http = 8080)
+# Add .env file and add 
+#  * TRANSACTION_ENV=dev
+#  * TRANSACTION_HTTP__ADDR=:8083
+#  * TRANSACTION_GRPC__ADDR=:50053
+#  * TRANSACTION_GRPC__ACCOUNT_SVC_ADDR=:50052
+
+nake run-tx
 
 # Runs Account Service on default port (gRPC = 50051; http = 8080)
 # Add .env file and add 
 #  * AUTH_ENV=dev
 #  * GATEWAY_GRPC__AUTH_SVC_ADDR=:50051
 #  * GATEWAY_GRPC__ACCOUNT_SVC_ADDR=:50052
+#  * GATEWAY_GRPC__TRANSACTION_SVC_ADDR=:50053
 
 nake run-gateway
 ```
@@ -365,6 +402,3 @@ and a more sophisticated rate-limiting system at the Gateway.
 
 * **SSO & Passkey Integration:** The Auth service's port-adapter design makes it trivial to add new authentication providers 
 like Single Sign-On (SSO) or modern passkeys by simply writing a new adapter.
-
-* **Saga Pattern for Complex Transactions:** If business processes become more complex, spanning multiple services, 
-I can use the event-driven system to implement the Saga pattern for managing distributed transactions reliably.
