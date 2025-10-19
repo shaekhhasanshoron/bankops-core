@@ -71,7 +71,7 @@ func (c *DeleteCustomer) Execute(id, requester, requestId string) (string, error
 		if account.ActiveStatus == entity.AccountActiveStatusActive && account.Balance > 0 {
 			err = fmt.Errorf("cannot delete customer with active accounts having balance: account %s has %.2f", account.ID, account.Balance)
 			logging.Logger.Warn().Err(err).Str("customer_id", id).Msg("Customer deletion blocked")
-			return "Customer deletion blocked", err
+			return "Deletion Blocked: Customer has active accounts", err
 		}
 	}
 

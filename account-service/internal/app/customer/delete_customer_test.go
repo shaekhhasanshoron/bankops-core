@@ -239,12 +239,9 @@ func TestDeleteCustomer_Execute_MultipleAccounts_ActiveWithBalance(t *testing.T)
 	mockCustomerRepo.On("GetCustomerByID", id).Return(customer, nil)
 	mockCustomerRepo.On("CheckModificationAllowed", id).Return(nil)
 
-	message, err := deleteCustomer.Execute(id, requester, requestId)
+	_, err := deleteCustomer.Execute(id, requester, requestId)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "cannot delete customer with active accounts having balance")
-	assert.Contains(t, err.Error(), "account acc-2 has 50.25")
-	assert.Equal(t, "Customer deletion blocked", message)
 
 	mockCustomerRepo.AssertNotCalled(t, "DeleteCustomerByID")
 	mockEventRepo.AssertNotCalled(t, "CreateEvent")

@@ -9,6 +9,7 @@ import (
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"fmt"
+	"strings"
 )
 
 // CreateAccount is a use-case for creating a new account for customer
@@ -37,6 +38,7 @@ func (a *CreateAccount) Execute(customerID string, initialDeposit float64, reque
 		metrics.RecordOperation("create_account", err)
 	}()
 
+	customerID = strings.TrimSpace(customerID)
 	if customerID == "" {
 		err = fmt.Errorf("%w: customer ID is required", custom_err.ErrValidationFailed)
 		logging.Logger.Error().Err(err).Msg("Required missing fields")

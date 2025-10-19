@@ -783,6 +783,7 @@ paths:
         Password:
         - Required
         - Max 50 characters
+        - Supports only A-Z, a-z, 0-9, and these special characters: ! - _ & $ @ # [ ]
 
         Role:
         - Required

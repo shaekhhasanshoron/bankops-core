@@ -91,7 +91,7 @@ func (a *DeleteAccount) Execute(scope, id, requester, requestId string) (string,
 		if accounts != nil && len(accounts) > 0 {
 			err = fmt.Errorf("%w: either accounts are in transaction or has balance", custom_err.ErrAccountLocked)
 			logging.Logger.Error().Err(err).Str("customer_id", id).Msg("Account deletion blocked - either accounts are in transaction or has balance")
-			return "Account deletion blocked. Some accounts are in transaction or has balance", err
+			return "Deletion Blocked: Some accounts are in transaction or has balance", err
 		}
 
 		if err = a.AccountRepo.DeleteAllAccountsByCustomerID(id, requester); err != nil {

@@ -99,8 +99,9 @@ func (r *TransactionRepo) GetTransactionHistory(accountID string, customerID str
 	// Build query - account can be source or destination
 	if accountID != "" {
 		query = query.Where("source_account_id = ? OR destination_account_id = ?", accountID, accountID)
+	}
 
-	} else if customerID != "" {
+	if customerID != "" {
 		query = query.Where("source_account_customer_id = ? OR destination_account_customer_id = ?", customerID, customerID)
 	}
 

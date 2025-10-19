@@ -59,6 +59,14 @@ func (a *CreateEmployee) Execute(username, password, role, requester string) (st
 		return "Username supports only lowercase and '_' (in middle only)", err
 	}
 
+	re = regexp.MustCompile(`^[][A-Za-z0-9!&$@#_-]+$`)
+	if !re.MatchString(password) {
+		logging.Logger.Debug().Str("password", password).Msg("Password Invalid")
+		logging.Logger.Warn().Err(custom_err.ErrInvalidPassword).Msg("Invalid password")
+		err = custom_err.ErrInvalidPassword
+		return "Password supports only the following are supported: A-Z, a-z, 0-9, and these special characters: ! - _ & $ @ # [ ]", err
+	}
+
 	existingEmployee, _ := a.EmployeeRepo.GetEmployeeByUsername(username)
 	if existingEmployee != nil && existingEmployee.Status == entity.EmployeeStatusValid {
 		logging.Logger.Warn().Err(custom_err.ErrEmployeeAlreadyExists).Str("username", username).Msg("Invalid request")

@@ -39,9 +39,6 @@ func (r *CustomerRepo) CreateCustomer(customer *entity.Customer) (*entity.Custom
 }
 
 func (r *CustomerRepo) GetCustomerByID(id string) (*entity.Customer, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
 	var customer entity.Customer
 	err := r.DB.Preload("Accounts").Where("id = ? AND status = ?", id, entity.CustomerStatusValid).First(&customer).Error
 	if err != nil {
@@ -52,11 +49,13 @@ func (r *CustomerRepo) GetCustomerByID(id string) (*entity.Customer, error) {
 
 func (r *CustomerRepo) GetCustomerByName(name string) (*entity.Customer, error) {
 	var customer entity.Customer
-	err := r.DB.Preload("Accounts").Where("name = ? AND status = ?", name, entity.CustomerStatusValid).First(&customer).Error
+	err := r.DB.Preload("Accounts").
+		Where("LOWER(name) = LOWER(?) AND status = ?", name, entity.CustomerStatusValid).
+		First(&customer).Error
 	if err != nil {
 		return nil, err
 	}
-	return &customer, err
+	return &customer, nil
 }
 
 func (r *CustomerRepo) ListCustomer(page, pageSize int, setOrder string) ([]*entity.Customer, int64, error) {

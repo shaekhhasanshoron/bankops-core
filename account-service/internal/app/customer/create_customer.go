@@ -8,6 +8,7 @@ import (
 	"account-service/internal/observability/metrics"
 	"account-service/internal/ports"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -42,6 +43,8 @@ func (c *CreateCustomer) Execute(name, requester, requestId string) (*entity.Cus
 	}
 
 	name = strings.TrimSpace(name)
+	re := regexp.MustCompile(`\s+`)
+	name = re.ReplaceAllString(name, " ")
 
 	if requester == "" {
 		err = fmt.Errorf("%w: requester is required", custom_err.ErrValidationFailed)
@@ -53,7 +56,7 @@ func (c *CreateCustomer) Execute(name, requester, requestId string) (*entity.Cus
 	if err == nil && existingCustomer != nil {
 		err = fmt.Errorf("%w", custom_err.ErrCustomerExists)
 		logging.Logger.Error().Err(err).Msg("Customer already exists")
-		return nil, "Customer already exists", err
+		return nil, "Customer already exists with the same name", err
 	}
 
 	customer, err := entity.NewCustomer(name, requester)

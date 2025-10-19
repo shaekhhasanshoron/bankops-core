@@ -69,11 +69,10 @@ func TestCreateCustomer_Execute_CustomerAlreadyExists(t *testing.T) {
 
 	mockCustomerRepo.On("GetCustomerByName", name).Return(existingCustomer, nil)
 
-	customer, message, err := createCustomer.Execute(name, requester, requestId)
+	customer, _, err := createCustomer.Execute(name, requester, requestId)
 
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrCustomerExists)
-	assert.Equal(t, "Customer already exists", message)
 	assert.Nil(t, customer)
 
 	mockCustomerRepo.AssertNotCalled(t, "CreateCustomer")

@@ -5,6 +5,7 @@ import "errors"
 var (
 	ErrValidationFailed      = errors.New("validation failed")
 	ErrInvalidUsername       = errors.New("invalid username")
+	ErrInvalidPassword       = errors.New("invalid password")
 	ErrInvalidRequest        = errors.New("invalid request")
 	ErrInvalidRole           = errors.New("invalid role")
 	ErrMissingRequiredData   = errors.New("missing required data")

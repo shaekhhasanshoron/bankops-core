@@ -55,6 +55,14 @@ func (a *InitTransaction) Execute(
 		metrics.RecordOperation("init_transaction", err)
 	}()
 
+	referenceID = strings.TrimSpace(referenceID)
+	transactionType = strings.TrimSpace(transactionType)
+	sourceAccountID = strings.TrimSpace(sourceAccountID)
+	if destinationAccountID != nil {
+		destAccountId := strings.TrimSpace(*destinationAccountID)
+		destinationAccountID = &destAccountId
+	}
+
 	msg, err := a.validateInput(sourceAccountID, destinationAccountID, transactionType, referenceID, requester)
 	if err != nil {
 		return nil, msg, err

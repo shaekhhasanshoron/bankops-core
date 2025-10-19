@@ -42,6 +42,62 @@ func TestCreateEmployee_Execute_Success(t *testing.T) {
 	mockHashing.AssertExpectations(t)
 }
 
+// TestCreateEmployee_Execute_InvalidPassword_VariousCases test all invalid passwords
+func TestCreateEmployee_Execute_InvalidPassword_VariousCases(t *testing.T) {
+	testCases := []struct {
+		name     string
+		password string
+		reason   string
+	}{
+		{
+			name:     "password with spaces",
+			password: "pass word",
+			reason:   "spaces are not allowed",
+		},
+		{
+			name:     "password with parentheses",
+			password: "password(123)",
+			reason:   "parentheses are not in allowed characters",
+		},
+		{
+			name:     "password with percent sign",
+			password: "password%123",
+			reason:   "percent sign is not allowed",
+		},
+		{
+			name:     "password with plus sign",
+			password: "password+123",
+			reason:   "plus sign is not allowed",
+		},
+		{
+			name:     "password with asterisk",
+			password: "password*123",
+			reason:   "asterisk is not allowed",
+		},
+		{
+			name:     "empty password",
+			password: "",
+			reason:   "empty password should fail",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockEmployeeRepo := new(mock_repo.MockEmployeeRepo)
+			mockHashing := new(mock_auth.MockHashing)
+			createEmployee := NewCreateEmployee(mockEmployeeRepo, mockHashing)
+
+			_, err := createEmployee.Execute("valid_user", tc.password, "admin", "requester")
+
+			assert.Error(t, err, "Expected error for password with %s", tc.reason)
+
+			mockEmployeeRepo.AssertNotCalled(t, "GetEmployeeByUsername")
+			mockEmployeeRepo.AssertNotCalled(t, "CreateEmployee")
+			mockHashing.AssertNotCalled(t, "HashData")
+		})
+	}
+}
+
 // TestCreateEmployee_Execute_SuccessValidUsernameFormats tests success for valid users
 func TestCreateEmployee_Execute_SuccessValidUsernameFormats(t *testing.T) {
 	mockEmployeeRepo := new(mock_repo.MockEmployeeRepo)

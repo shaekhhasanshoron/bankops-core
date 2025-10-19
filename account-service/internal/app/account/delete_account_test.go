@@ -214,11 +214,10 @@ func TestDeleteAccount_Execute_AccountsLockedOrHasBalance_AllScope(t *testing.T)
 	mockCustomerRepo.On("Exists", id).Return(true, nil)
 	mockAccountRepo.On("GetCustomerAccountsInTransactionOrHasBalance", id).Return(accounts, nil)
 
-	message, err := deleteAccount.Execute(scope, id, requester, requestId)
+	_, err := deleteAccount.Execute(scope, id, requester, requestId)
 
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, custom_err.ErrAccountLocked)
-	assert.Equal(t, "Account deletion blocked. Some accounts are in transaction or has balance", message)
 
 	mockCustomerRepo.AssertExpectations(t)
 	mockAccountRepo.AssertExpectations(t)

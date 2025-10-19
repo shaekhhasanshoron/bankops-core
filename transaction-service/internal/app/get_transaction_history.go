@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 	"time"
 	"transaction-service/internal/domain/entity"
 	custom_err "transaction-service/internal/domain/error"
@@ -39,6 +40,7 @@ func (t *GetTransactionHistory) Execute(accountID string, customerID string, typ
 		pageSize = 50
 	}
 
+	sortOrder = strings.TrimSpace(sortOrder)
 	if sortOrder != "asc" && sortOrder != "desc" {
 		sortOrder = "desc"
 	}
@@ -48,7 +50,15 @@ func (t *GetTransactionHistory) Execute(accountID string, customerID string, typ
 		return nil, 0, err
 	}
 
-	transactions, total, err := t.TransactionRepo.GetTransactionHistory(accountID, customerID, startDate, endDate, sortOrder, page, pageSize, types)
+	transactions, total, err := t.TransactionRepo.GetTransactionHistory(
+		strings.TrimSpace(accountID),
+		strings.TrimSpace(customerID),
+		startDate,
+		endDate,
+		sortOrder,
+		page,
+		pageSize,
+		types)
 	if err != nil {
 		logging.Logger.Error().Err(err).
 			Str("account_id", accountID).

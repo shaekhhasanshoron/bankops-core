@@ -65,6 +65,7 @@ type ListEmployeeResponse struct {
 // @Description Password:
 // @Description - Required
 // @Description - Max 50 characters
+// @Description - Supports only A-Z, a-z, 0-9, and these special characters: ! - _ & $ @ # [ ]
 // @Description
 // @Description Role:
 // @Description - Required

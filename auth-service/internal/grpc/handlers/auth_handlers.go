@@ -118,6 +118,7 @@ func (h *AuthHandler) ListEmployee(ctx context.Context, req *proto.ListEmployeeR
 		protoEmployees[i] = &proto.Employee{
 			Id:        employee.ID,
 			UserName:  employee.Username,
+			Role:      employee.Role,
 			CreatedAt: timestamppb.New(employee.CreatedAt),
 			UpdatedAt: timestamppb.New(employee.UpdatedAt),
 		}

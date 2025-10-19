@@ -598,7 +598,7 @@
                 }
             },
             "post": {
-                "description": "**Request Body:**\n\nUsername:\n- Required\n- Max 50 characters\n- Lowercase letters only\n- Underscores allowed only in middle\n\nPassword:\n- Required\n- Max 50 characters\n\nRole:\n- Required\n- Options: **admin**, **viewer**, **editor**\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
+                "description": "**Request Body:**\n\nUsername:\n- Required\n- Max 50 characters\n- Lowercase letters only\n- Underscores allowed only in middle\n\nPassword:\n- Required\n- Max 50 characters\n- Supports only A-Z, a-z, 0-9, and these special characters: ! - _ \u0026 $ @ # [ ]\n\nRole:\n- Required\n- Options: **admin**, **viewer**, **editor**\n\n**Header:**\n\nAuthorization:\n- Required\n- Format: Bearer token",
                 "consumes": [
                     "application/json"
                 ],
