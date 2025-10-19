@@ -410,8 +410,8 @@ kubectl apply -f deployment/kubernetes/manifests/gateway-service/
 ## 7. Live Demo
 You can find the live url. Go to http://bankops-core.135.235.192.122.nip.io
 
-**To use the system, a default employee with `admin` privileges has been created. Use the `login` api to authenticate and get JWT
-token:** 
+**To use the system, some employees with different privileges are already created. 
+Use the credentials(username and password) in the `login` api for authentication and get JWT access token:** 
 
 Employee with `admin` privileges: 
 * Username: `admin`
