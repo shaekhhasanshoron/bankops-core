@@ -74,15 +74,18 @@ func main() {
 		}
 	}()
 
-	go grpc.StartGRPCServer(grpc.ServiceRepos{
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ctx, stop := runtime.SignalContext(ctx)
+	defer stop()
+
+	go grpc.StartGRPCServer(ctx, grpc.ServiceRepos{
 		AccountClient:   accountClient,
 		SagaRepo:        sagaRepo,
 		TransactionRepo: transactionRepo,
 		EventRepo:       eventRepo,
 	})
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	recoveryJob := jobs.NewTransactionReconciliationJob(
 		transactionRepo,
@@ -101,10 +104,6 @@ func main() {
 		logging.Logger.Error().Err(err).Str("addr", config.Current().HTTP.Addr).Msg("listen failed")
 		os.Exit(1)
 	}
-
-	// Getting context for receiving OS signals for initiate graceful shutdown.
-	ctx, stop := runtime.SignalContext(ctx)
-	defer stop()
 
 	// Creating new http server for liveness and readiness checking
 	srv := httpserver.NewServerHTTP(httpserver.ServerConfig{

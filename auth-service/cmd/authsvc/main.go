@@ -67,7 +67,12 @@ func main() {
 	tokenSigner := auth.NewTokenSigner(config.Current().Auth.JWTSecret)
 	hashing := auth.NewHashing(config.Current().Auth.HashKey)
 
-	go grpc.StartGRPCServer(sqlite.NewEmployeeRepo(dbInstance), tokenSigner, hashing)
+	// Getting context for receiving OS signals for initiate graceful shutdown.
+	ctx := context.Background()
+	ctx, stop := runtime.SignalContext(ctx)
+	defer stop()
+
+	go grpc.StartGRPCServer(ctx, sqlite.NewEmployeeRepo(dbInstance), tokenSigner, hashing)
 
 	// Creating new http server for liveness and readiness checking
 	srv := httpserver.NewServerHTTP(httpserver.ServerConfig{
@@ -83,11 +88,6 @@ func main() {
 		logging.Logger.Error().Err(err).Str("addr", config.Current().HTTP.Addr).Msg("listen failed")
 		os.Exit(1)
 	}
-
-	// Getting context for receiving OS signals for initiate graceful shutdown.
-	ctx := context.Background()
-	ctx, stop := runtime.SignalContext(ctx)
-	defer stop()
 
 	logging.Logger.Info().Msg(fmt.Sprintf("server listening on %s", listener.Addr().String()))
 

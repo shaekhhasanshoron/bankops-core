@@ -62,7 +62,12 @@ func main() {
 		}
 	}()
 
-	go grpc.StartGRPCServer(grpc.ServiceRepos{
+	// Getting context for receiving OS signals for initiate graceful shutdown.
+	ctx := context.Background()
+	ctx, stop := runtime.SignalContext(ctx)
+	defer stop()
+
+	go grpc.StartGRPCServer(ctx, grpc.ServiceRepos{
 		CustomerRepo: sqlite.NewCustomerRepo(dbInstance),
 		AccountRepo:  sqlite.NewAccountRepo(dbInstance),
 		EventRepo:    sqlite.NewEventRepo(dbInstance),
@@ -82,11 +87,6 @@ func main() {
 		logging.Logger.Error().Err(err).Str("addr", config.Current().HTTP.Addr).Msg("listen failed")
 		os.Exit(1)
 	}
-
-	// Getting context for receiving OS signals for initiate graceful shutdown.
-	ctx := context.Background()
-	ctx, stop := runtime.SignalContext(ctx)
-	defer stop()
 
 	logging.Logger.Info().Msg(fmt.Sprintf("server listening on %s", listener.Addr().String()))
 

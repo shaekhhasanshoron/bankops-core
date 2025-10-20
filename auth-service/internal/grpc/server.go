@@ -8,6 +8,7 @@ import (
 	"auth-service/internal/grpc/interceptors"
 	"auth-service/internal/logging"
 	"auth-service/internal/ports"
+	"context"
 	"fmt"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
@@ -15,7 +16,7 @@ import (
 	"net"
 )
 
-func StartGRPCServer(employeeRepo ports.EmployeeRepo, tokenSigner ports.TokenSigner, hashing ports.Hashing) {
+func StartGRPCServer(ctx context.Context, employeeRepo ports.EmployeeRepo, tokenSigner ports.TokenSigner, hashing ports.Hashing) {
 	var unaryInterceptors []grpc.UnaryServerInterceptor
 
 	if config.Current().Observability.MetricsConfig.Enabled {
@@ -56,6 +57,12 @@ func StartGRPCServer(employeeRepo ports.EmployeeRepo, tokenSigner ports.TokenSig
 	}
 
 	logging.Logger.Info().Msg(fmt.Sprintf("gRPC server listening on %s", listener.Addr().String()))
+
+	go func() {
+		<-ctx.Done()
+		logging.Logger.Info().Msg("Shutting down gRPC server...")
+		grpcServer.GracefulStop()
+	}()
 
 	// Start the server
 	if err := grpcServer.Serve(listener); err != nil {

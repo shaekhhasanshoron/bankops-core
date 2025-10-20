@@ -10,6 +10,7 @@ import (
 	"account-service/internal/grpc/interceptors"
 	"account-service/internal/logging"
 	"account-service/internal/ports"
+	"context"
 	"fmt"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
@@ -23,7 +24,7 @@ type ServiceRepos struct {
 	EventRepo    ports.EventRepo
 }
 
-func StartGRPCServer(repos ServiceRepos) {
+func StartGRPCServer(ctx context.Context, repos ServiceRepos) {
 	var unaryInterceptors []grpc.UnaryServerInterceptor
 
 	if config.Current().Observability.MetricsConfig.Enabled {
@@ -56,6 +57,12 @@ func StartGRPCServer(repos ServiceRepos) {
 	}
 
 	logging.Logger.Info().Msg(fmt.Sprintf("gRPC server listening on %s", listener.Addr().String()))
+
+	go func() {
+		<-ctx.Done()
+		logging.Logger.Info().Msg("Shutting down gRPC server...")
+		grpcServer.GracefulStop()
+	}()
 
 	// Start the server
 	if err := grpcServer.Serve(listener); err != nil {
