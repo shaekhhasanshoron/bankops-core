@@ -129,7 +129,7 @@ This provides a familiar and well-structured interface for clients.
 Crucially, the Transaction Service acts as an orchestrator, making gRPC calls to the Account Service to validate accounts 
 and update balances during a transaction.
 **gRPC** is integrated because of its performance, strong contract-first API definitions via Protocol Buffers, and built-in connection pooling.
-* **Asynchronous Events (Service to Service)**: For decoupled, event-driven workflows, **message queue** (e.g kafka) has been integrated.
+* **Asynchronous Events**: For decoupled, event-driven workflows, **message queue** (e.g kafka) has been integrated.
 All the service publishes events (e.g., `TransactionCompleted`, `CustomerCreated`, `EmployeeCreated`) to dedicated topics. 
 This allows future services (like a Notification Service or Analytics Service) to react to these events without the event produce services 
 needing to know they exist, solving the problem of tight coupling and enabling system-wide scalability.
@@ -146,7 +146,7 @@ Here's the system architecture of **"Account Service"**:
 ### 3.1 Architectural Patterns & Principles
 **Microservice Foundation with Bounded Contexts**: 
 
-The services are modeled around clear business domains (Auth, Account). This allows each service to have its own 
+The services are modeled around clear business domains (Auth, Account, Transaction). This allows each service to have its own 
 independent data model, technology, and team.
 
 **Hexagonal Architecture (Ports & Adapters):** 
@@ -163,6 +163,7 @@ with their own business rules and invariants, the code becomes a direct reflecti
 This makes it easier to maintain and ensures that complex rules, like those governing transactions, are encapsulated correctly.
 
 **Saga Orchestrator Pattern:**
+
 A fund transfer is a perfect example of a long-running business process (a Saga) that spans multiple services. 
 The Transaction Service acts as the orchestrator, executing the transfer in a series of steps (debit, credit) via gRPC. 
 If any step fails (e.g., insufficient funds), the orchestrator triggers compensating transactions (e.g., a reverse debit) 
@@ -395,7 +396,8 @@ make compose-up
 ```
 ### 6.3 Kubernetes 
 
-All the manifests are inside `deployment/kubernetes/manifests` folder
+All the manifests are inside `deployment/kubernetes/manifests` folder. Update the manifests according to your cluster
+configuration before applying them.
 
 ```
 kubectl apply -f deployment/kubernetes/manifests/auth-service/
